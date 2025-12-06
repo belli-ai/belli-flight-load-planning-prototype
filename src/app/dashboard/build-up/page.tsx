@@ -1,10 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Boxes, Plane, Package, Sparkles, RefreshCw } from "lucide-react";
+import {
+  Boxes,
+  Plane,
+  Package,
+  Sparkles,
+  RefreshCw,
+  Loader2,
+} from "lucide-react";
 import {
   FlightSelector,
   FlightInfoBadge,
@@ -16,13 +23,18 @@ import {
   ResultsSummary,
   runOptimization,
   generateInstructions,
+  getCargoItems,
+  getPackingRules,
   MOCK_CARGO_ITEMS,
   MOCK_PACKING_RULES,
+  type OptimizationObjective,
 } from "@/features/planning";
 import type {
   OptimizationResult,
   BuildUpInstruction,
+  PackingRule,
 } from "@/features/planning";
+import type { CargoItemDisplay } from "@/features/cargo";
 
 // ============================================================================
 // BUILD-UP PAGE COMPONENT
@@ -31,7 +43,13 @@ import type {
 export default function BuildUpPage() {
   const { selectedFlight } = useSelectedFlight();
 
-  // State
+  // Data state
+  const [cargoItems, setCargoItems] = useState<CargoItemDisplay[]>([]);
+  const [packingRules, setPackingRules] = useState<PackingRule[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
+  const [useMockData, setUseMockData] = useState(false);
+
+  // UI state
   const [selectedCargoIds, setSelectedCargoIds] = useState<string[]>([]);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizationResult, setOptimizationResult] =
@@ -43,41 +61,99 @@ export default function BuildUpPage() {
   const [isGeneratingInstructions, setIsGeneratingInstructions] =
     useState(false);
   const [activeTab, setActiveTab] = useState<"cargo" | "results">("cargo");
+  const [objective, setObjective] =
+    useState<OptimizationObjective>("MINIMIZE_ULDS");
 
-  // Calculate selected weight
-  const selectedWeight = MOCK_CARGO_ITEMS.filter((item) =>
-    selectedCargoIds.includes(item.id)
-  ).reduce((sum, item) => sum + item.weightKg, 0);
+  // Fetch data when flight changes
+  useEffect(() => {
+    async function fetchData() {
+      if (!selectedFlight?.id) {
+        setCargoItems([]);
+        setPackingRules([]);
+        return;
+      }
+
+      setIsLoadingData(true);
+      try {
+        // Try to fetch real data
+        const [cargoResult, rulesResult] = await Promise.all([
+          getCargoItems(selectedFlight.id),
+          getPackingRules(),
+        ]);
+
+        // Use real data if available, otherwise fall back to mock
+        if (cargoResult.items.length > 0) {
+          setCargoItems(cargoResult.items);
+          setUseMockData(false);
+        } else {
+          // Fall back to mock data for development
+          setCargoItems(MOCK_CARGO_ITEMS);
+          setUseMockData(true);
+        }
+
+        if (rulesResult.rules.length > 0) {
+          setPackingRules(rulesResult.rules);
+        } else {
+          setPackingRules(MOCK_PACKING_RULES);
+        }
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        // Fall back to mock data on error
+        setCargoItems(MOCK_CARGO_ITEMS);
+        setPackingRules(MOCK_PACKING_RULES);
+        setUseMockData(true);
+      } finally {
+        setIsLoadingData(false);
+      }
+    }
+
+    fetchData();
+    // Reset selection when flight changes
+    setSelectedCargoIds([]);
+    setOptimizationResult(null);
+    setInstructions(new Map());
+    setActiveTab("cargo");
+  }, [selectedFlight?.id]);
+
+  // Calculate selected weight from current cargo items
+  const selectedWeight = cargoItems
+    .filter((item) => selectedCargoIds.includes(item.id))
+    .reduce((sum, item) => sum + item.weightKg, 0);
 
   // Handlers
-  const handleOptimize = useCallback(async () => {
-    if (selectedCargoIds.length === 0) return;
+  const handleOptimize = useCallback(
+    async (selectedObjective: OptimizationObjective) => {
+      if (selectedCargoIds.length === 0 || !selectedFlight?.id) return;
 
-    setIsOptimizing(true);
-    try {
-      const result = await runOptimization({
-        flightId: selectedFlight?.id || "",
-        cargoItemIds: selectedCargoIds,
-        uldTypeIds: [],
-        rules: MOCK_PACKING_RULES,
-        options: {
-          objective: "MINIMIZE_ULDS",
-          allowRotation: true,
-        },
-      });
+      setIsOptimizing(true);
+      try {
+        const result = await runOptimization({
+          flightId: selectedFlight.id,
+          cargoItemIds: selectedCargoIds,
+          rules: packingRules,
+          options: {
+            objective: selectedObjective,
+            allowRotation: true,
+            prioritizeHighPriorityCargo: true,
+          },
+        });
 
-      if (result.success && result.result) {
-        setOptimizationResult(result.result);
-        setActiveTab("results");
-        setSelectedUldIndex(0);
-        setInstructions(new Map());
+        if (result.success && result.result) {
+          setOptimizationResult(result.result);
+          setActiveTab("results");
+          setSelectedUldIndex(0);
+          setInstructions(new Map());
+        } else if (result.error) {
+          console.error("Optimization error:", result.error);
+        }
+      } catch (error) {
+        console.error("Optimization failed:", error);
+      } finally {
+        setIsOptimizing(false);
       }
-    } catch (error) {
-      console.error("Optimization failed:", error);
-    } finally {
-      setIsOptimizing(false);
-    }
-  }, [selectedCargoIds, selectedFlight?.id]);
+    },
+    [selectedCargoIds, selectedFlight?.id, packingRules]
+  );
 
   const handleGenerateInstructions = useCallback(
     async (uldIndex: number) => {
@@ -116,6 +192,7 @@ export default function BuildUpPage() {
     setOptimizationResult(null);
     setInstructions(new Map());
     setActiveTab("cargo");
+    setSelectedCargoIds([]);
   };
 
   return (
@@ -129,6 +206,9 @@ export default function BuildUpPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Pack cargo into ULDs with AI-powered optimization
+            {useMockData && (
+              <span className="ml-2 text-xs text-amber-500">(Demo Mode)</span>
+            )}
           </p>
         </div>
 
@@ -167,6 +247,11 @@ export default function BuildUpPage() {
             >
               <Package className="size-4" />
               Cargo List
+              {cargoItems.length > 0 && (
+                <span className="ml-1 text-xs text-muted-foreground">
+                  ({cargoItems.length})
+                </span>
+              )}
             </button>
             <button
               onClick={() => setActiveTab("results")}
@@ -190,9 +275,18 @@ export default function BuildUpPage() {
           </div>
 
           {/* Content */}
-          {activeTab === "cargo" ? (
+          {isLoadingData ? (
+            <Card>
+              <CardContent className="flex items-center justify-center py-12">
+                <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">
+                  Loading cargo data...
+                </span>
+              </CardContent>
+            </Card>
+          ) : activeTab === "cargo" ? (
             <CargoList
-              items={MOCK_CARGO_ITEMS}
+              items={cargoItems}
               selectedIds={selectedCargoIds}
               onSelectionChange={setSelectedCargoIds}
             />
@@ -204,6 +298,7 @@ export default function BuildUpPage() {
               onGenerateInstructions={handleGenerateInstructions}
               instructions={instructions}
               isGeneratingInstructions={isGeneratingInstructions}
+              cargoItems={cargoItems}
             />
           ) : null}
         </div>
@@ -216,7 +311,9 @@ export default function BuildUpPage() {
             onOptimize={handleOptimize}
             isOptimizing={isOptimizing}
             result={optimizationResult}
-            rules={MOCK_PACKING_RULES}
+            rules={packingRules}
+            objective={objective}
+            onObjectiveChange={setObjective}
           />
         </div>
       </div>

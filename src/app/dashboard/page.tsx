@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   Card,
@@ -17,15 +20,46 @@ import {
   AlertTriangle,
   ArrowRight,
   TrendingUp,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 
 // Mock data for dashboard statistics
-const stats = {
-  flightsToday: 12,
-  pendingCargo: 48,
-  activeLoadPlans: 8,
-  onTimeRate: 99.2,
-};
+const heroStats = [
+  {
+    value: "12",
+    label: "Flights Today",
+    description: "Active flight operations",
+    icon: Plane,
+    color: "text-foreground",
+    bgGlow: "from-primary/20 via-transparent to-transparent",
+  },
+  {
+    value: "48",
+    label: "Pending Cargo",
+    description: "Shipments awaiting processing",
+    icon: Package,
+    color: "text-foreground",
+    bgGlow: "from-blue-500/20 via-transparent to-transparent",
+  },
+  {
+    value: "8",
+    label: "Active Load Plans",
+    description: "Currently being optimized",
+    icon: Scale,
+    color: "text-foreground",
+    bgGlow: "from-emerald-500/20 via-transparent to-transparent",
+  },
+  {
+    value: "99.2%",
+    label: "On-Time Rate",
+    description: "Performance metric - Live",
+    icon: TrendingUp,
+    color: "text-primary",
+    bgGlow: "from-primary/30 via-primary/10 to-transparent",
+    isLive: true,
+  },
+];
 
 // Mock data for major features with urgency stats
 const majorFeatures = [
@@ -112,43 +146,151 @@ const secondaryFeatures = [
 ];
 
 export default function DashboardPage() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [direction, setDirection] = useState<"left" | "right">("right");
+
+  const goToNext = useCallback(() => {
+    setDirection("right");
+    setCurrentIndex((prev) => (prev + 1) % heroStats.length);
+  }, []);
+
+  const goToPrev = useCallback(() => {
+    setDirection("left");
+    setCurrentIndex((prev) => (prev - 1 + heroStats.length) % heroStats.length);
+  }, []);
+
+  const goToSlide = useCallback((index: number) => {
+    setDirection(index > currentIndex ? "right" : "left");
+    setCurrentIndex(index);
+  }, [currentIndex]);
+
+  // Auto-play effect
+  useEffect(() => {
+    if (!isAutoPlaying) return;
+    const interval = setInterval(goToNext, 5000);
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, goToNext]);
+
+  const currentStat = heroStats[currentIndex];
+  const IconComponent = currentStat.icon;
+
   return (
     <div className="relative">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
 
       <div className="relative mx-auto max-w-7xl px-6 py-8">
-        {/* Hero Statistics */}
-        <section className="mb-12">
-          <div className="mb-6">
+        {/* Hero Statistics Carousel */}
+        <section className="mb-16">
+          <div className="mb-8">
             <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
             <p className="text-sm text-muted-foreground">
               Real-time overview of cargo operations
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <StatCard
-              label="Flights Today"
-              value={stats.flightsToday.toString()}
-              icon={<Plane className="size-4" />}
-            />
-            <StatCard
-              label="Pending Cargo"
-              value={stats.pendingCargo.toString()}
-              icon={<Package className="size-4" />}
-            />
-            <StatCard
-              label="Active Load Plans"
-              value={stats.activeLoadPlans.toString()}
-              icon={<Scale className="size-4" />}
-            />
-            <StatCard
-              label="On-Time Rate"
-              value={`${stats.onTimeRate}%`}
-              icon={<TrendingUp className="size-4" />}
-              highlight
-            />
+          {/* Hero Carousel */}
+          <div 
+            className="relative overflow-hidden rounded-lg border bg-card"
+            onMouseEnter={() => setIsAutoPlaying(false)}
+            onMouseLeave={() => setIsAutoPlaying(true)}
+          >
+            {/* Ambient glow effect */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${currentStat.bgGlow} transition-all duration-700`} />
+            
+            <div className="relative px-8 py-12 md:px-16 md:py-20">
+              {/* Top bar with navigation */}
+              <div className="absolute top-4 left-4 right-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <IconComponent className="size-4" />
+                  </div>
+                  {currentStat.isLive && (
+                    <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                      <span className="size-1.5 rounded-full bg-primary animate-pulse" />
+                      LIVE
+                    </span>
+                  )}
+                </div>
+                
+                {/* Navigation arrows */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={goToPrev}
+                    className="flex h-8 w-8 items-center justify-center rounded-md border bg-background/80 backdrop-blur-sm text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                    aria-label="Previous stat"
+                  >
+                    <ChevronLeft className="size-4" />
+                  </button>
+                  <button
+                    onClick={goToNext}
+                    className="flex h-8 w-8 items-center justify-center rounded-md border bg-background/80 backdrop-blur-sm text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                    aria-label="Next stat"
+                  >
+                    <ChevronRight className="size-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Main content */}
+              <div className="flex min-h-[160px] flex-col items-center justify-center text-center">
+                <div
+                  key={currentIndex}
+                  className="animate-in fade-in slide-in-from-right-4 duration-500"
+                  style={{
+                    animationName: direction === "right" 
+                      ? "fadeInSlideRight" 
+                      : "fadeInSlideLeft"
+                  }}
+                >
+                  <p className={`text-7xl font-bold tracking-tighter md:text-9xl ${currentStat.color}`}>
+                    {currentStat.value}
+                  </p>
+                  <p className="mt-2 text-xl font-medium text-foreground md:text-2xl">
+                    {currentStat.label}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {currentStat.description}
+                  </p>
+                </div>
+              </div>
+
+              {/* Dot indicators */}
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2">
+                {heroStats.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => goToSlide(index)}
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      index === currentIndex 
+                        ? "w-6 bg-primary" 
+                        : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                    }`}
+                    aria-label={`Go to stat ${index + 1}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Quick stat pills below carousel */}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            {heroStats.map((stat, index) => (
+              <button
+                key={index}
+                onClick={() => goToSlide(index)}
+                className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-all ${
+                  index === currentIndex
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground"
+                }`}
+              >
+                <stat.icon className="size-3.5" />
+                <span className="font-medium">{stat.value}</span>
+                <span className="hidden sm:inline">{stat.label}</span>
+              </button>
+            ))}
           </div>
         </section>
 
@@ -198,38 +340,6 @@ export default function DashboardPage() {
   );
 }
 
-function StatCard({
-  label,
-  value,
-  icon,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  highlight?: boolean;
-}) {
-  return (
-    <Card className={highlight ? "border-primary/50" : ""}>
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground">{icon}</span>
-          {highlight && (
-            <span className="text-xs text-primary font-medium">LIVE</span>
-          )}
-        </div>
-        <div className="mt-3">
-          <p
-            className={`text-3xl font-bold tracking-tight ${highlight ? "text-primary" : ""}`}
-          >
-            {value}
-          </p>
-          <p className="text-xs text-muted-foreground">{label}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
 
 function MajorFeatureCard({
   title,

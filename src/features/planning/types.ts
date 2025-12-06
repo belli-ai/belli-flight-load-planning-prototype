@@ -346,6 +346,30 @@ export type OptimizationResult = {
   unassignedCargoIds: string[];
   stats: OptimizationStats;
   warnings: string[];
+  /** CG calculation result (when aircraft config is available) */
+  cgResult?: CgResult;
+};
+
+/**
+ * CG calculation result from optimization
+ */
+export type CgResult = {
+  /** Zero fuel weight in kg */
+  zeroFuelWeightKg: number;
+  /** Zero fuel weight CG in % MAC */
+  zfwCgPercentMac: number;
+  /** Whether ZFW CG is within envelope */
+  zfwWithinEnvelope: boolean;
+  /** Total payload weight in kg */
+  payloadWeightKg: number;
+  /** Total moment from payload */
+  totalMomentKgCm: number;
+  /** Forward CG limit at this weight */
+  forwardLimitPercentMac: number;
+  /** Aft CG limit at this weight */
+  aftLimitPercentMac: number;
+  /** Deviation from target CG (if specified) */
+  cgDeviationFromTarget?: number;
 };
 
 export const OPTIMIZATION_STATUSES = {
@@ -368,6 +392,24 @@ export type UldAssignmentResult = {
   volumeUsedM3: number;
   volumeUtilization: number;
   weightUtilization: number;
+  /** ULD internal dimensions in cm (for 3D visualization) */
+  uldDimensions: {
+    lengthCm: number;
+    widthCm: number;
+    heightCm: number;
+  };
+  /** Max gross weight capacity in kg */
+  maxGrossWeightKg: number;
+  /** Position assignment details (when aircraft config is available) */
+  positionAssignment?: PositionAssignmentResult;
+};
+
+export type PositionAssignmentResult = {
+  positionId: string;
+  positionCode: string;
+  deckCode: string;
+  armStationCm: number;
+  momentKgCm: number;
 };
 
 export type PackedItemResult = {
@@ -380,10 +422,12 @@ export type PackedItemResult = {
 
 export type OptimizationStats = {
   uldsUsed: number;
+  totalCargoItems: number;
   avgVolumeUtilization: number;
   avgWeightUtilization: number;
   totalCargoWeight: number;
   totalCargoVolume: number;
+  unassignedCount: number;
   unassignedWeight: number;
   unassignedVolume: number;
 };
