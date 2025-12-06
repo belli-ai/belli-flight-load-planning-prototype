@@ -132,6 +132,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
   // AWB 001 - Electronics
   {
     id: "cargo-001",
+    awbId: "awb-001",
     awbNumber: "126-12345678",
     pieceNumber: 1,
     weightKg: 180,
@@ -146,6 +147,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
   },
   {
     id: "cargo-002",
+    awbId: "awb-001",
     awbNumber: "126-12345678",
     pieceNumber: 2,
     weightKg: 165,
@@ -160,6 +162,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
   },
   {
     id: "cargo-003",
+    awbId: "awb-001",
     awbNumber: "126-12345678",
     pieceNumber: 3,
     weightKg: 145,
@@ -175,6 +178,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
   // AWB 002 - DG Batteries
   {
     id: "cargo-004",
+    awbId: "awb-002",
     awbNumber: "126-23456789",
     pieceNumber: 1,
     weightKg: 220,
@@ -189,6 +193,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
   },
   {
     id: "cargo-005",
+    awbId: "awb-002",
     awbNumber: "126-23456789",
     pieceNumber: 2,
     weightKg: 195,
@@ -204,6 +209,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
   // AWB 003 - General Cargo
   {
     id: "cargo-006",
+    awbId: "awb-003",
     awbNumber: "126-34567890",
     pieceNumber: 1,
     weightKg: 210,
@@ -218,6 +224,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
   },
   {
     id: "cargo-007",
+    awbId: "awb-003",
     awbNumber: "126-34567890",
     pieceNumber: 2,
     weightKg: 185,
@@ -232,6 +239,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
   },
   {
     id: "cargo-008",
+    awbId: "awb-003",
     awbNumber: "126-34567890",
     pieceNumber: 3,
     weightKg: 175,
@@ -247,6 +255,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
   // AWB 004 - Perishables
   {
     id: "cargo-009",
+    awbId: "awb-004",
     awbNumber: "126-45678901",
     pieceNumber: 1,
     weightKg: 85,
@@ -261,6 +270,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
   },
   {
     id: "cargo-010",
+    awbId: "awb-004",
     awbNumber: "126-45678901",
     pieceNumber: 2,
     weightKg: 78,
@@ -276,6 +286,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
   // AWB 005 - Machinery Parts
   {
     id: "cargo-011",
+    awbId: "awb-005",
     awbNumber: "126-56789012",
     pieceNumber: 1,
     weightKg: 320,
@@ -290,6 +301,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
   },
   {
     id: "cargo-012",
+    awbId: "awb-005",
     awbNumber: "126-56789012",
     pieceNumber: 2,
     weightKg: 285,
@@ -308,7 +320,7 @@ export const MOCK_CARGO_ITEMS: CargoItemDisplay[] = [
 export const MOCK_CARGO_FOR_PACKING: CargoItemForPacking[] = MOCK_CARGO_ITEMS.map(
   (item) => ({
     id: item.id,
-    awbId: `awb-${item.awbNumber.split("-")[1]?.slice(0, 3)}`,
+    awbId: item.awbId,
     pieceNumber: item.pieceNumber,
     weightKg: item.weightKg,
     lengthCm: item.lengthCm,

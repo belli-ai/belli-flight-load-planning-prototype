@@ -39,24 +39,27 @@ import type {
 // ============================================================================
 
 /**
- * Get cargo items for a flight (via AWBs that match the destination)
+ * Get cargo items for a flight (via AWBs linked to the flight)
  */
 export async function getCargoItemsForFlight(flightId: string): Promise<CargoItemForPacking[]> {
-  // Get flight destination
-  const flight = await db.query.flights.findFirst({
-    where: eq(flights.id, flightId),
-    with: {
-      destination: true,
-    },
+  // First, get all AWB IDs that belong to this flight
+  const awbsForFlight = await db.query.airWaybills.findMany({
+    where: eq(airWaybills.flightId, flightId),
+    columns: { id: true },
   });
 
-  if (!flight) {
+  if (awbsForFlight.length === 0) {
     return [];
   }
 
-  // Get cargo items assigned to AWBs going to this destination
+  const awbIds = awbsForFlight.map((awb) => awb.id);
+
+  // Get cargo items belonging to these AWBs
   const items = await db.query.cargoItems.findMany({
-    where: eq(cargoItems.loadStatus, "PENDING"),
+    where: and(
+      inArray(cargoItems.awbId, awbIds),
+      eq(cargoItems.loadStatus, "PENDING")
+    ),
     with: {
       awb: true,
       tempZone: true,

@@ -212,6 +212,7 @@ export type CargoItemDisplay = Pick<
   | "priority"
   | "loadStatus"
 > & {
+  awbId: string;
   awbNumber: string;
   description: string | null;
   specialHandling: string[];

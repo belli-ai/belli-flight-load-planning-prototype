@@ -9,6 +9,7 @@ export * from "./types";
 
 // Components
 export { CargoList } from "./components/cargo-list";
+export { AwbList } from "./components/awb-list";
 export { UldVisualization } from "./components/uld-visualization";
 export { UldViewer3D } from "./components/uld-viewer-3d";
 export { OptimizationPanel, type OptimizationObjective } from "./components/optimization-panel";
@@ -27,8 +28,11 @@ export {
   getAvailableUldsForFlight,
   confirmBuildUpPlan,
   getLoadPlanById,
+  getAwbsForFlight,
   type OptimizerUsed,
   type AvailableUldDisplay,
+  type AwbWithParcelsDisplay,
+  type ParcelDisplay,
 } from "./actions/optimize.actions";
 
 // Algorithm (for custom optimizer implementations)

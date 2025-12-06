@@ -8,7 +8,7 @@ import type {
 } from "../types";
 import type { CargoItemDisplay } from "@/features/cargo";
 import { db } from "@/lib/db";
-import { loadPlans } from "@/lib/db/schema";
+import { loadPlans, airWaybills } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import {
   getCargoItemsByIds,
@@ -458,6 +458,7 @@ export async function generateInstructions(
       cargoItems: cargoItems.map((item, index) => ({
         item: {
           id: item.id,
+          awbId: item.awbId,
           awbNumber: item.awbNumber,
           pieceNumber: item.pieceNumber,
           weightKg: item.weightKg,
@@ -607,6 +608,7 @@ export async function getCargoItems(
     // Convert to display format
     const displayItems: CargoItemDisplay[] = items.map((item) => ({
       id: item.id,
+      awbId: item.awbId,
       awbNumber: item.awbNumber,
       pieceNumber: item.pieceNumber,
       weightKg: item.weightKg,
@@ -683,6 +685,105 @@ export async function getFlights(): Promise<{
     return {
       success: true,
       flights: [],
+    };
+  }
+}
+
+// ============================================================================
+// AWB DATA ACTIONS
+// ============================================================================
+
+/**
+ * Display type for AWB with parcels
+ */
+export type AwbWithParcelsDisplay = {
+  id: string;
+  awbNumber: string;
+  flightId: string | null;
+  originCode: string;
+  destinationCode: string;
+  shipperName: string | null;
+  consigneeName: string | null;
+  totalPieces: number;
+  totalWeightKg: number;
+  totalVolumeM3: number | null;
+  natureOfGoods: string | null;
+  specialHandlingCodes: string[] | null;
+  status: string | null;
+  parcels: ParcelDisplay[];
+};
+
+export type ParcelDisplay = {
+  id: string;
+  groupNumber: number;
+  pieces: number;
+  weightKg: number;
+  lengthCm: number;
+  widthCm: number;
+  heightCm: number;
+  volumeM3: number | null;
+  isStackable: boolean;
+  isTiltable: boolean;
+  specialHandlingCodes: string[] | null;
+  description: string | null;
+};
+
+/**
+ * Get AWBs with parcels for a specific flight
+ */
+export async function getAwbsForFlight(
+  flightId: string
+): Promise<{ success: boolean; awbs: AwbWithParcelsDisplay[]; error?: string }> {
+  try {
+    const awbs = await db.query.airWaybills.findMany({
+      where: eq(airWaybills.flightId, flightId),
+      with: {
+        parcelGroups: true,
+        origin: true,
+        destination: true,
+      },
+    });
+
+    const displayAwbs: AwbWithParcelsDisplay[] = awbs.map((awb) => ({
+      id: awb.id,
+      awbNumber: awb.awbNumber,
+      flightId: awb.flightId,
+      originCode: awb.origin?.airportCode ?? "Unknown",
+      destinationCode: awb.destination?.airportCode ?? "Unknown",
+      shipperName: awb.shipperName,
+      consigneeName: awb.consigneeName,
+      totalPieces: awb.totalPieces,
+      totalWeightKg: Number(awb.totalWeightKg),
+      totalVolumeM3: awb.totalVolumeM3 ? Number(awb.totalVolumeM3) : null,
+      natureOfGoods: awb.natureOfGoods,
+      specialHandlingCodes: awb.specialHandlingCodes as string[] | null,
+      status: awb.status,
+      parcels: awb.parcelGroups.map((p) => ({
+        id: p.id,
+        groupNumber: p.groupNumber,
+        pieces: p.pieces,
+        weightKg: Number(p.weightKg),
+        lengthCm: Number(p.lengthCm),
+        widthCm: Number(p.widthCm),
+        heightCm: Number(p.heightCm),
+        volumeM3: p.volumeM3 ? Number(p.volumeM3) : null,
+        isStackable: p.isStackable,
+        isTiltable: p.isTiltable,
+        specialHandlingCodes: p.specialHandlingCodes as string[] | null,
+        description: p.description,
+      })),
+    }));
+
+    return {
+      success: true,
+      awbs: displayAwbs,
+    };
+  } catch (error) {
+    console.error("Failed to get AWBs for flight:", error);
+    return {
+      success: false,
+      awbs: [],
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }

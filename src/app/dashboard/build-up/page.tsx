@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 import {
   Boxes,
   Plane,
-  Package,
   Sparkles,
   RefreshCw,
   Loader2,
+  FileText,
 } from "lucide-react";
 import {
   FlightSelector,
@@ -18,7 +18,7 @@ import {
   useSelectedFlight,
 } from "@/components/shared/flight-selector";
 import {
-  CargoList,
+  AwbList,
   OptimizationPanel,
   ResultsSummary,
   UldSelector,
@@ -27,10 +27,12 @@ import {
   getCargoItems,
   getPackingRules,
   getAvailableUldsForFlight,
+  getAwbsForFlight,
   confirmBuildUpPlan,
   type OptimizationObjective,
   type AvailableUldDisplay,
   type RotationLevel,
+  type AwbWithParcelsDisplay,
 } from "@/features/planning";
 import type {
   OptimizationResult,
@@ -49,6 +51,7 @@ export default function BuildUpPage() {
 
   // Data state
   const [cargoItems, setCargoItems] = useState<CargoItemDisplay[]>([]);
+  const [awbs, setAwbs] = useState<AwbWithParcelsDisplay[]>([]);
   const [packingRules, setPackingRules] = useState<PackingRule[]>([]);
   const [availableUlds, setAvailableUlds] = useState<AvailableUldDisplay[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
@@ -66,7 +69,7 @@ export default function BuildUpPage() {
   >(new Map());
   const [isGeneratingInstructions, setIsGeneratingInstructions] =
     useState(false);
-  const [activeTab, setActiveTab] = useState<"cargo" | "results">("cargo");
+  const [activeTab, setActiveTab] = useState<"awbs" | "results">("awbs");
   const [objective, setObjective] =
     useState<OptimizationObjective>("MINIMIZE_ULDS");
   const [useLlm, setUseLlm] = useState(false);
@@ -83,6 +86,7 @@ export default function BuildUpPage() {
     async function fetchData() {
       if (!selectedFlight?.id) {
         setCargoItems([]);
+        setAwbs([]);
         setPackingRules([]);
         setAvailableUlds([]);
         return;
@@ -92,18 +96,21 @@ export default function BuildUpPage() {
       setIsLoadingUlds(true);
       try {
         // Fetch data from database in parallel
-        const [cargoResult, rulesResult, uldsResult] = await Promise.all([
+        const [cargoResult, awbsResult, rulesResult, uldsResult] = await Promise.all([
           getCargoItems(selectedFlight.id),
+          getAwbsForFlight(selectedFlight.id),
           getPackingRules(),
           getAvailableUldsForFlight(selectedFlight.id),
         ]);
 
         setCargoItems(cargoResult.items);
+        setAwbs(awbsResult.awbs);
         setPackingRules(rulesResult.rules);
         setAvailableUlds(uldsResult.ulds);
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setCargoItems([]);
+        setAwbs([]);
         setPackingRules([]);
         setAvailableUlds([]);
       } finally {
@@ -118,7 +125,7 @@ export default function BuildUpPage() {
     setSelectedUldIds([]);
     setOptimizationResult(null);
     setInstructions(new Map());
-    setActiveTab("cargo");
+    setActiveTab("awbs");
     setLoadPlanId(undefined);
     setIsConfirmed(false);
   }, [selectedFlight?.id]);
@@ -244,7 +251,7 @@ export default function BuildUpPage() {
     setOptimizationResult(null);
     setOptimizerUsed(undefined);
     setInstructions(new Map());
-    setActiveTab("cargo");
+    setActiveTab("awbs");
     setSelectedCargoIds([]);
     setSelectedUldIds([]);
     setLoadPlanId(undefined);
@@ -290,19 +297,19 @@ export default function BuildUpPage() {
           {/* Tab switcher */}
           <div className="flex items-center gap-1 p-1 rounded-sm bg-muted/30 w-fit">
             <button
-              onClick={() => setActiveTab("cargo")}
+              onClick={() => setActiveTab("awbs")}
               className={cn(
                 "flex items-center gap-2 px-3 py-1.5 rounded-sm text-sm font-medium transition-colors",
-                activeTab === "cargo"
+                activeTab === "awbs"
                   ? "bg-background text-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Package className="size-4" />
-              Cargo List
-              {cargoItems.length > 0 && (
+              <FileText className="size-4" />
+              AWBs & Cargo
+              {awbs.length > 0 && (
                 <span className="ml-1 text-xs text-muted-foreground">
-                  ({cargoItems.length})
+                  ({awbs.length} AWBs, {cargoItems.length} items)
                 </span>
               )}
             </button>
@@ -333,14 +340,15 @@ export default function BuildUpPage() {
               <CardContent className="flex items-center justify-center py-12">
                 <Loader2 className="size-6 animate-spin text-muted-foreground" />
                 <span className="ml-2 text-sm text-muted-foreground">
-                  Loading cargo data...
+                  Loading data...
                 </span>
               </CardContent>
             </Card>
-          ) : activeTab === "cargo" ? (
-            <CargoList
-              items={cargoItems}
-              selectedIds={selectedCargoIds}
+          ) : activeTab === "awbs" ? (
+            <AwbList
+              awbs={awbs}
+              cargoItems={cargoItems}
+              selectedCargoIds={selectedCargoIds}
               onSelectionChange={setSelectedCargoIds}
             />
           ) : optimizationResult ? (
