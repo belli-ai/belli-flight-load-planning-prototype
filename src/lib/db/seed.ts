@@ -1406,6 +1406,178 @@ const loadingZonesData = [
   },
 ];
 
+// Loading Zone Index Entries (from LOAD_PLANNING_SPEC.md Cargo Loading Index Table)
+// These map weight ranges to index values for CG calculations per zone
+// Ranges are continuous: min of range N+1 = max of range N + 0.01
+const loadingZoneIndexEntriesData = [
+  // Zone U1 index entries
+  {
+    id: "d1378620-9ce7-4a9b-811e-786c1511ccc3",
+    zoneId: "52cedde6-7725-4fe5-97f7-da9ad1ec48d3", // U1
+    weightMinKg: "0.01",
+    weightMaxKg: "100.00",
+    indexUnits: "-1.00",
+  },
+  {
+    id: "6b0cf898-cc97-45f5-991f-16e202a554ed",
+    zoneId: "52cedde6-7725-4fe5-97f7-da9ad1ec48d3", // U1
+    weightMinKg: "100.01",
+    weightMaxKg: "200.00",
+    indexUnits: "-2.00",
+  },
+  {
+    id: "212a3c21-9ac8-456b-a1c9-c2795353a8dd",
+    zoneId: "52cedde6-7725-4fe5-97f7-da9ad1ec48d3", // U1
+    weightMinKg: "200.01",
+    weightMaxKg: "500.00",
+    indexUnits: "-5.00",
+  },
+  {
+    id: "086fed40-f665-4d46-b0c7-50883148503e",
+    zoneId: "52cedde6-7725-4fe5-97f7-da9ad1ec48d3", // U1
+    weightMinKg: "500.01",
+    weightMaxKg: "1000.00",
+    indexUnits: "-10.00",
+  },
+  {
+    id: "f147b601-e9d1-4eef-9d17-95aa3497caa0",
+    zoneId: "52cedde6-7725-4fe5-97f7-da9ad1ec48d3", // U1
+    weightMinKg: "1000.01",
+    weightMaxKg: "1836.00",
+    indexUnits: "-25.00",
+  },
+  // Zone U2 index entries
+  {
+    id: "ee6a5724-40f7-401e-8b8e-f110aec46aba",
+    zoneId: "d7d684d7-9248-41c9-a5d4-e7e87eecd583", // U2
+    weightMinKg: "0.01",
+    weightMaxKg: "100.00",
+    indexUnits: "-1.00",
+  },
+  {
+    id: "d009c67c-c862-46f5-9f73-0346ee022933",
+    zoneId: "d7d684d7-9248-41c9-a5d4-e7e87eecd583", // U2
+    weightMinKg: "100.01",
+    weightMaxKg: "200.00",
+    indexUnits: "-2.00",
+  },
+  {
+    id: "35ef2aad-aff0-4ee9-bca3-1bd7a823f8aa",
+    zoneId: "d7d684d7-9248-41c9-a5d4-e7e87eecd583", // U2
+    weightMinKg: "200.01",
+    weightMaxKg: "500.00",
+    indexUnits: "-5.00",
+  },
+  {
+    id: "19e73f7b-77cd-4207-b9b6-699ba5a22735",
+    zoneId: "d7d684d7-9248-41c9-a5d4-e7e87eecd583", // U2
+    weightMinKg: "500.01",
+    weightMaxKg: "1000.00",
+    indexUnits: "-20.00",
+  },
+  {
+    id: "b6dc9d2f-2aa9-4aea-9f6f-4ec8d288d328",
+    zoneId: "d7d684d7-9248-41c9-a5d4-e7e87eecd583", // U2
+    weightMinKg: "1000.01",
+    weightMaxKg: "1836.00",
+    indexUnits: "-47.00",
+  },
+  // Zone U7 (center) index entries - neutral CG impact
+  {
+    id: "cc90e2a5-9312-4973-b10e-d5f2f90aed02",
+    zoneId: "2d7e6727-f685-4213-b118-0cf92dddf10f", // U7
+    weightMinKg: "0.01",
+    weightMaxKg: "100.00",
+    indexUnits: "0.00",
+  },
+  {
+    id: "2e01a3ed-675d-4dee-99ec-ffa9af37d5f3",
+    zoneId: "2d7e6727-f685-4213-b118-0cf92dddf10f", // U7
+    weightMinKg: "100.01",
+    weightMaxKg: "500.00",
+    indexUnits: "0.00",
+  },
+  {
+    id: "1bef7587-9e6a-4797-8c7b-10ccfe8d56c1",
+    zoneId: "2d7e6727-f685-4213-b118-0cf92dddf10f", // U7
+    weightMinKg: "500.01",
+    weightMaxKg: "1000.00",
+    indexUnits: "-1.00",
+  },
+  {
+    id: "fe2dbdc4-c090-4011-ac3c-5bdd8f7064ee",
+    zoneId: "2d7e6727-f685-4213-b118-0cf92dddf10f", // U7
+    weightMinKg: "1000.01",
+    weightMaxKg: "3193.00",
+    indexUnits: "-1.00",
+  },
+  // Zone U12 index entries (aft position - positive index)
+  {
+    id: "670709e3-b730-4475-a1e8-95f48a97e05b",
+    zoneId: "b4c9b1e6-8de9-4c05-8769-f4a90b867b1b", // U12
+    weightMinKg: "0.01",
+    weightMaxKg: "100.00",
+    indexUnits: "0.00",
+  },
+  {
+    id: "18caf260-efee-423b-8e49-305a51ded884",
+    zoneId: "b4c9b1e6-8de9-4c05-8769-f4a90b867b1b", // U12
+    weightMinKg: "100.01",
+    weightMaxKg: "200.00",
+    indexUnits: "2.00",
+  },
+  {
+    id: "7b4c496e-10a5-4ddc-bfe3-dfb6636a5751",
+    zoneId: "b4c9b1e6-8de9-4c05-8769-f4a90b867b1b", // U12
+    weightMinKg: "200.01",
+    weightMaxKg: "500.00",
+    indexUnits: "8.00",
+  },
+  {
+    id: "9aaa47e7-89a3-4f27-91e2-5e35257aa538",
+    zoneId: "b4c9b1e6-8de9-4c05-8769-f4a90b867b1b", // U12
+    weightMinKg: "500.01",
+    weightMaxKg: "1000.00",
+    indexUnits: "18.00",
+  },
+  {
+    id: "2faa0a25-3678-4132-ac19-16e1ede842a0",
+    zoneId: "b4c9b1e6-8de9-4c05-8769-f4a90b867b1b", // U12
+    weightMinKg: "1000.01",
+    weightMaxKg: "2275.00",
+    indexUnits: "37.00",
+  },
+  // Zone U14 (bulk) index entries
+  {
+    id: "e57e421c-0b1c-4b94-be4b-1ea3f765dec7",
+    zoneId: "d2821f97-cb09-440b-a3b2-4896602da1db", // U14
+    weightMinKg: "0.01",
+    weightMaxKg: "100.00",
+    indexUnits: "1.00",
+  },
+  {
+    id: "2b9aea99-e9c4-42c5-bfab-f80d407e2a5d",
+    zoneId: "d2821f97-cb09-440b-a3b2-4896602da1db", // U14
+    weightMinKg: "100.01",
+    weightMaxKg: "200.00",
+    indexUnits: "2.00",
+  },
+  {
+    id: "35934066-46ff-4ab2-8715-c220b57377a8",
+    zoneId: "d2821f97-cb09-440b-a3b2-4896602da1db", // U14
+    weightMinKg: "200.01",
+    weightMaxKg: "500.00",
+    indexUnits: "10.00",
+  },
+  {
+    id: "6d6f4afe-a7e8-4538-abb0-1a9dff78e4f6",
+    zoneId: "d2821f97-cb09-440b-a3b2-4896602da1db", // U14
+    weightMinKg: "500.01",
+    weightMaxKg: "770.00",
+    indexUnits: "31.00",
+  },
+];
+
 // CG Envelopes
 const cgEnvelopesData = [
   {
@@ -1974,6 +2146,9 @@ export async function seed() {
     console.log("🗺️  Seeding loading zones...");
     await db.insert(loadingZones).values(loadingZonesData);
 
+    console.log("📐 Seeding loading zone index entries...");
+    await db.insert(loadingZoneIndexEntries).values(loadingZoneIndexEntriesData);
+
     console.log("⛽ Seeding fuel configurations...");
     await db.insert(fuelConfigurations).values(fuelConfigurationsData);
 
@@ -2004,6 +2179,7 @@ Summary:
   - ${cgEnvelopesData.length} CG envelopes
   - ${cgEnvelopePointsData.length} CG envelope points
   - ${loadingZonesData.length} loading zones
+  - ${loadingZoneIndexEntriesData.length} loading zone index entries
   - ${fuelConfigurationsData.length} fuel configurations
   - ${fuelTanksData.length} fuel tanks
   - ${fuelIndexEntriesData.length} fuel index entries
