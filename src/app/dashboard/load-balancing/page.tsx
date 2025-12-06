@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Collapsible,
   CollapsibleContent,
@@ -22,6 +24,7 @@ import {
   ChevronDown,
   Weight,
   Target,
+  Boxes,
 } from "lucide-react";
 import {
   FlightSelector,
@@ -367,7 +370,9 @@ function CollapsibleCgData({
 // ============================================================================
 
 export default function LoadBalancingPage() {
-  const { selectedFlight } = useSelectedFlight();
+  const { selectedFlight, setFlightById } = useSelectedFlight();
+  const searchParams = useSearchParams();
+  const loadPlanIdParam = searchParams.get("loadPlanId");
 
   // Data state
   const [loadPlan, setLoadPlan] = useState<LoadPlanWithAssignments | null>(
@@ -375,6 +380,7 @@ export default function LoadBalancingPage() {
   );
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fromBuildUp, setFromBuildUp] = useState(false);
 
   // Optimization state
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -385,22 +391,55 @@ export default function LoadBalancingPage() {
   const [selectedUldIndex, setSelectedUldIndex] = useState<number | undefined>(
     undefined
   );
-  const [activeTab, setActiveTab] = useState<"visualization" | "data">(
-    "visualization"
-  );
   const [isExporting, setIsExporting] = useState(false);
 
-  // Fetch load plan when flight changes
+  // Fetch load plan by ID (from URL param) or by flight
   useEffect(() => {
     async function fetchLoadPlan() {
+      // If we have a loadPlanId from URL, use it directly
+      if (loadPlanIdParam) {
+        setIsLoadingData(true);
+        setError(null);
+        setFromBuildUp(true);
+
+        try {
+          const loadPlanResult = await getLoadPlanWithAssignments(
+            loadPlanIdParam
+          );
+
+          if (!loadPlanResult.success || !loadPlanResult.data) {
+            setError(loadPlanResult.error || "Failed to load plan data");
+            setLoadPlan(null);
+            return;
+          }
+
+          setLoadPlan(loadPlanResult.data);
+
+          // Set the flight context using the flightId from the load plan
+          if (loadPlanResult.data.flightId) {
+            setFlightById(loadPlanResult.data.flightId);
+          }
+        } catch (err) {
+          console.error("Failed to fetch load plan by ID:", err);
+          setError("Failed to load data");
+          setLoadPlan(null);
+        } finally {
+          setIsLoadingData(false);
+        }
+        return;
+      }
+
+      // Otherwise, fetch by selected flight
       if (!selectedFlight?.id) {
         setLoadPlan(null);
         setOptimizationResult(null);
+        setFromBuildUp(false);
         return;
       }
 
       setIsLoadingData(true);
       setError(null);
+      setFromBuildUp(false);
 
       try {
         // First, get load plans for this flight
@@ -437,7 +476,7 @@ export default function LoadBalancingPage() {
     fetchLoadPlan();
     setSelectedUldIndex(undefined);
     setOptimizationResult(null);
-  }, [selectedFlight?.id]);
+  }, [selectedFlight?.id, loadPlanIdParam, setFlightById]);
 
   // Convert load plan assignments to visualization format
   const assignments: UldAssignmentResult[] =
@@ -604,6 +643,31 @@ export default function LoadBalancingPage() {
         </div>
       )}
 
+      {/* Build-up confirmation banner */}
+      {fromBuildUp && loadPlan && (
+        <div className="mb-6 rounded-sm border border-green-500/30 bg-green-500/5 p-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-green-500/10">
+              <Boxes className="size-4 text-green-500" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-green-400">
+                  Build-Up Plan Confirmed
+                </span>
+                <Badge variant="secondary" className="text-[10px]">
+                  {loadPlan.assignments.length} ULDs
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                This load plan was created from the ULD Build-Up page. You can
+                now optimize position assignments.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Loading state */}
       {isLoadingData && (
         <Card>
@@ -685,138 +749,51 @@ export default function LoadBalancingPage() {
 
           {/* Center/Right panel - Visualization & Data */}
           <div className="lg:col-span-2 space-y-4">
-            {/* Tab switcher */}
-            <div className="flex items-center gap-1 p-1 rounded-sm bg-muted/30 w-fit">
-              <button
-                onClick={() => setActiveTab("visualization")}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-sm text-sm font-medium transition-colors",
-                  activeTab === "visualization"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <Plane className="size-4" />
-                Aircraft View
-              </button>
-              <button
-                onClick={() => setActiveTab("data")}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-1.5 rounded-sm text-sm font-medium transition-colors",
-                  activeTab === "data"
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <BarChart3 className="size-4" />
-                Weight & CG Data
-              </button>
-            </div>
+            {/* Aircraft 3D Visualization */}
+            <Card>
+              <CardContent className="pt-4">
+                <AircraftViewer3D
+                  assignments={displayAssignments}
+                  selectedUldIndex={selectedUldIndex}
+                  onUldSelect={setSelectedUldIndex}
+                />
+              </CardContent>
+            </Card>
 
-            {/* Visualization tab */}
-            {activeTab === "visualization" && (
+            {/* Weight & CG Data below visualization */}
+            <div className="grid gap-4 md:grid-cols-2">
+              {/* Weight Breakdown */}
+              <WeightBreakdown
+                weights={{
+                  operatingEmptyWeightKg:
+                    loadPlan.aircraft.operatingEmptyWeightKg,
+                  payloadKg: loadPlan.weights.payloadKg,
+                  zeroFuelWeightKg: loadPlan.weights.zeroFuelWeightKg,
+                  takeoffWeightKg: loadPlan.weights.takeoffWeightKg,
+                  landingWeightKg: loadPlan.weights.landingWeightKg,
+                }}
+                limits={{
+                  maxZeroFuelWeightKg: loadPlan.aircraft.maxZeroFuelWeightKg,
+                  maxTakeoffWeightKg: loadPlan.aircraft.maxTakeoffWeightKg,
+                  maxLandingWeightKg: loadPlan.aircraft.maxLandingWeightKg,
+                  maxPayloadKg: loadPlan.aircraft.totalMaxPayloadKg,
+                }}
+                compact
+              />
+
+              {/* CG Envelope Chart */}
               <Card>
-                <CardContent className="pt-4">
-                  <AircraftViewer3D
-                    assignments={displayAssignments}
-                    selectedUldIndex={selectedUldIndex}
-                    onUldSelect={setSelectedUldIndex}
-                  />
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium flex items-center gap-2">
+                    <BarChart3 className="size-4 text-primary" />
+                    CG Envelope
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CgEnvelopeChart cgPoints={cgPoints} compact showLegend />
                 </CardContent>
               </Card>
-            )}
-
-            {/* Data tab */}
-            {activeTab === "data" && (
-              <div className="grid gap-4 md:grid-cols-2">
-                {/* Weight Breakdown */}
-                <WeightBreakdown
-                  weights={{
-                    operatingEmptyWeightKg:
-                      loadPlan.aircraft.operatingEmptyWeightKg,
-                    payloadKg: loadPlan.weights.payloadKg,
-                    zeroFuelWeightKg: loadPlan.weights.zeroFuelWeightKg,
-                    takeoffWeightKg: loadPlan.weights.takeoffWeightKg,
-                    landingWeightKg: loadPlan.weights.landingWeightKg,
-                  }}
-                  limits={{
-                    maxZeroFuelWeightKg: loadPlan.aircraft.maxZeroFuelWeightKg,
-                    maxTakeoffWeightKg: loadPlan.aircraft.maxTakeoffWeightKg,
-                    maxLandingWeightKg: loadPlan.aircraft.maxLandingWeightKg,
-                    maxPayloadKg: loadPlan.aircraft.totalMaxPayloadKg,
-                  }}
-                />
-
-                {/* CG Envelope Chart */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      <BarChart3 className="size-4 text-primary" />
-                      CG Envelope
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CgEnvelopeChart cgPoints={cgPoints} compact showLegend />
-                  </CardContent>
-                </Card>
-
-                {/* CG Result Summary */}
-                {optimizationResult?.cgResult && (
-                  <Card className="md:col-span-2">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        CG Calculation Result
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div className="p-3 rounded-sm bg-muted/30">
-                          <div className="text-lg font-semibold">
-                            {optimizationResult.cgResult.zfwCgPercentMac.toFixed(
-                              1
-                            )}
-                            %
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            ZFW CG (% MAC)
-                          </div>
-                        </div>
-                        <div className="p-3 rounded-sm bg-muted/30">
-                          <div className="text-lg font-semibold">
-                            {optimizationResult.cgResult.zeroFuelWeightKg.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            ZFW (kg)
-                          </div>
-                        </div>
-                        <div className="p-3 rounded-sm bg-muted/30">
-                          <div className="text-lg font-semibold">
-                            {optimizationResult.cgResult.forwardLimitPercentMac.toFixed(
-                              1
-                            )}
-                            %
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Forward Limit
-                          </div>
-                        </div>
-                        <div className="p-3 rounded-sm bg-muted/30">
-                          <div className="text-lg font-semibold">
-                            {optimizationResult.cgResult.aftLimitPercentMac.toFixed(
-                              1
-                            )}
-                            %
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Aft Limit
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
+            </div>
           </div>
         </div>
       )}

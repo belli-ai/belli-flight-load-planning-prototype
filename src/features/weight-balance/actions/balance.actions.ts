@@ -7,6 +7,7 @@ import {
   positionLoads,
   loadingPositions,
   deckConfigurations,
+  deckConfigurationPresets,
   aircrafts,
   cgEnvelopes,
   cgEnvelopePoints,
@@ -132,8 +133,8 @@ export async function getLoadPlanWithAssignments(
       uldTypeCode: a.uldType?.code ?? "UNK",
       uldNumber: a.uldNumber,
       positionCode: a.positionCode,
-      totalWeightKg: a.totalWeightKg,
-      volumeUtilization: a.volumeUtilization ?? 0,
+      totalWeightKg: parseFloat(String(a.totalWeightKg)),
+      volumeUtilization: parseFloat(String(a.volumeUtilization ?? 0)),
       cargoCount: a.packedItems?.length ?? 0,
     }));
 
@@ -142,7 +143,7 @@ export async function getLoadPlanWithAssignments(
       (sum, a) => sum + a.totalWeightKg,
       0
     );
-    const zeroFuelWeightKg = aircraft.operatingEmptyWeightKg + payloadKg;
+    const zeroFuelWeightKg = parseFloat(String(aircraft.operatingEmptyWeightKg)) + payloadKg;
 
     return {
       success: true,
@@ -156,19 +157,19 @@ export async function getLoadPlanWithAssignments(
           id: aircraft.id,
           name: aircraft.name,
           typeCode: aircraft.typeCode,
-          operatingEmptyWeightKg: aircraft.operatingEmptyWeightKg,
-          maxZeroFuelWeightKg: aircraft.maxZeroFuelWeightKg,
-          maxTakeoffWeightKg: aircraft.maxTakeoffWeightKg,
-          maxLandingWeightKg: aircraft.maxLandingWeightKg,
-          totalMaxPayloadKg: aircraft.totalMaxPayloadKg,
-          macLeadingEdgeCm: aircraft.macLeadingEdgeCm,
-          macLengthCm: aircraft.macLengthCm,
+          operatingEmptyWeightKg: parseFloat(String(aircraft.operatingEmptyWeightKg)),
+          maxZeroFuelWeightKg: parseFloat(String(aircraft.maxZeroFuelWeightKg)),
+          maxTakeoffWeightKg: parseFloat(String(aircraft.maxTakeoffWeightKg)),
+          maxLandingWeightKg: parseFloat(String(aircraft.maxLandingWeightKg)),
+          totalMaxPayloadKg: parseFloat(String(aircraft.totalMaxPayloadKg)),
+          macLeadingEdgeCm: parseFloat(String(aircraft.macLeadingEdgeCm)),
+          macLengthCm: parseFloat(String(aircraft.macLengthCm)),
         },
         weights: {
           payloadKg,
           zeroFuelWeightKg,
-          takeoffWeightKg: loadPlan.takeoffWeightKg ?? zeroFuelWeightKg,
-          landingWeightKg: loadPlan.landingWeightKg ?? zeroFuelWeightKg,
+          takeoffWeightKg: parseFloat(String(loadPlan.takeoffWeightKg ?? zeroFuelWeightKg)),
+          landingWeightKg: parseFloat(String(loadPlan.landingWeightKg ?? zeroFuelWeightKg)),
         },
       },
     };
@@ -196,38 +197,51 @@ async function getAircraftConfigForBalancing(
 
     if (!aircraft) return null;
 
-    // Get deck configurations with positions
-    const decks = await db.query.deckConfigurations.findMany({
-      where: eq(deckConfigurations.aircraftId, aircraftId),
+    // Get deck configurations with positions through presets
+    const presets = await db.query.deckConfigurationPresets.findMany({
+      where: eq(deckConfigurationPresets.aircraftId, aircraftId),
       with: {
-        loadingPositions: true,
+        deckConfigurations: {
+          with: {
+            loadingPositions: true,
+          },
+        },
       },
     });
+
+    // Flatten deck configurations from all presets (use first preset as default)
+    const decks = presets.length > 0 ? presets[0].deckConfigurations : [];
 
     // Get CG envelopes with points
     const envelopes = await db.query.cgEnvelopes.findMany({
       where: eq(cgEnvelopes.aircraftId, aircraftId),
       with: {
-        cgEnvelopePoints: true,
+        points: true,
       },
     });
+
+    // Helper to parse decimal strings to numbers
+    const toNum = (val: string | number | null | undefined): number | null => {
+      if (val === null || val === undefined) return null;
+      return typeof val === "number" ? val : parseFloat(val);
+    };
 
     // Transform to algorithm types
     const deckConfigs: DeckConfigForPacking[] = decks.map((deck, idx) => ({
       id: deck.id,
       deckCode: deck.deckCode as DeckConfigForPacking["deckCode"],
       deckName: deck.deckName,
-      maxStructuralWeightKg: deck.maxStructuralWeightKg,
+      maxStructuralWeightKg: toNum(deck.maxStructuralWeightKg),
       sequence: deck.sequence ?? idx,
       positions: deck.loadingPositions.map((pos) => ({
         id: pos.id,
         positionCode: pos.positionCode,
         sequenceNumber: pos.sequenceNumber,
-        maxWeightKg: pos.maxWeightKg,
-        armStationCm: pos.armStationCm,
+        maxWeightKg: toNum(pos.maxWeightKg) ?? 0,
+        armStationCm: toNum(pos.armStationCm) ?? 0,
         compatibleUldTypes: pos.compatibleUldTypes,
         acceptsBulkCargo: pos.acceptsBulkCargo ?? false,
-        maxHeightCm: pos.maxHeightCm ?? null,
+        maxHeightCm: toNum(pos.maxHeightCm),
         contourCode: pos.contourCode ?? null,
         colIndex: pos.colIndex ?? null,
         rowIndex: pos.rowIndex ?? null,
@@ -237,12 +251,12 @@ async function getAircraftConfigForBalancing(
     const cgEnvelopesForPacking: CgEnvelopeForPacking[] = envelopes.map((env) => ({
       id: env.id,
       envelopeType: env.envelopeType as CgEnvelopeForPacking["envelopeType"],
-      forwardLimitPercentMac: env.forwardLimitPercentMac,
-      aftLimitPercentMac: env.aftLimitPercentMac,
-      points: env.cgEnvelopePoints.map((p) => ({
+      forwardLimitPercentMac: toNum(env.forwardLimitPercentMac) ?? 0,
+      aftLimitPercentMac: toNum(env.aftLimitPercentMac) ?? 0,
+      points: env.points.map((p) => ({
         sequence: p.sequence,
-        weightKg: p.weightKg,
-        cgPercentMac: p.cgPercentMac,
+        weightKg: toNum(p.weightKg) ?? 0,
+        cgPercentMac: toNum(p.cgPercentMac) ?? 0,
       })),
     }));
 
@@ -250,11 +264,13 @@ async function getAircraftConfigForBalancing(
       id: aircraft.id,
       name: aircraft.name,
       typeCode: aircraft.typeCode,
-      operatingEmptyWeightKg: aircraft.operatingEmptyWeightKg,
-      totalMaxPayloadKg: aircraft.totalMaxPayloadKg,
-      maxZeroFuelWeightKg: aircraft.maxZeroFuelWeightKg,
-      macLeadingEdgeCm: aircraft.macLeadingEdgeCm,
-      macLengthCm: aircraft.macLengthCm,
+      operatingEmptyWeightKg: toNum(aircraft.operatingEmptyWeightKg) ?? 0,
+      totalMaxPayloadKg: toNum(aircraft.totalMaxPayloadKg) ?? 0,
+      maxZeroFuelWeightKg: toNum(aircraft.maxZeroFuelWeightKg) ?? 0,
+      maxTakeoffWeightKg: toNum(aircraft.maxTakeoffWeightKg) ?? 0,
+      maxLandingWeightKg: toNum(aircraft.maxLandingWeightKg) ?? 0,
+      macLeadingEdgeCm: toNum(aircraft.macLeadingEdgeCm) ?? 0,
+      macLengthCm: toNum(aircraft.macLengthCm) ?? 0,
       decks: deckConfigs,
       cgEnvelopes: cgEnvelopesForPacking,
     };
@@ -356,8 +372,8 @@ export async function optimizeBalance(
             positionId: assignment.positionAssignment.positionId,
             uldAssignmentId: null, // Would need to map back to actual ULD assignment IDs
             positionCode: assignment.positionAssignment.positionCode,
-            grossWeightKg: assignment.totalWeightKg,
-            calculatedMoment: assignment.positionAssignment.momentKgCm,
+            grossWeightKg: String(assignment.totalWeightKg),
+            calculatedMoment: String(assignment.positionAssignment.momentKgCm),
             calculatedIndex: null,
             status: "PLANNED",
           });
@@ -369,10 +385,10 @@ export async function optimizeBalance(
         await db
           .update(loadPlans)
           .set({
-            zfwCgPercentMac: cgResult.zfwCgPercentMac,
+            zfwCgPercentMac: String(cgResult.zfwCgPercentMac),
             withinCgEnvelope: cgResult.zfwWithinEnvelope,
-            payloadKg: cgResult.payloadWeightKg,
-            zeroFuelWeightKg: cgResult.zeroFuelWeightKg,
+            payloadKg: String(cgResult.payloadWeightKg),
+            zeroFuelWeightKg: String(cgResult.zeroFuelWeightKg),
             updatedAt: new Date(),
           })
           .where(eq(loadPlans.id, input.loadPlanId));

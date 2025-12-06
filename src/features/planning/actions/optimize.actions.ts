@@ -7,6 +7,9 @@ import type {
   BuildUpInstruction,
 } from "../types";
 import type { CargoItemDisplay } from "@/features/cargo";
+import { db } from "@/lib/db";
+import { loadPlans } from "@/lib/db/schema";
+import { eq } from "drizzle-orm";
 import {
   getCargoItemsByIds,
   getUldTypes,
@@ -65,6 +68,8 @@ export async function runOptimization(input: OptimizeInput): Promise<{
   result?: OptimizationResult;
   error?: string;
   optimizerUsed?: OptimizerUsed;
+  /** Load plan ID for confirmed build-up */
+  loadPlanId?: string;
 }> {
   try {
     // Get or create load plan
@@ -262,6 +267,7 @@ export async function runOptimization(input: OptimizeInput): Promise<{
       success: true,
       result,
       optimizerUsed,
+      loadPlanId: loadPlan.id,
     };
   } catch (error) {
     console.error("Optimization failed:", error);
@@ -739,6 +745,115 @@ export async function getAvailableUldsForFlight(
     return {
       success: false,
       ulds: [],
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// ============================================================================
+// BUILD-UP CONFIRMATION
+// ============================================================================
+
+/**
+ * Confirm a build-up plan - validates that the load plan exists and has assignments
+ * Returns the load plan ID for navigation to load balancing
+ */
+export async function confirmBuildUpPlan(loadPlanId: string): Promise<{
+  success: boolean;
+  loadPlanId?: string;
+  flightId?: string;
+  error?: string;
+}> {
+  try {
+    // Verify the load plan exists and has data
+    const loadPlan = await db.query.loadPlans.findFirst({
+      where: eq(loadPlans.id, loadPlanId),
+      with: {
+        uldAssignments: true,
+      },
+    });
+
+    if (!loadPlan) {
+      return {
+        success: false,
+        error: "Load plan not found",
+      };
+    }
+
+    if (loadPlan.uldAssignments.length === 0) {
+      return {
+        success: false,
+        error: "No ULD assignments found for this load plan",
+      };
+    }
+
+    return {
+      success: true,
+      loadPlanId: loadPlan.id,
+      flightId: loadPlan.flightId,
+    };
+  } catch (error) {
+    console.error("Failed to confirm build-up plan:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+/**
+ * Get load plan by ID with flight details
+ */
+export async function getLoadPlanById(loadPlanId: string): Promise<{
+  success: boolean;
+  loadPlan?: {
+    id: string;
+    flightId: string;
+    flightNumber: string;
+    status: string;
+    assignmentCount: number;
+  };
+  error?: string;
+}> {
+  try {
+    const loadPlan = await db.query.loadPlans.findFirst({
+      where: eq(loadPlans.id, loadPlanId),
+      with: {
+        flight: {
+          columns: {
+            id: true,
+            flightNumber: true,
+          },
+        },
+        uldAssignments: {
+          columns: {
+            id: true,
+          },
+        },
+      },
+    });
+
+    if (!loadPlan) {
+      return {
+        success: false,
+        error: "Load plan not found",
+      };
+    }
+
+    return {
+      success: true,
+      loadPlan: {
+        id: loadPlan.id,
+        flightId: loadPlan.flightId,
+        flightNumber: loadPlan.flight.flightNumber,
+        status: loadPlan.status,
+        assignmentCount: loadPlan.uldAssignments.length,
+      },
+    };
+  } catch (error) {
+    console.error("Failed to get load plan:", error);
+    return {
+      success: false,
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }

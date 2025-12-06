@@ -27,6 +27,7 @@ import {
   getCargoItems,
   getPackingRules,
   getAvailableUldsForFlight,
+  confirmBuildUpPlan,
   type OptimizationObjective,
   type AvailableUldDisplay,
   type RotationLevel,
@@ -73,6 +74,9 @@ export default function BuildUpPage() {
     OptimizerUsed | undefined
   >();
   const [rotationLevel, setRotationLevel] = useState<RotationLevel>("Z_ONLY");
+  const [loadPlanId, setLoadPlanId] = useState<string | undefined>();
+  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   // Fetch data when flight changes
   useEffect(() => {
@@ -115,6 +119,8 @@ export default function BuildUpPage() {
     setOptimizationResult(null);
     setInstructions(new Map());
     setActiveTab("cargo");
+    setLoadPlanId(undefined);
+    setIsConfirmed(false);
   }, [selectedFlight?.id]);
 
   // Calculate selected cargo weight and volume for capacity checks
@@ -159,6 +165,8 @@ export default function BuildUpPage() {
         if (result.success && result.result) {
           setOptimizationResult(result.result);
           setOptimizerUsed(result.optimizerUsed);
+          setLoadPlanId(result.loadPlanId);
+          setIsConfirmed(false);
           setActiveTab("results");
           setSelectedUldIndex(0);
           setInstructions(new Map());
@@ -214,6 +222,24 @@ export default function BuildUpPage() {
     [optimizationResult]
   );
 
+  const handleConfirm = useCallback(async () => {
+    if (!loadPlanId) return;
+
+    setIsConfirming(true);
+    try {
+      const result = await confirmBuildUpPlan(loadPlanId);
+      if (result.success) {
+        setIsConfirmed(true);
+      } else {
+        console.error("Failed to confirm build-up:", result.error);
+      }
+    } catch (error) {
+      console.error("Confirmation failed:", error);
+    } finally {
+      setIsConfirming(false);
+    }
+  }, [loadPlanId]);
+
   const handleReset = () => {
     setOptimizationResult(null);
     setOptimizerUsed(undefined);
@@ -221,6 +247,8 @@ export default function BuildUpPage() {
     setActiveTab("cargo");
     setSelectedCargoIds([]);
     setSelectedUldIds([]);
+    setLoadPlanId(undefined);
+    setIsConfirmed(false);
   };
 
   return (
@@ -324,6 +352,10 @@ export default function BuildUpPage() {
               instructions={instructions}
               isGeneratingInstructions={isGeneratingInstructions}
               cargoItems={cargoItems}
+              loadPlanId={loadPlanId}
+              isConfirmed={isConfirmed}
+              onConfirm={handleConfirm}
+              isConfirming={isConfirming}
             />
           ) : null}
         </div>

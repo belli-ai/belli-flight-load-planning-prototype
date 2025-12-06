@@ -25,6 +25,8 @@ export {
   getPackingRules,
   getFlights,
   getAvailableUldsForFlight,
+  confirmBuildUpPlan,
+  getLoadPlanById,
   type OptimizerUsed,
   type AvailableUldDisplay,
 } from "./actions/optimize.actions";

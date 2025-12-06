@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,6 +14,9 @@ import {
   Sparkles,
   ChevronRight,
   AlertTriangle,
+  Check,
+  ArrowRight,
+  Scale,
 } from "lucide-react";
 import type { OptimizationResult, BuildUpInstruction } from "../types";
 import type { CargoItemDisplay } from "@/features/cargo";
@@ -30,6 +34,14 @@ type ResultsSummaryProps = {
   instructions: Map<number, BuildUpInstruction>;
   isGeneratingInstructions: boolean;
   cargoItems?: CargoItemDisplay[];
+  /** Load plan ID for confirmation */
+  loadPlanId?: string;
+  /** Whether the build-up has been confirmed */
+  isConfirmed?: boolean;
+  /** Callback to confirm the build-up */
+  onConfirm?: () => Promise<void>;
+  /** Whether confirmation is in progress */
+  isConfirming?: boolean;
 };
 
 // ============================================================================
@@ -44,6 +56,10 @@ export function ResultsSummary({
   instructions,
   isGeneratingInstructions,
   cargoItems = [],
+  loadPlanId,
+  isConfirmed = false,
+  onConfirm,
+  isConfirming = false,
 }: ResultsSummaryProps) {
   const [expandedUld, setExpandedUld] = useState<number | null>(null);
 
@@ -331,6 +347,53 @@ export function ResultsSummary({
                       ... and {result.unassignedCargoIds.length - 10} more items
                     </div>
                   )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Confirmation Section */}
+          {loadPlanId && (
+            <div className="border-t border-border pt-4 mt-4">
+              {isConfirmed ? (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-green-400">
+                    <Check className="size-5" />
+                    <span className="font-medium">Build-Up Plan Confirmed</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    The build-up plan has been saved. You can now proceed to load balancing.
+                  </p>
+                  <Button asChild className="w-full">
+                    <Link href={`/dashboard/load-balancing?loadPlanId=${loadPlanId}`}>
+                      <Scale className="mr-2 size-4" />
+                      Go to Load Balancing
+                      <ArrowRight className="ml-2 size-4" />
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Review the build-up plan above. Once confirmed, the plan will be saved and you can proceed to load balancing.
+                  </p>
+                  <Button
+                    onClick={onConfirm}
+                    disabled={isConfirming || !onConfirm}
+                    className="w-full"
+                  >
+                    {isConfirming ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" />
+                        Confirming...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="mr-2 size-4" />
+                        Confirm Build-Up Plan
+                      </>
+                    )}
+                  </Button>
                 </div>
               )}
             </div>

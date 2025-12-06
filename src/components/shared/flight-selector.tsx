@@ -32,6 +32,7 @@ export type SelectedFlight = {
 type FlightContextType = {
   selectedFlight: SelectedFlight | null;
   setSelectedFlight: (flight: SelectedFlight | null) => void;
+  setFlightById: (flightId: string) => void;
   isLoading: boolean;
   flights: SelectedFlight[];
   refreshFlights: () => Promise<void>;
@@ -95,11 +96,20 @@ export function FlightProvider({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Set flight by ID (useful when navigating from other pages)
+  const setFlightById = useCallback((flightId: string) => {
+    const flight = flights.find((f) => f.id === flightId);
+    if (flight) {
+      setSelectedFlight(flight);
+    }
+  }, [flights]);
+
   return (
     <FlightContext.Provider 
       value={{ 
         selectedFlight, 
-        setSelectedFlight, 
+        setSelectedFlight,
+        setFlightById,
         isLoading, 
         flights,
         refreshFlights,
