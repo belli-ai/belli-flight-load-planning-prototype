@@ -598,6 +598,7 @@ export const airWaybills = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     awbNumber: varchar("awb_number", { length: 20 }).notNull().unique(),
+    flightId: uuid("flight_id").references(() => flights.id),
     originId: uuid("origin_id")
       .notNull()
       .references(() => locations.id),
@@ -632,6 +633,7 @@ export const airWaybills = pgTable(
     index("idx_awb_origin").on(table.originId),
     index("idx_awb_destination").on(table.destinationId),
     index("idx_awb_status").on(table.status),
+    index("idx_awb_flight").on(table.flightId),
   ]
 );
 
@@ -1069,6 +1071,7 @@ export const flightsRelations = relations(flights, ({ one, many }) => ({
     relationName: "destinationFlights",
   }),
   loadPlans: many(loadPlans),
+  airWaybills: many(airWaybills),
 }));
 
 export const cgEnvelopesRelations = relations(cgEnvelopes, ({ one, many }) => ({
@@ -1155,6 +1158,10 @@ export const weightConstraintsRelations = relations(
 );
 
 export const airWaybillsRelations = relations(airWaybills, ({ one, many }) => ({
+  flight: one(flights, {
+    fields: [airWaybills.flightId],
+    references: [flights.id],
+  }),
   origin: one(locations, {
     fields: [airWaybills.originId],
     references: [locations.id],

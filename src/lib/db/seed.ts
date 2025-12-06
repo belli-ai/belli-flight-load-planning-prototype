@@ -146,6 +146,12 @@ export const DECK_CONFIG_IDS = {
   BULK: "7a888c64-3fe9-4ff5-a8fd-c7eb3833621f",
 } as const;
 
+// Flight IDs
+export const FLIGHT_IDS = {
+  RY501_KUL_SIN: "25cfae82-930b-4338-8d20-4d93ae8fd9d8",
+  RY502_KUL_HKG: "c37f4d13-1b3a-4209-8076-08d4906d1f56",
+} as const;
+
 // ============================================================================
 // SEED DATA
 // ============================================================================
@@ -2938,6 +2944,7 @@ const airWaybillsData = [
   {
     id: "cfa118fe-d58b-40c2-8efd-3edbee43f9a6",
     awbNumber: "618-12345001",
+    flightId: FLIGHT_IDS.RY501_KUL_SIN,
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.SIN,
     shipperName: "Tech Solutions Sdn Bhd",
@@ -2957,6 +2964,7 @@ const airWaybillsData = [
   {
     id: "5249ad2c-e15d-40fd-ac7f-a4f1a93b0144",
     awbNumber: "618-12345002",
+    flightId: FLIGHT_IDS.RY501_KUL_SIN,
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.SIN,
     shipperName: "Fashion Forward KL Sdn Bhd",
@@ -2976,6 +2984,7 @@ const airWaybillsData = [
   {
     id: "8c311b46-f6f5-4810-963f-8e7f5e5321f4",
     awbNumber: "618-12345003",
+    flightId: FLIGHT_IDS.RY501_KUL_SIN,
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.SIN,
     shipperName: "Malaysia Fresh Produce Sdn Bhd",
@@ -2995,6 +3004,7 @@ const airWaybillsData = [
   {
     id: "41ac6f9f-ee59-4c2c-881c-4ece90c247c0",
     awbNumber: "618-12345004",
+    flightId: FLIGHT_IDS.RY501_KUL_SIN,
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.SIN,
     shipperName: "PharmaCare Malaysia Sdn Bhd",
@@ -3014,6 +3024,7 @@ const airWaybillsData = [
   {
     id: "c969e034-eab1-4ec4-897e-434ef46945b9",
     awbNumber: "618-12345005",
+    flightId: FLIGHT_IDS.RY501_KUL_SIN,
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.SIN,
     shipperName: "Shopee Express Malaysia",
@@ -3033,6 +3044,7 @@ const airWaybillsData = [
   {
     id: "81e901c7-b479-48cf-9470-3ae70de8ff28",
     awbNumber: "618-12345006",
+    flightId: FLIGHT_IDS.RY501_KUL_SIN,
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.SIN,
     shipperName: "DHL Express Malaysia",
@@ -3320,7 +3332,7 @@ const cargoItemsData = [
 // Flights
 const flightsData = [
   {
-    id: "25cfae82-930b-4338-8d20-4d93ae8fd9d8",
+    id: FLIGHT_IDS.RY501_KUL_SIN,
     flightNumber: "RY501",
     aircraftId: AIRCRAFT_IDS.A321_P2F,
     originId: LOCATION_IDS.KUL,
@@ -3332,7 +3344,7 @@ const flightsData = [
     status: "SCHEDULED",
   },
   {
-    id: "c37f4d13-1b3a-4209-8076-08d4906d1f56",
+    id: FLIGHT_IDS.RY502_KUL_HKG,
     flightNumber: "RY502",
     aircraftId: AIRCRAFT_IDS.A321_P2F,
     originId: LOCATION_IDS.KUL,
@@ -3349,7 +3361,7 @@ const flightsData = [
 const loadPlansData = [
   {
     id: "050e8669-6d19-4f75-9f02-ce5ee307f8e8",
-    flightId: "25cfae82-930b-4338-8d20-4d93ae8fd9d8",
+    flightId: FLIGHT_IDS.RY501_KUL_SIN,
     aircraftId: AIRCRAFT_IDS.A321_P2F,
     planNumber: "LP-RY501-2025-001",
     status: "DRAFT",
