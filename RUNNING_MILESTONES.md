@@ -8,85 +8,97 @@ An intelligent cargo load planning system that optimizes ULD (Unit Load Device) 
 
 ### Core Value Proposition
 
-| Problem | Our Solution |
-|---------|--------------|
-| ~20% wasted cargo capacity | AI-optimized bin-packing algorithm |
-| Manual spreadsheet planning | Automated optimization with visual feedback |
+| Problem                             | Our Solution                                   |
+| ----------------------------------- | ---------------------------------------------- |
+| ~20% wasted cargo capacity          | AI-optimized bin-packing algorithm             |
+| Manual spreadsheet planning         | Automated optimization with visual feedback    |
 | $50-150 handling fees per extra ULD | Minimize ULD count through intelligent packing |
-| Time pressure decisions | Real-time optimization with instant results |
+| Time pressure decisions             | Real-time optimization with instant results    |
 
 ---
 
 ## Data Architecture
 
+> **Full Schema Documentation:** See [docs/DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) for complete ERD, table definitions, and sample data.
+
+### Schema Overview
+
+The database is organized into 6 logical groups supporting both ULD build-up optimization and aircraft load planning:
+
+| Group            | Tables                                                                                                                                                               | Purpose                                                              |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Reference Data   | `locations`, `commodity_codes`, `dangerous_goods_classes`, `dg_segregation_rules`, `temperature_zones`                                                               | Static lookup data for airports, DG classes, and compatibility rules |
+| ULD & Aircraft   | `uld_types`, `ulds`, `aircrafts`, `deck_configurations`, `loading_positions`, `flights`                                                                              | Master data for containers, aircraft configs, and flight schedules   |
+| Weight & Balance | `cg_envelopes`, `cg_envelope_points`, `loading_zones`, `loading_zone_index_entries`, `fuel_configurations`, `fuel_tanks`, `fuel_index_entries`, `weight_constraints` | CG calculations, fuel impact, and position constraints               |
+| Cargo & AWB      | `air_waybills`, `parcel_groups`, `cargo_items`                                                                                                                       | Shipment and cargo piece data                                        |
+| Planning         | `load_plans`, `uld_assignments`, `packed_items`, `position_loads`, `packing_rules`                                                                                   | Optimization sessions and results                                    |
+| Messaging        | `load_messages`                                                                                                                                                      | IATA LDM/CPM/UCM message records                                     |
+
 ### Entity Relationship Diagram
 
 ```
-┌─────────────────┐       ┌─────────────────┐
-│  aircraft_types │       │    uld_types    │
-│─────────────────│       │─────────────────│
-│ id (PK)         │       │ id (PK)         │
-│ model           │       │ code            │
-│ cargo_positions │       │ dimensions      │
-│ max_payload     │       │ max_weight      │
-└────────┬────────┘       │ tare_weight     │
-         │                └────────┬────────┘
-         │                         │
-         │    ┌─────────────────┐  │
-         └───►│  load_sessions  │◄─┘
-              │─────────────────│
-              │ id (PK)         │
-              │ aircraft_type   │───────────────┐
-              │ status          │               │
-              │ created_at      │               │
-              └────────┬────────┘               │
-                       │                        │
-         ┌─────────────┴─────────────┐          │
-         │                           │          │
-         ▼                           ▼          │
-┌─────────────────┐       ┌─────────────────┐   │
-│  cargo_items    │       │ uld_assignments │   │
-│─────────────────│       │─────────────────│   │
-│ id (PK)         │       │ id (PK)         │   │
-│ session_id (FK) │       │ session_id (FK) │   │
-│ awb             │       │ uld_type_id(FK) │───┘
-│ dimensions      │       │ position        │
-│ weight          │       │ cargo_ids[]     │
-│ priority        │       │ total_weight    │
-│ special_handling│       │ volume_used     │
-└─────────────────┘       └─────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              REFERENCE DATA                                      │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  locations ─┬─< flights (origin/destination)                                    │
+│             └─< ulds (current location)                                         │
+│                                                                                 │
+│  commodity_codes ─< parcel_groups                                               │
+│                                                                                 │
+│  dangerous_goods_classes ─┬─< dg_segregation_rules (class_a, class_b)           │
+│                           └─< cargo_items (dg_class_id)                         │
+│                                                                                 │
+│  temperature_zones ─< cargo_items, parcel_groups                                │
+└─────────────────────────────────────────────────────────────────────────────────┘
 
-┌─────────────────┐
-│  packing_rules  │
-│─────────────────│
-│ id (PK)         │
-│ rule_text       │  ← Natural language for LLM
-│ rule_type       │
-│ priority        │
-│ is_active       │
-└─────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                           ULD & AIRCRAFT DATA                                    │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  uld_types ─┬─< ulds (physical instances)                                       │
+│             └─< uld_assignments (type reference)                                │
+│                                                                                 │
+│  aircrafts ─┬─< deck_configurations ─< loading_positions                        │
+│             ├─< cg_envelopes ─< cg_envelope_points                              │
+│             ├─< loading_zones ─< loading_zone_index_entries                     │
+│             ├─< fuel_configurations ─< fuel_tanks ─< fuel_index_entries         │
+│             ├─< weight_constraints                                              │
+│             ├─< flights                                                         │
+│             └─< load_plans                                                      │
+└─────────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                              CARGO & PLANNING                                    │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  air_waybills ─< parcel_groups ─< cargo_items                                   │
+│                                                                                 │
+│  flights ─< load_plans ─┬─< uld_assignments ─< packed_items                     │
+│                         ├─< position_loads                                      │
+│                         └─< load_messages                                       │
+│                                                                                 │
+│  packing_rules (standalone - LLM-interpretable natural language rules)          │
+└─────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Data Entity Definitions
+### Core Entity Definitions
 
-#### 1. `aircraft_types` - Aircraft Specifications
+#### 1. `aircrafts` - Aircraft Configuration
 
 ```typescript
-type AircraftType = {
-  id: string;                    // UUID
-  model: string;                 // e.g., "Boeing 777F", "Airbus A330-200F"
-  maxPayloadKg: number;          // Maximum cargo weight capacity
-  cargoPositions: CargoPosition[]; // Available ULD positions in cargo hold
-  compatibleUldTypes: string[];  // ULD type codes compatible with this aircraft
-};
-
-type CargoPosition = {
-  id: string;                    // Position identifier (e.g., "11L", "21R")
-  deck: "main" | "lower";        // Main deck or lower hold
-  maxWeightKg: number;           // Position weight limit
-  acceptedContours: string[];    // Compatible ULD contours
-  xOffset: number;               // Position for visualization (longitudinal)
-  yOffset: number;               // Position for visualization (lateral)
+type Aircraft = {
+  id: string; // UUID
+  name: string; // e.g., "Airbus A321-211P2F"
+  typeCode: string; // ICAO code (e.g., "A321")
+  subtype: string; // Variant (e.g., "211P2F")
+  registration: string; // Aircraft registration
+  mainDeckMaxWeightKg: number; // Main deck weight limit
+  lowerDeckMaxWeightKg: number; // Lower deck weight limit
+  totalMaxPayloadKg: number; // Total payload capacity
+  maxZeroFuelWeightKg: number; // MZFW
+  maxTakeoffWeightKg: number; // MTOW
+  maxLandingWeightKg: number; // MLW
+  operatingEmptyWeightKg: number; // OEW
+  macLeadingEdgeCm: number; // MAC reference for CG calc
+  macLengthCm: number; // Mean Aerodynamic Chord length
 };
 ```
 
@@ -94,20 +106,20 @@ type CargoPosition = {
 
 ```typescript
 type UldType = {
-  id: string;                    // UUID
-  code: string;                  // IATA code (e.g., "AKE", "PMC", "PAG")
-  name: string;                  // Full name (e.g., "LD3 Container")
-  contour: string;               // Shape classification
-  dimensions: Dimensions;        // Internal dimensions
-  maxGrossWeightKg: number;      // Maximum loaded weight
-  tareWeightKg: number;          // Empty container weight
-  volumeM3: number;              // Usable volume in cubic meters
-};
-
-type Dimensions = {
-  lengthCm: number;
+  id: string; // UUID
+  code: string; // IATA code (e.g., "AKE", "PMC", "PAG")
+  name: string; // Full name (e.g., "LD-3 Container")
+  category: "CONTAINER" | "PALLET";
+  contour: string; // HALF_WIDTH, FULL_WIDTH, CONTOURED
+  maxGrossWeightKg: number; // Maximum loaded weight
+  tareWeightKg: number; // Empty container weight
+  maxVolumeM3: number; // Usable volume in cubic meters
+  lengthCm: number; // External dimensions
   widthCm: number;
   heightCm: number;
+  colSpan: 1 | 2; // Position column span
+  isRefrigerated: boolean; // Temperature controlled capability
+  deckCompatibility: string[]; // ["MAIN"], ["LOWER"], or both
 };
 ```
 
@@ -115,48 +127,52 @@ type Dimensions = {
 
 ```typescript
 type CargoItem = {
-  id: string;                    // UUID
-  sessionId: string;             // FK to load_sessions
-  awb: string;                   // Air Waybill number
-  description: string;           // Cargo description
-  dimensions: Dimensions;        // Piece dimensions
-  weightKg: number;              // Piece weight
-  priority: "high" | "medium" | "low";
-  specialHandling: SpecialHandling[];
-  destination: string;           // Airport code
-  isFragile: boolean;
-  stackable: boolean;            // Can other items be placed on top
+  id: string; // UUID
+  awbId: string; // FK to air_waybills
+  parcelGroupId: string; // FK to parcel_groups
+  pieceNumber: number; // Piece ID within AWB
+  weightKg: number; // Piece weight
+  lengthCm: number; // Dimensions
+  widthCm: number;
+  heightCm: number;
+  isStackable: boolean; // Can stack items on top
+  maxStackWeightKg: number; // Max weight on top
+  isDangerousGoods: boolean; // DG indicator
+  dgClassId: string; // FK to dangerous_goods_classes
+  tempZoneId: string; // FK to temperature_zones
+  isLiveAnimal: boolean; // Live animal flag
+  isFoodstuff: boolean; // Food item flag
+  specialHandlingCodes: string[]; // IATA SHC codes
+  priority: "HIGH" | "MEDIUM" | "LOW" | "STANDARD";
+  loadStatus: "PENDING" | "ASSIGNED" | "LOADED" | "OFFLOADED";
 };
-
-type SpecialHandling = 
-  | "DGR"      // Dangerous goods
-  | "PER"      // Perishable
-  | "VAL"      // Valuable
-  | "HEA"      // Heavy
-  | "OHG"      // Overhanging
-  | "TEMP";    // Temperature controlled
 ```
 
-#### 4. `load_sessions` - Planning Session State
+#### 4. `load_plans` - Planning Session & Results
 
 ```typescript
-type LoadSession = {
-  id: string;                    // UUID
-  aircraftTypeId: string;        // FK to aircraft_types
-  flightNumber: string;          // e.g., "GA100"
-  origin: string;                // Airport code
-  destination: string;           // Airport code
-  status: "draft" | "optimizing" | "optimized" | "finalized";
-  createdAt: Date;
-  updatedAt: Date;
-  optimizationResult?: OptimizationResult;
-};
-
-type OptimizationResult = {
-  totalUldsUsed: number;
-  volumeUtilization: number;     // Percentage
-  weightUtilization: number;     // Percentage
-  unassignedCargo: string[];     // Cargo IDs that couldn't fit
+type LoadPlan = {
+  id: string; // UUID
+  flightId: string; // FK to flights
+  aircraftId: string; // FK to aircrafts
+  status: "DRAFT" | "OPTIMIZING" | "OPTIMIZED" | "FINAL" | "RELEASED";
+  // Weight calculations
+  operatingEmptyWeightKg: number;
+  payloadKg: number;
+  zeroFuelWeightKg: number;
+  takeoffFuelKg: number;
+  takeoffWeightKg: number;
+  landingWeightKg: number;
+  // CG results
+  zfwCgPercentMac: number;
+  towCgPercentMac: number;
+  ldwCgPercentMac: number;
+  // Validation
+  withinWeightLimits: boolean;
+  withinCgEnvelope: boolean;
+  constraintsSatisfied: boolean;
+  validationErrors: string[];
+  validationWarnings: string[];
   optimizationTimeMs: number;
 };
 ```
@@ -165,43 +181,85 @@ type OptimizationResult = {
 
 ```typescript
 type UldAssignment = {
-  id: string;                    // UUID
-  sessionId: string;             // FK to load_sessions
-  uldTypeId: string;             // FK to uld_types
-  position: string;              // Aircraft position ID
-  cargoIds: string[];            // Array of cargo_item IDs
-  totalWeightKg: number;         // Sum of cargo weights + tare
-  volumeUsedM3: number;          // Volume occupied
-  packingCoordinates: PackedItem[]; // 3D positions for visualization
-};
-
-type PackedItem = {
-  cargoId: string;
-  x: number;                     // Position within ULD
-  y: number;
-  z: number;
-  rotated: boolean;              // Whether item was rotated to fit
+  id: string; // UUID
+  loadPlanId: string; // FK to load_plans
+  uldTypeId: string; // FK to uld_types
+  uldId: string; // FK to ulds (physical ULD)
+  uldNumber: string; // ULD identifier
+  positionCode: string; // Aircraft position
+  sequence: number; // Build-up sequence
+  totalWeightKg: number; // Total loaded weight
+  tareWeightKg: number; // ULD tare weight
+  cargoWeightKg: number; // Cargo weight only
+  volumeUsedM3: number; // Volume occupied
+  volumeUtilization: number; // % volume used
+  weightUtilization: number; // % weight capacity used
+  isVirtual: boolean; // Virtual ULD for planning
+  status: "PLANNED" | "BUILDING" | "COMPLETE" | "LOADED";
 };
 ```
 
-#### 6. `packing_rules` - LLM-Interpretable Rules
+#### 6. `packed_items` - 3D Packing Coordinates
+
+```typescript
+type PackedItem = {
+  id: string; // UUID
+  uldAssignmentId: string; // FK to uld_assignments
+  cargoItemId: string; // FK to cargo_items
+  sequence: number; // Packing order
+  xPositionCm: number; // X coordinate in ULD
+  yPositionCm: number; // Y coordinate in ULD
+  zPositionCm: number; // Z coordinate (height)
+  rotated: boolean; // Item was rotated
+  rotationAxis: "X" | "Y" | "Z"; // Rotation axis
+  packedLengthCm: number; // Packed orientation dimensions
+  packedWidthCm: number;
+  packedHeightCm: number;
+};
+```
+
+#### 7. `packing_rules` - LLM-Interpretable Rules
 
 ```typescript
 type PackingRule = {
-  id: string;                    // UUID
-  ruleText: string;              // Natural language rule
-  ruleType: "constraint" | "preference" | "prohibition";
-  priority: number;              // Higher = more important
+  id: string; // UUID
+  ruleText: string; // Natural language rule
+  ruleType: "CONSTRAINT" | "PREFERENCE" | "PROHIBITION";
+  priority: number; // 1-100, higher = more important
+  category: string; // Rule category
   isActive: boolean;
-  examples?: string[];           // Example scenarios for LLM context
+  examples: string[]; // Example scenarios for LLM
+  structuredRule: object; // LLM-parsed structured rule (JSONB)
 };
 
 // Example rules:
-// - "Dangerous goods (DGR) must not be placed adjacent to perishables (PER)"
-// - "High priority cargo should be loaded last for easy access"
+// - "Dangerous goods (DGR) must not be placed in same ULD as foodstuffs"
 // - "Heavy items (>100kg) must be placed at the bottom of the ULD"
-// - "Temperature-controlled items must be grouped together"
+// - "Temperature-controlled items must be grouped in refrigerated ULDs"
+// - "Class 5.1 oxidizers cannot be mixed with Class 3 flammables"
 ```
+
+### Cargo Compatibility Rules
+
+The schema supports IATA DGR Table 9.3.A segregation via `dg_segregation_rules`:
+
+| Incompatible Pairs                                | Reason                           |
+| ------------------------------------------------- | -------------------------------- |
+| Class 1 (Explosives) + most classes               | Safety risk                      |
+| Class 5.1 (Oxidizers) + Class 3 (Flammables)      | Spontaneous ignition             |
+| Class 8 (Corrosives) + Class 4 (Flammable solids) | Dangerous reaction               |
+| Class 6.1/6.2 (Toxic/Infectious) + Foodstuffs     | Contamination                    |
+| Different temperature zones                       | Temperature control              |
+| Live animals + any ULD cargo                      | Animals go direct to compartment |
+
+### Weight & Balance Support
+
+The schema includes full CG envelope and index calculation support:
+
+- `cg_envelopes` + `cg_envelope_points`: Define valid CG ranges at various weights
+- `loading_zones` + `loading_zone_index_entries`: Weight-to-index lookup tables
+- `fuel_configurations` + `fuel_tanks` + `fuel_index_entries`: Fuel impact on balance
+- `weight_constraints`: Combined position weight limits (e.g., "A1 + A2 + 11 + 12 <= 3674 kg")
 
 ---
 
@@ -230,6 +288,7 @@ src/app/
 **Purpose:** Entry point, create new planning session
 
 **Components:**
+
 - Hero section with value proposition
 - "New Planning Session" form
   - Aircraft type selector
@@ -239,6 +298,7 @@ src/app/
 - Sample data loader button
 
 **Key Interactions:**
+
 - Create session → redirects to `/plan/[id]`
 - Load sample data → pre-populates with demo cargo
 
@@ -249,6 +309,7 @@ src/app/
 **Purpose:** Core workspace for cargo input and optimization
 
 **Layout:**
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Header: Flight Info | Status Badge | Actions          │
@@ -267,6 +328,7 @@ src/app/
 ```
 
 **Components:**
+
 - `CargoList` - Sortable table of cargo items
 - `CargoInputForm` - Modal/drawer for adding cargo
 - `AircraftOverview` - 2D top-down aircraft with ULD slots
@@ -274,6 +336,7 @@ src/app/
 - `ResultsSummary` - ULDs used, utilization %, warnings
 
 **Key Interactions:**
+
 - Add/edit/delete cargo items
 - Trigger optimization algorithm
 - Click ULD position → navigate to visualization
@@ -286,6 +349,7 @@ src/app/
 **Purpose:** Visual 3D packing representation
 
 **Layout:**
+
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Header: Back to Plan | ULD Selector | View Controls    │
@@ -304,6 +368,7 @@ src/app/
 ```
 
 **Components:**
+
 - `UldViewer3D` - Three.js or isometric canvas view
 - `UldSelector` - Dropdown/tabs to switch between ULDs
 - `CargoLegend` - Color-coded cargo item list
@@ -311,6 +376,7 @@ src/app/
 - `ViewControls` - Rotate, zoom, explode view
 
 **Visualization Modes:**
+
 1. **Isometric 2D** (Default) - Fast, CSS-based pseudo-3D
 2. **Full 3D** (Stretch) - Three.js with orbit controls
 
@@ -321,11 +387,13 @@ src/app/
 **Purpose:** Generate PDF build-up instructions
 
 **Components:**
+
 - `ExportPreview` - Preview of generated PDF
 - `ExportOptions` - Format selection, sections to include
 - `DownloadButton` - Generate and download PDF
 
 **PDF Sections:**
+
 1. Flight summary (aircraft, route, date)
 2. ULD summary table (count, types, positions)
 3. Per-ULD build-up instructions
@@ -341,6 +409,7 @@ src/app/
 **Purpose:** Configure packing rules for LLM interpretation
 
 **Components:**
+
 - `RulesList` - All configured rules with toggle
 - `RuleEditor` - Natural language rule input
 - `RuleTestPanel` - Test rule against sample scenario
@@ -434,13 +503,24 @@ async function optimizeLoadPlan(
 
 **Goal:** Database schema + sample data + basic UI shell
 
-| Task | Description | Output |
-|------|-------------|--------|
-| M0.1 | Define Drizzle schema for all 6 entities | `schema.ts` |
-| M0.2 | Create seed script with realistic sample data | `seed.ts` |
-| M0.3 | Set up feature folder structure | `src/features/*` |
-| M0.4 | Create basic page routes (empty shells) | Route files |
-| M0.5 | Implement session creation flow | Working `/` page |
+| Task | Description                                         | Output                    | Status |
+| ---- | --------------------------------------------------- | ------------------------- | ------ |
+| M0.1 | Define Drizzle schema for all entities (30+ tables) | `src/lib/db/schema.ts`    | DONE   |
+| M0.2 | Create database schema documentation                | `docs/DATABASE_SCHEMA.md` | DONE   |
+| M0.3 | Create seed script with realistic sample data       | `scripts/seed.ts`         | TODO   |
+| M0.4 | Run database migrations                             | Drizzle migrate           | TODO   |
+| M0.5 | Set up feature folder structure                     | `src/features/*`          | TODO   |
+| M0.6 | Create basic page routes (empty shells)             | Route files               | TODO   |
+| M0.7 | Implement session creation flow                     | Working `/` page          | TODO   |
+
+**Schema Entities Implemented:**
+
+- Reference Data: `locations`, `commodity_codes`, `dangerous_goods_classes`, `dg_segregation_rules`, `temperature_zones`
+- ULD & Aircraft: `uld_types`, `ulds`, `aircrafts`, `deck_configurations`, `loading_positions`, `flights`
+- Weight & Balance: `cg_envelopes`, `cg_envelope_points`, `loading_zones`, `loading_zone_index_entries`, `fuel_configurations`, `fuel_tanks`, `fuel_index_entries`, `weight_constraints`
+- Cargo: `air_waybills`, `parcel_groups`, `cargo_items`
+- Planning: `load_plans`, `uld_assignments`, `packed_items`, `position_loads`, `packing_rules`
+- Messaging: `load_messages`
 
 **Deliverable:** Can create a session and see sample cargo data
 
@@ -450,13 +530,13 @@ async function optimizeLoadPlan(
 
 **Goal:** Working bin-packing with LLM integration
 
-| Task | Description | Output |
-|------|-------------|--------|
-| M1.1 | Implement 3D FFD bin-packing algorithm | `algorithm.ts` |
-| M1.2 | Create LLM prompt for rule interpretation | `prompts.ts` |
-| M1.3 | Build optimization server action | `optimize.action.ts` |
-| M1.4 | Wire up to planning workspace | Working optimization |
-| M1.5 | Display results summary | Stats panel |
+| Task | Description                               | Output               |
+| ---- | ----------------------------------------- | -------------------- |
+| M1.1 | Implement 3D FFD bin-packing algorithm    | `algorithm.ts`       |
+| M1.2 | Create LLM prompt for rule interpretation | `prompts.ts`         |
+| M1.3 | Build optimization server action          | `optimize.action.ts` |
+| M1.4 | Wire up to planning workspace             | Working optimization |
+| M1.5 | Display results summary                   | Stats panel          |
 
 **Deliverable:** Click "Optimize" → get valid ULD assignments
 
@@ -466,13 +546,13 @@ async function optimizeLoadPlan(
 
 **Goal:** Impressive visual representation
 
-| Task | Description | Output |
-|------|-------------|--------|
-| M2.1 | Create isometric ULD component | `UldIsometric.tsx` |
-| M2.2 | Implement cargo item rendering with colors | Color-coded boxes |
-| M2.3 | Add aircraft top-down view | `AircraftLayout.tsx` |
-| M2.4 | Create ULD position indicators | Clickable positions |
-| M2.5 | Add hover states and tooltips | Interactive details |
+| Task | Description                                | Output               |
+| ---- | ------------------------------------------ | -------------------- |
+| M2.1 | Create isometric ULD component             | `UldIsometric.tsx`   |
+| M2.2 | Implement cargo item rendering with colors | Color-coded boxes    |
+| M2.3 | Add aircraft top-down view                 | `AircraftLayout.tsx` |
+| M2.4 | Create ULD position indicators             | Clickable positions  |
+| M2.5 | Add hover states and tooltips              | Interactive details  |
 
 **Deliverable:** Visual packing view with interactivity
 
@@ -482,13 +562,13 @@ async function optimizeLoadPlan(
 
 **Goal:** Professional finish and exports
 
-| Task | Description | Output |
-|------|-------------|--------|
-| M3.1 | Add loading/optimizing animations | Skeleton states |
-| M3.2 | Implement PDF export with react-pdf | PDF generation |
-| M3.3 | Create build-up instruction format | Instruction layout |
-| M3.4 | Add toast notifications | User feedback |
-| M3.5 | Implement cargo drag-and-drop reorder | Enhanced UX |
+| Task | Description                           | Output             |
+| ---- | ------------------------------------- | ------------------ |
+| M3.1 | Add loading/optimizing animations     | Skeleton states    |
+| M3.2 | Implement PDF export with react-pdf   | PDF generation     |
+| M3.3 | Create build-up instruction format    | Instruction layout |
+| M3.4 | Add toast notifications               | User feedback      |
+| M3.5 | Implement cargo drag-and-drop reorder | Enhanced UX        |
 
 **Deliverable:** Polished UX with PDF export
 
@@ -498,13 +578,13 @@ async function optimizeLoadPlan(
 
 **Goal:** Hackathon-winning features
 
-| Task | Description | Output |
-|------|-------------|--------|
+| Task | Description                          | Output            |
+| ---- | ------------------------------------ | ----------------- |
 | M4.1 | Upgrade to Three.js 3D visualization | `UldViewer3D.tsx` |
-| M4.2 | Add real-time optimization animation | Visual algorithm |
-| M4.3 | Implement "exploded view" for ULD | Dramatic reveal |
-| M4.4 | Add before/after comparison | Impact showcase |
-| M4.5 | Create demo mode with guided tour | Judge-friendly |
+| M4.2 | Add real-time optimization animation | Visual algorithm  |
+| M4.3 | Implement "exploded view" for ULD    | Dramatic reveal   |
+| M4.4 | Add before/after comparison          | Impact showcase   |
+| M4.5 | Create demo mode with guided tour    | Judge-friendly    |
 
 **Deliverable:** Jaw-dropping demo experience
 
@@ -515,21 +595,25 @@ async function optimizeLoadPlan(
 ### Visual Impact Priorities
 
 1. **Real-time Optimization Animation**
+
    - Show cargo "flying" into ULDs during optimization
    - Progress indicator with live stats
    - Satisfying completion animation
 
 2. **3D Exploded View**
+
    - Click to "explode" ULD showing all cargo separated
    - Each piece animates out with label
    - Reassembles on click
 
 3. **Before/After Toggle**
+
    - Split screen or slider comparison
    - "Manual planning: 8 ULDs" vs "Optimized: 5 ULDs"
    - Cost savings calculator ($150 × 3 = $450 saved!)
 
 4. **Interactive Aircraft View**
+
    - Rotate aircraft, see load distribution
    - Weight balance indicator (CG visualization)
    - Click positions to drill into ULD
@@ -565,33 +649,32 @@ async function optimizeLoadPlan(
 
 ## Dependencies & Tech Decisions
 
-| Concern | Decision | Rationale |
-|---------|----------|-----------|
-| 3D Rendering | React Three Fiber | Best React integration for Three.js |
-| PDF Generation | @react-pdf/renderer | Pure React PDF creation |
-| LLM Integration | OpenAI API | Fast, reliable, good at instructions |
-| State Management | React Query + Zustand | Server state + client state split |
-| Animations | Framer Motion | Smooth, declarative animations |
+| Concern          | Decision              | Rationale                            |
+| ---------------- | --------------------- | ------------------------------------ |
+| 3D Rendering     | React Three Fiber     | Best React integration for Three.js  |
+| PDF Generation   | @react-pdf/renderer   | Pure React PDF creation              |
+| LLM Integration  | OpenAI API            | Fast, reliable, good at instructions |
+| State Management | React Query + Zustand | Server state + client state split    |
+| Animations       | Framer Motion         | Smooth, declarative animations       |
 
 ---
 
 ## Risk Mitigation
 
-| Risk | Mitigation |
-|------|------------|
-| 3D takes too long | Fallback to polished isometric view |
-| LLM latency | Pre-compute common rule interpretations |
-| Algorithm bugs | Extensive sample data testing |
-| Time pressure | Strict milestone cutoffs, MVP-first |
+| Risk              | Mitigation                              |
+| ----------------- | --------------------------------------- |
+| 3D takes too long | Fallback to polished isometric view     |
+| LLM latency       | Pre-compute common rule interpretations |
+| Algorithm bugs    | Extensive sample data testing           |
+| Time pressure     | Strict milestone cutoffs, MVP-first     |
 
 ---
 
 ## Success Metrics
 
-| Metric | Target |
-|--------|--------|
-| ULD reduction | 20-30% fewer ULDs vs naive packing |
-| Volume utilization | >80% average |
-| Optimization time | <3 seconds for 50 cargo items |
-| Demo impact | "Wow" reaction from judges |
-
+| Metric             | Target                             |
+| ------------------ | ---------------------------------- |
+| ULD reduction      | 20-30% fewer ULDs vs naive packing |
+| Volume utilization | >80% average                       |
+| Optimization time  | <3 seconds for 50 cargo items      |
+| Demo impact        | "Wow" reaction from judges         |
