@@ -31,6 +31,7 @@ import type {
   OptimizationResult,
   BuildUpInstruction,
   PackingRule,
+  OptimizerUsed,
 } from "@/features/planning";
 import type { CargoItemDisplay } from "@/features/cargo";
 
@@ -60,6 +61,10 @@ export default function BuildUpPage() {
   const [activeTab, setActiveTab] = useState<"cargo" | "results">("cargo");
   const [objective, setObjective] =
     useState<OptimizationObjective>("MINIMIZE_ULDS");
+  const [useLlm, setUseLlm] = useState(false);
+  const [optimizerUsed, setOptimizerUsed] = useState<
+    OptimizerUsed | undefined
+  >();
 
   // Fetch data when flight changes
   useEffect(() => {
@@ -118,10 +123,12 @@ export default function BuildUpPage() {
             allowRotation: true,
             prioritizeHighPriorityCargo: true,
           },
+          useLlm,
         });
 
         if (result.success && result.result) {
           setOptimizationResult(result.result);
+          setOptimizerUsed(result.optimizerUsed);
           setActiveTab("results");
           setSelectedUldIndex(0);
           setInstructions(new Map());
@@ -134,7 +141,7 @@ export default function BuildUpPage() {
         setIsOptimizing(false);
       }
     },
-    [selectedCargoIds, selectedFlight?.id, packingRules]
+    [selectedCargoIds, selectedFlight?.id, packingRules, useLlm]
   );
 
   const handleGenerateInstructions = useCallback(
@@ -172,6 +179,7 @@ export default function BuildUpPage() {
 
   const handleReset = () => {
     setOptimizationResult(null);
+    setOptimizerUsed(undefined);
     setInstructions(new Map());
     setActiveTab("cargo");
     setSelectedCargoIds([]);
@@ -293,6 +301,9 @@ export default function BuildUpPage() {
             rules={packingRules}
             objective={objective}
             onObjectiveChange={setObjective}
+            useLlm={useLlm}
+            onUseLlmChange={setUseLlm}
+            optimizerUsed={optimizerUsed}
           />
         </div>
       </div>

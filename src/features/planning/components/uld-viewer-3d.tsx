@@ -309,6 +309,10 @@ export function UldViewer3D({
               weightKg: cargo.weightKg,
               dimensions: `${cargo.lengthCm}×${cargo.widthCm}×${cargo.heightCm}cm`,
               color: getColorForAwb(cargo.awbNumber),
+              isDangerousGoods: cargo.isDangerousGoods,
+              dgClassCode: cargo.dgClassCode,
+              specialHandling: cargo.specialHandling,
+              isStackable: cargo.isStackable,
             }
           : null;
       })()
@@ -390,14 +394,41 @@ export function UldViewer3D({
                 style={{ backgroundColor: hoveredItemDetails.color }}
               />
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm">{hoveredItemDetails.awbNumber}</div>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">{hoveredItemDetails.awbNumber}</span>
+                  {hoveredItemDetails.isDangerousGoods && (
+                    <span className="inline-flex items-center rounded-sm bg-red-500/20 px-1.5 py-0.5 text-[10px] font-medium text-red-400">
+                      DG{hoveredItemDetails.dgClassCode ? ` ${hoveredItemDetails.dgClassCode}` : ""}
+                    </span>
+                  )}
+                  {hoveredItemDetails.isStackable === false && (
+                    <span className="inline-flex items-center rounded-sm bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+                      No Stack
+                    </span>
+                  )}
+                </div>
                 <div className="text-xs text-muted-foreground">
                   {hoveredItemDetails.description || "General cargo"}
                 </div>
-                <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
+                <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                   <span>{hoveredItemDetails.weightKg} kg</span>
                   <span>{hoveredItemDetails.dimensions}</span>
+                  {hoveredItemDetails.isStackable && (
+                    <span className="text-green-400">Stackable</span>
+                  )}
                 </div>
+                {hoveredItemDetails.specialHandling && hoveredItemDetails.specialHandling.length > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1">
+                    {hoveredItemDetails.specialHandling.map((code) => (
+                      <span
+                        key={code}
+                        className="inline-flex rounded-sm bg-primary/20 px-1.5 py-0.5 text-[10px] font-medium text-primary"
+                      >
+                        {code}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

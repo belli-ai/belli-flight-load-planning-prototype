@@ -34,6 +34,10 @@ type PackedItemWithDetails = PackedItemResult & {
   description: string | null;
   color: string;
   weightKg: number;
+  isDangerousGoods: boolean;
+  dgClassCode?: string | null;
+  specialHandling: string[];
+  isStackable?: boolean;
 };
 
 // ============================================================================
@@ -67,6 +71,10 @@ function IsometricUldView({
       description: cargo?.description || null,
       color: getColorForAwb(cargo?.awbNumber || ""),
       weightKg: cargo?.weightKg || 0,
+      isDangerousGoods: cargo?.isDangerousGoods || false,
+      dgClassCode: cargo?.dgClassCode,
+      specialHandling: cargo?.specialHandling || [],
+      isStackable: cargo?.isStackable,
     };
   });
 
@@ -216,17 +224,44 @@ function IsometricUldView({
                   style={{ backgroundColor: item.color }}
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-sm">{item.awbNumber}</div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-sm">{item.awbNumber}</span>
+                    {item.isDangerousGoods && (
+                      <span className="inline-flex items-center rounded-sm bg-red-500/20 px-1.5 py-0.5 text-[10px] font-medium text-red-400">
+                        DG{item.dgClassCode ? ` ${item.dgClassCode}` : ""}
+                      </span>
+                    )}
+                    {item.isStackable === false && (
+                      <span className="inline-flex items-center rounded-sm bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+                        No Stack
+                      </span>
+                    )}
+                  </div>
                   <div className="text-xs text-muted-foreground">
                     {item.description || "General cargo"}
                   </div>
-                  <div className="mt-1 flex gap-3 text-xs text-muted-foreground">
+                  <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span>{item.weightKg} kg</span>
                     <span>
                       {item.dimensions.length}×{item.dimensions.width}×
                       {item.dimensions.height} cm
                     </span>
+                    {item.isStackable && (
+                      <span className="text-green-400">Stackable</span>
+                    )}
                   </div>
+                  {item.specialHandling && item.specialHandling.length > 0 && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {item.specialHandling.map((code) => (
+                        <span
+                          key={code}
+                          className="inline-flex rounded-sm bg-primary/20 px-1.5 py-0.5 text-[10px] font-medium text-primary"
+                        >
+                          {code}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             );

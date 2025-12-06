@@ -215,6 +215,10 @@ export type CargoItemDisplay = Pick<
   awbNumber: string;
   description: string | null;
   specialHandling: string[];
+  /** DG class code if dangerous goods */
+  dgClassCode?: string | null;
+  /** Whether the cargo item can be stacked */
+  isStackable?: boolean;
 };
 
 // ============================================================================

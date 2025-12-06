@@ -31,7 +31,10 @@ import {
   generateBuildUpInstructions,
   explainOptimization,
   parsePackingRule,
+  runLlmOptimization,
+  type LlmOptimizerInput,
 } from "../lib/llm/anthropic-client";
+import { validateLlmOptimizationOutput } from "../lib/llm/validate-llm-output";
 
 // ============================================================================
 // OPTIMIZATION ACTION
@@ -44,14 +47,23 @@ type OptimizeInput = {
   rules?: PackingRule[];
   options: OptimizationOptions;
   algorithmName?: string; // Allow specifying which algorithm to use
+  useLlm?: boolean; // Use LLM-based optimization instead of algorithm
 };
+
+/** Which optimizer was used for the result */
+export type OptimizerUsed = "FFD3D" | "LLM" | "LLM_FALLBACK";
+
+const MAX_LLM_RETRIES = 3;
 
 /**
  * Run optimization algorithm on cargo items
  */
-export async function runOptimization(
-  input: OptimizeInput
-): Promise<{ success: boolean; result?: OptimizationResult; error?: string }> {
+export async function runOptimization(input: OptimizeInput): Promise<{
+  success: boolean;
+  result?: OptimizationResult;
+  error?: string;
+  optimizerUsed?: OptimizerUsed;
+}> {
   try {
     // Get or create load plan
     const loadPlan = await getOrCreateLoadPlan(input.flightId);
@@ -106,24 +118,83 @@ export async function runOptimization(
     // Fetch aircraft configuration for position assignment and CG calculations
     const aircraftConfig = await getAircraftConfigForFlight(input.flightId);
 
-    // Get optimizer (defaults to FFD-3D)
-    const optimizer = getOptimizer(input.algorithmName);
+    let optimizationResult: OptimizationOutput;
+    let optimizerUsed: OptimizerUsed = "FFD3D";
 
-    // Run optimization with aircraft configuration and ULD inventory
-    const optimizationResult = await optimizer.optimize({
-      cargoItems,
-      uldTypes,
-      constraints,
-      options: {
-        objective: input.options.objective ?? "MINIMIZE_ULDS",
-        maxUldsToUse: input.options.maxUldsToUse,
-        prioritizeHighPriorityCargo: input.options.prioritizeHighPriorityCargo,
-        allowRotation: input.options.allowRotation ?? true,
-        targetCgPercentMac: input.options.targetCgPercentMac,
-      },
-      aircraftConfig: aircraftConfig ?? undefined,
-      uldInventory,
-    });
+    // Choose optimization approach
+    if (input.useLlm) {
+      // Try LLM optimization with retry logic
+      const llmResult = await runLlmOptimizationWithRetry(
+        {
+          cargoItems,
+          uldTypes,
+          constraints,
+          options: {
+            objective: input.options.objective ?? "MINIMIZE_ULDS",
+            maxUldsToUse: input.options.maxUldsToUse,
+            prioritizeHighPriorityCargo:
+              input.options.prioritizeHighPriorityCargo,
+            allowRotation: input.options.allowRotation ?? true,
+            targetCgPercentMac: input.options.targetCgPercentMac,
+          },
+          aircraftConfig: aircraftConfig ?? undefined,
+          uldInventory,
+        },
+        cargoItems,
+        uldTypes
+      );
+
+      if (llmResult.success && llmResult.output) {
+        optimizationResult = llmResult.output;
+        optimizerUsed = "LLM";
+      } else {
+        // Fallback to algorithm
+        console.warn(
+          "LLM optimization failed, falling back to FFD-3D algorithm:",
+          llmResult.error
+        );
+        const optimizer = getOptimizer(input.algorithmName);
+        optimizationResult = await optimizer.optimize({
+          cargoItems,
+          uldTypes,
+          constraints,
+          options: {
+            objective: input.options.objective ?? "MINIMIZE_ULDS",
+            maxUldsToUse: input.options.maxUldsToUse,
+            prioritizeHighPriorityCargo:
+              input.options.prioritizeHighPriorityCargo,
+            allowRotation: input.options.allowRotation ?? true,
+            targetCgPercentMac: input.options.targetCgPercentMac,
+          },
+          aircraftConfig: aircraftConfig ?? undefined,
+          uldInventory,
+        });
+        optimizerUsed = "LLM_FALLBACK";
+
+        // Add warning about fallback
+        optimizationResult.warnings.push(
+          `LLM optimization failed after ${MAX_LLM_RETRIES} attempts. Used FFD-3D algorithm as fallback.`
+        );
+      }
+    } else {
+      // Use traditional algorithm
+      const optimizer = getOptimizer(input.algorithmName);
+      optimizationResult = await optimizer.optimize({
+        cargoItems,
+        uldTypes,
+        constraints,
+        options: {
+          objective: input.options.objective ?? "MINIMIZE_ULDS",
+          maxUldsToUse: input.options.maxUldsToUse,
+          prioritizeHighPriorityCargo:
+            input.options.prioritizeHighPriorityCargo,
+          allowRotation: input.options.allowRotation ?? true,
+          targetCgPercentMac: input.options.targetCgPercentMac,
+        },
+        aircraftConfig: aircraftConfig ?? undefined,
+        uldInventory,
+      });
+    }
 
     // Save results to database
     await saveOptimizationResults(loadPlan.id, {
@@ -198,6 +269,7 @@ export async function runOptimization(
     return {
       success: true,
       result,
+      optimizerUsed,
     };
   } catch (error) {
     console.error("Optimization failed:", error);
@@ -206,6 +278,89 @@ export async function runOptimization(
       error: error instanceof Error ? error.message : "Optimization failed",
     };
   }
+}
+
+// ============================================================================
+// LLM OPTIMIZATION WITH RETRY
+// ============================================================================
+
+import type {
+  CargoItemForPacking,
+  UldTypeForPacking,
+} from "../lib/algorithm/types";
+
+type LlmRetryResult = {
+  success: boolean;
+  output?: OptimizationOutput;
+  error?: string;
+  attempts: number;
+};
+
+/**
+ * Run LLM optimization with retry logic and validation
+ */
+async function runLlmOptimizationWithRetry(
+  input: LlmOptimizerInput,
+  cargoItems: CargoItemForPacking[],
+  uldTypes: UldTypeForPacking[]
+): Promise<LlmRetryResult> {
+  let lastError: string | undefined;
+  let previousErrors: string[] = [];
+
+  for (let attempt = 1; attempt <= MAX_LLM_RETRIES; attempt++) {
+    console.log(`LLM optimization attempt ${attempt}/${MAX_LLM_RETRIES}`);
+
+    // Run LLM optimization with previous errors for context
+    const llmResult = await runLlmOptimization({
+      ...input,
+      previousErrors: previousErrors.length > 0 ? previousErrors : undefined,
+    });
+
+    if (llmResult.error) {
+      lastError = llmResult.error;
+      previousErrors = [`API Error: ${llmResult.error}`];
+      continue;
+    }
+
+    if (!llmResult.output) {
+      lastError = "LLM returned no output";
+      previousErrors = ["LLM returned no output"];
+      continue;
+    }
+
+    // Validate the output
+    const validation = validateLlmOptimizationOutput(llmResult.output, {
+      cargoItems,
+      uldTypes,
+      allowRotation: input.options.allowRotation,
+    });
+
+    if (validation.isValid) {
+      // Add validation warnings to output
+      if (validation.warnings.length > 0) {
+        llmResult.output.warnings.push(...validation.warnings);
+      }
+      return {
+        success: true,
+        output: llmResult.output,
+        attempts: attempt,
+      };
+    }
+
+    // Validation failed - collect errors for retry
+    lastError = validation.errors.join("; ");
+    previousErrors = validation.errors;
+    console.warn(
+      `LLM output validation failed (attempt ${attempt}):`,
+      validation.errors
+    );
+  }
+
+  return {
+    success: false,
+    error: lastError ?? "LLM optimization failed after max retries",
+    attempts: MAX_LLM_RETRIES,
+  };
 }
 
 /**
@@ -461,6 +616,8 @@ export async function getCargoItems(
       widthCm: item.widthCm,
       heightCm: item.heightCm,
       isDangerousGoods: item.isDangerousGoods,
+      dgClassCode: item.dgClassCode,
+      isStackable: item.isStackable,
       priority: item.priority,
       loadStatus: "PENDING" as const,
       description: item.specialHandlingCodes.join(", ") || "General cargo",
