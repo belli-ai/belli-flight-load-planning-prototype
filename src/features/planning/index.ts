@@ -12,7 +12,10 @@ export { CargoList } from "./components/cargo-list";
 export { AwbList } from "./components/awb-list";
 export { UldVisualization } from "./components/uld-visualization";
 export { UldViewer3D } from "./components/uld-viewer-3d";
-export { OptimizationPanel, type OptimizationObjective } from "./components/optimization-panel";
+export {
+  OptimizationPanel,
+  type OptimizationObjective,
+} from "./components/optimization-panel";
 export { ResultsSummary } from "./components/results-summary";
 export { UldSelector } from "./components/uld-selector";
 

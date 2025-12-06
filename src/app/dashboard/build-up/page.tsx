@@ -96,12 +96,13 @@ export default function BuildUpPage() {
       setIsLoadingUlds(true);
       try {
         // Fetch data from database in parallel
-        const [cargoResult, awbsResult, rulesResult, uldsResult] = await Promise.all([
-          getCargoItems(selectedFlight.id),
-          getAwbsForFlight(selectedFlight.id),
-          getPackingRules(),
-          getAvailableUldsForFlight(selectedFlight.id),
-        ]);
+        const [cargoResult, awbsResult, rulesResult, uldsResult] =
+          await Promise.all([
+            getCargoItems(selectedFlight.id),
+            getAwbsForFlight(selectedFlight.id),
+            getPackingRules(),
+            getAvailableUldsForFlight(selectedFlight.id),
+          ]);
 
         setCargoItems(cargoResult.items);
         setAwbs(awbsResult.awbs);

@@ -7,7 +7,15 @@
 
 "use client";
 
-import { Document, Page, Text, View, pdf, Svg, Rect } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  pdf,
+  Svg,
+  Rect,
+} from "@react-pdf/renderer";
 import { styles, COLORS } from "./styles";
 import type { BuildUpPdfInput, PackedItemData } from "./types";
 
@@ -16,11 +24,13 @@ import type { BuildUpPdfInput, PackedItemData } from "./types";
 // ============================================================================
 
 function formatDate(date: Date): string {
-  return date.toLocaleDateString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).toUpperCase();
+  return date
+    .toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    })
+    .toUpperCase();
 }
 
 function formatWeight(kg: number): string {
@@ -73,7 +83,9 @@ function HeaderSection({ data }: { data: BuildUpPdfInput }) {
           </View>
           <View>
             <Text style={styles.headerLabel}>Date</Text>
-            <Text style={styles.headerValue}>{formatDate(data.flightDate)}</Text>
+            <Text style={styles.headerValue}>
+              {formatDate(data.flightDate)}
+            </Text>
           </View>
           <View>
             <Text style={styles.headerLabel}>Route</Text>
@@ -84,7 +96,9 @@ function HeaderSection({ data }: { data: BuildUpPdfInput }) {
           {data.aircraftRegistration && (
             <View>
               <Text style={styles.headerLabel}>Aircraft</Text>
-              <Text style={styles.headerValue}>{data.aircraftRegistration}</Text>
+              <Text style={styles.headerValue}>
+                {data.aircraftRegistration}
+              </Text>
             </View>
           )}
         </View>
@@ -93,7 +107,9 @@ function HeaderSection({ data }: { data: BuildUpPdfInput }) {
       <View style={styles.uldInfo}>
         <View style={styles.uldInfoItem}>
           <Text style={styles.headerLabel}>ULD Type</Text>
-          <Text style={styles.headerValue}>{data.uldAssignment.uldTypeCode}</Text>
+          <Text style={styles.headerValue}>
+            {data.uldAssignment.uldTypeCode}
+          </Text>
         </View>
         <View style={styles.uldInfoItem}>
           <Text style={styles.headerLabel}>ULD Number</Text>
@@ -282,7 +298,9 @@ function BuildUpNotesSection({ data }: { data: BuildUpPdfInput }) {
       category: "⚡ HEAVY CARGO",
       items: heavyItems.map(
         (item) =>
-          `${item.pieceId}: ${formatWeight(item.weightKg)} kg - Use lifting equipment`
+          `${item.pieceId}: ${formatWeight(
+            item.weightKg
+          )} kg - Use lifting equipment`
       ),
     });
   }
@@ -305,7 +323,9 @@ function BuildUpNotesSection({ data }: { data: BuildUpPdfInput }) {
     notes.push({
       category: "❄ PERISHABLE",
       items: [
-        ...perishableItems.map((item) => `${item.pieceId}: Minimize exposure time`),
+        ...perishableItems.map(
+          (item) => `${item.pieceId}: Minimize exposure time`
+        ),
       ],
     });
   }
@@ -378,8 +398,13 @@ function BuildUpNotesSection({ data }: { data: BuildUpPdfInput }) {
 // ============================================================================
 
 function SummarySection({ data }: { data: BuildUpPdfInput }) {
-  const { uldAssignment, packedItems, totalWeightKg, volumeUtilization, weightUtilization } =
-    data;
+  const {
+    uldAssignment,
+    packedItems,
+    totalWeightKg,
+    volumeUtilization,
+    weightUtilization,
+  } = data;
 
   // Count unique AWBs
   const uniqueAwbs = new Set(packedItems.map((item) => item.awbNumber)).size;
@@ -393,10 +418,16 @@ function SummarySection({ data }: { data: BuildUpPdfInput }) {
 
       <View style={styles.summaryContainer}>
         <View style={styles.summaryBox}>
-          <Text style={styles.summaryValue}>{formatWeight(totalWeightKg)} kg</Text>
+          <Text style={styles.summaryValue}>
+            {formatWeight(totalWeightKg)} kg
+          </Text>
           <Text style={styles.summaryLabel}>TOTAL CARGO WEIGHT</Text>
           <Text style={styles.summarySubtext}>
-            Max: {formatWeight(uldAssignment.maxGrossWeightKg - uldAssignment.tareWeightKg)} kg
+            Max:{" "}
+            {formatWeight(
+              uldAssignment.maxGrossWeightKg - uldAssignment.tareWeightKg
+            )}{" "}
+            kg
           </Text>
         </View>
 
@@ -546,4 +577,3 @@ export function getBuildUpPdfFilename(
   const sanitizedUldNumber = uldNumber.replace(/[^a-zA-Z0-9-]/g, "_");
   return `BuildUp_${flightNumber}_${sanitizedUldNumber}_${dateStr}.pdf`;
 }
-

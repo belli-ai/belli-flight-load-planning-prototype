@@ -94,35 +94,36 @@ function convertDeckConfigToPositions(
 ): PositionWithCoords[] {
   if (positions.length === 0) return [];
 
-  // Find the range of xOffset values to calculate scaling
-  const xOffsets = positions.map((p) => p.xOffset);
-  const minX = Math.min(...xOffsets);
-  const maxX = Math.max(...xOffsets);
-  const xRange = maxX - minX || 1;
+  // Use armStationCm for x-axis (actual longitudinal position along aircraft)
+  // This is the correct field for positioning - xOffset is just local layout offset
+  const armStations = positions.map((p) => p.armStationCm);
+  const minArm = Math.min(...armStations);
+  const maxArm = Math.max(...armStations);
+  const armRange = maxArm - minArm || 1;
 
-  // Find the range of yOffset values for z-axis
+  // Scale factor: map cm to 3D units
+  // Aircraft arm stations typically range ~450-1600cm, we want to map to ~-11 to 11 units
+  const targetXRange = 22;
+  const xScale = targetXRange / armRange;
+  const armCenter = (minArm + maxArm) / 2;
+
+  // Find the range of yOffset values for z-axis (lateral position)
   const yOffsets = positions.map((p) => p.yOffset);
   const minY = Math.min(...yOffsets);
   const maxY = Math.max(...yOffsets);
-  const yRange = maxY - minY || 1;
+  const yRange = maxY - minY;
 
-  // Scale factor: map cm offsets to 3D units
-  // We want the aircraft to span roughly -13 to 13 units (26 total)
-  const targetXRange = 24;
-  const xScale = targetXRange / xRange;
-
-  // Z-axis: positions within deck width (approximately -1.5 to 1.5)
-  const targetZRange = 2.5;
-  const zScale = yRange > 0 ? targetZRange / yRange : 1;
-
-  // Center offset
-  const xCenter = (minX + maxX) / 2;
+  // Z-axis: positions within deck width (approximately -1 to 1 for half-width containers)
+  // Main deck full-width pallets: z=0 (centered)
+  // Lower deck half-width containers: z=-0.7 or z=0.7 (side by side)
+  const targetZRange = yRange > 0 ? 1.4 : 0;
+  const zScale = yRange > 0 ? targetZRange / yRange : 0;
   const yCenter = (minY + maxY) / 2;
 
   return positions.map((pos) => ({
     code: pos.positionCode,
-    x: (pos.xOffset - xCenter) * xScale * 0.01, // Convert cm to meters-ish units
-    z: (pos.yOffset - yCenter) * zScale * 0.01,
+    x: (pos.armStationCm - armCenter) * xScale,
+    z: yRange > 0 ? (pos.yOffset - yCenter) * zScale : 0,
     contourCode: pos.contourCode,
   }));
 }
@@ -152,16 +153,27 @@ function calculateAircraftDimensions(
   const mainXs = mainDeckPositions.map((p) => p.x);
   const lowerXs = lowerDeckPositions.map((p) => p.x);
 
-  const mainMinX = mainXs.length > 0 ? Math.min(...mainXs) - 1.5 : -13;
-  const mainMaxX = mainXs.length > 0 ? Math.max(...mainXs) + 1.5 : 11;
-  const lowerMinX = lowerXs.length > 0 ? Math.min(...lowerXs) - 1.5 : -11;
-  const lowerMaxX = lowerXs.length > 0 ? Math.max(...lowerXs) + 1.5 : 12;
+  // Calculate bounds with padding for position markers
+  const positionPadding = 1.5;
+  const mainMinX =
+    mainXs.length > 0 ? Math.min(...mainXs) - positionPadding : -13;
+  const mainMaxX =
+    mainXs.length > 0 ? Math.max(...mainXs) + positionPadding : 11;
+  const lowerMinX =
+    lowerXs.length > 0 ? Math.min(...lowerXs) - positionPadding : -11;
+  const lowerMaxX =
+    lowerXs.length > 0 ? Math.max(...lowerXs) + positionPadding : 12;
 
   const overallMinX = Math.min(mainMinX, lowerMinX);
   const overallMaxX = Math.max(mainMaxX, lowerMaxX);
 
+  // Calculate fuselage length with nose and tail padding
+  const nosePadding = 5;
+  const tailPadding = 6;
+  const fuselageLength = overallMaxX - overallMinX + nosePadding + tailPadding;
+
   return {
-    fuselageLength: overallMaxX - overallMinX + 10, // Add padding for nose/tail
+    fuselageLength,
     mainDeckFloorY: 0.3,
     lowerDeckFloorY: -0.8,
     mainDeckMinX: mainMinX,
@@ -588,49 +600,69 @@ function PositionMarkers({
 }) {
   const y = floorY + 0.05;
   const color = deck === "MAIN" ? "#22c55e" : "#f97316";
+  const labelColor = deck === "MAIN" ? "#4ade80" : "#fb923c";
 
   // Create square outline for each position
   const createSquarePoints = (
     cx: number,
     cy: number,
     cz: number,
-    size: number
+    sizeX: number,
+    sizeZ: number
   ): [number, number, number][] => [
-    [cx - size / 2, cy, cz - size / 2],
-    [cx + size / 2, cy, cz - size / 2],
-    [cx + size / 2, cy, cz + size / 2],
-    [cx - size / 2, cy, cz + size / 2],
-    [cx - size / 2, cy, cz - size / 2],
+    [cx - sizeX / 2, cy, cz - sizeZ / 2],
+    [cx + sizeX / 2, cy, cz - sizeZ / 2],
+    [cx + sizeX / 2, cy, cz + sizeZ / 2],
+    [cx - sizeX / 2, cy, cz + sizeZ / 2],
+    [cx - sizeX / 2, cy, cz - sizeZ / 2],
   ];
 
   return (
     <group>
       {positions.map((pos) => {
-        // Size based on contour code
-        const size = pos.contourCode === "FULL_WIDTH" ? 2.4 : 1.8;
+        // Size based on contour code and deck type
+        // Main deck full-width pallets are wider, lower deck containers are smaller
+        const isFullWidth = pos.contourCode === "FULL_WIDTH";
+        const sizeX = deck === "MAIN" ? 1.8 : 1.4; // Length along fuselage
+        const sizeZ = isFullWidth ? 2.2 : 1.0; // Width across fuselage
 
         return (
           <group key={pos.code}>
-            {/* Position outline - wireframe square */}
+            {/* Position outline - solid wireframe square */}
             <Line
-              points={createSquarePoints(pos.x, y, pos.z, size)}
+              points={createSquarePoints(pos.x, y, pos.z, sizeX, sizeZ)}
+              color={color}
+              lineWidth={1.5}
+              transparent
+              opacity={opacity * 0.5}
+            />
+            {/* Inner dashed outline for visual depth */}
+            <Line
+              points={createSquarePoints(
+                pos.x,
+                y + 0.02,
+                pos.z,
+                sizeX * 0.85,
+                sizeZ * 0.85
+              )}
               color={color}
               lineWidth={1}
               transparent
-              opacity={opacity * 0.4}
+              opacity={opacity * 0.3}
               dashed
-              dashSize={0.15}
-              gapSize={0.1}
+              dashSize={0.12}
+              gapSize={0.08}
             />
-            {/* Position label */}
+            {/* Position label - more prominent */}
             <Text
-              position={[pos.x, y + 0.1, pos.z]}
+              position={[pos.x, y + 0.15, pos.z]}
               rotation={[-Math.PI / 2, 0, 0]}
-              fontSize={0.35}
-              color={color}
+              fontSize={0.4}
+              color={labelColor}
               anchorX="center"
               anchorY="middle"
-              fillOpacity={opacity * 0.6}
+              fillOpacity={opacity * 0.9}
+              fontWeight="bold"
             >
               {pos.code}
             </Text>

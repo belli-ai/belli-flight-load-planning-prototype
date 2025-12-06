@@ -733,7 +733,11 @@ export type ParcelDisplay = {
  */
 export async function getAwbsForFlight(
   flightId: string
-): Promise<{ success: boolean; awbs: AwbWithParcelsDisplay[]; error?: string }> {
+): Promise<{
+  success: boolean;
+  awbs: AwbWithParcelsDisplay[];
+  error?: string;
+}> {
   try {
     const awbs = await db.query.airWaybills.findMany({
       where: eq(airWaybills.flightId, flightId),
