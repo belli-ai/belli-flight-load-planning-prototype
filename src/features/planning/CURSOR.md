@@ -247,7 +247,6 @@ const exampleRules: PackingRule[] = [
 | Cargo | Receives cargo items for optimization |
 | Weight Balance | CG envelope validation, fuel impact |
 | Reference Data | DG segregation, temperature compatibility |
-| Messaging | Generates LDM/CPM messages |
 
 ## Milestone Alignment (from RUNNING_MILESTONES.md)
 

@@ -14,8 +14,7 @@
 10. [Fuel Configuration](#fuel-configuration)
 11. [Cargo Items](#cargo-items)
 12. [Load Plan](#load-plan)
-13. [Message Integration](#message-integration)
-14. [Entity Relationship Diagram](#entity-relationship-diagram)
+13. [Entity Relationship Diagram](#entity-relationship-diagram)
 
 ---
 
@@ -820,52 +819,6 @@ From the A321-211P2F document NOTES section, several combined weight constraints
 
 ---
 
-## Message Integration
-
-### Overview
-
-> "It is a central element of AHM aviation practices, focusing on the electronic exchange of load-related data through Load Messages (LDM), Movement Messages (MVT), and Container/Pallet Messages (CPM). These messages follow the IATA Type B messaging format."
-
-### Standard Message Types
-
-| Message Type               | Code | Description               |
-| -------------------------- | ---- | ------------------------- |
-| Load Message               | LDM  | Load distribution message |
-| Movement Message           | MVT  | Aircraft movement message |
-| Container/Pallet Message   | CPM  | ULD content details       |
-| Unit Configuration Message | UCM  | ULD configuration         |
-| Load Planning Message      | LPM  | Pre-planning message      |
-
-### Entity: `LoadMessage`
-
-| Field             | Type     | Description                       |
-| ----------------- | -------- | --------------------------------- |
-| `message_id`      | UUID     | Primary key                       |
-| `message_type`    | enum     | `LDM`, `MVT`, `CPM`, `UCM`, `LPM` |
-| `load_plan_id`    | UUID     | Foreign key to LoadPlan           |
-| `created_at`      | datetime | Message creation timestamp        |
-| `sent_at`         | datetime | Message sent timestamp            |
-| `message_content` | text     | Raw message content               |
-| `format`          | enum     | `TYPE_B`, `CARGO_XML`             |
-
-### JSON Schema
-
-```json
-{
-  "load_message": {
-    "message_id": "uuid",
-    "message_type": "LDM",
-    "load_plan_id": "uuid",
-    "created_at": "2025-01-15T10:30:00Z",
-    "sent_at": "2025-01-15T10:31:00Z",
-    "message_content": "LDM\nRY123/15.KUL\n-KUL.0/15000.PAX/0.B/0\n...",
-    "format": "TYPE_B"
-  }
-}
-```
-
----
-
 ## Entity Relationship Diagram
 
 ```
@@ -943,18 +896,18 @@ From the A321-211P2F document NOTES section, several combined weight constraints
 │ weights             │            │ gross_weight_kg     │
 │ cg_results          │            │ cargo_items[]       │
 │ validation_status   │            │ calculated_moment   │
-└──────────┬──────────┘            └──────────┬──────────┘
-           │                                  │
-           │ 1:N                              │ N:M
-           ▼                                  ▼
-┌─────────────────────┐            ┌─────────────────────┐
-│    LoadMessage      │            │     CargoItem       │
-│─────────────────────│            │─────────────────────│
-│ message_id (PK)     │            │ cargo_item_id (PK)  │
-│ load_plan_id (FK)   │            │ awb_number          │
-│ message_type        │            │ gross_weight_kg     │
-│ message_content     │            │ cargo_type          │
-└─────────────────────┘            │ assigned_position   │
+└─────────────────────┘            └──────────┬──────────┘
+                                              │
+                                              │ N:M
+                                              ▼
+                                   ┌─────────────────────┐
+                                   │     CargoItem       │
+                                   │─────────────────────│
+                                   │ cargo_item_id (PK)  │
+                                   │ awb_number          │
+                                   │ gross_weight_kg     │
+                                   │ cargo_type          │
+                                   │ assigned_position   │
                                    └─────────────────────┘
 ```
 

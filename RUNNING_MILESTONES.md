@@ -32,7 +32,6 @@ The database is organized into 6 logical groups supporting both ULD build-up opt
 | Weight & Balance | `cg_envelopes`, `cg_envelope_points`, `loading_zones`, `loading_zone_index_entries`, `fuel_configurations`, `fuel_tanks`, `fuel_index_entries`, `weight_constraints` | CG calculations, fuel impact, and position constraints               |
 | Cargo & AWB      | `air_waybills`, `parcel_groups`, `cargo_items`                                                                                                                       | Shipment and cargo piece data                                        |
 | Planning         | `load_plans`, `uld_assignments`, `packed_items`, `position_loads`, `packing_rules`                                                                                   | Optimization sessions and results                                    |
-| Messaging        | `load_messages`                                                                                                                                                      | IATA LDM/CPM/UCM message records                                     |
 
 ### Entity Relationship Diagram
 
@@ -72,8 +71,7 @@ The database is organized into 6 logical groups supporting both ULD build-up opt
 │  air_waybills ─< parcel_groups ─< cargo_items                                   │
 │                                                                                 │
 │  flights ─< load_plans ─┬─< uld_assignments ─< packed_items                     │
-│                         ├─< position_loads                                      │
-│                         └─< load_messages                                       │
+│                         └─< position_loads                                      │
 │                                                                                 │
 │  packing_rules (standalone - LLM-interpretable natural language rules)          │
 └─────────────────────────────────────────────────────────────────────────────────┘
@@ -520,7 +518,6 @@ async function optimizeLoadPlan(
 - Weight & Balance: `cg_envelopes`, `cg_envelope_points`, `loading_zones`, `loading_zone_index_entries`, `fuel_configurations`, `fuel_tanks`, `fuel_index_entries`, `weight_constraints`
 - Cargo: `air_waybills`, `parcel_groups`, `cargo_items`
 - Planning: `load_plans`, `uld_assignments`, `packed_items`, `position_loads`, `packing_rules`
-- Messaging: `load_messages`
 
 **Deliverable:** Can create a session and see sample cargo data
 

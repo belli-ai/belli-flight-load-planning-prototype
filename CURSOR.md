@@ -102,6 +102,25 @@ export const aircraft = pgTable("aircraft", {
 
 Use CSS variables defined in `src/app/globals.css`. Never hardcode colors.
 
+### Hover & Focus States
+
+Use **10% opacity backgrounds** for hover/focus states to maintain text readability:
+
+```typescript
+// Good: 10% opacity hover background, no text color change
+className = "hover:bg-foreground/10 focus:bg-foreground/10";
+
+// Bad: Solid accent background that obscures text
+className = "hover:bg-accent hover:text-accent-foreground";
+```
+
+**Key principles:**
+
+- Hover backgrounds: `hover:bg-foreground/10` (10% opacity)
+- Focus backgrounds: `focus:bg-foreground/10` (10% opacity)
+- **Do NOT change text color on hover** - maintain consistent foreground/muted-foreground colors
+- For destructive items: use `focus:bg-destructive/10`
+
 ## File Naming Conventions
 
 | Type           | Convention                   | Example                 |

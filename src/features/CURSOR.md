@@ -13,20 +13,18 @@ features/
 ├── aircraft/             # Aircraft configs, ULDs, positions, flights
 ├── cargo/                # AWBs, parcel groups, cargo items
 ├── planning/             # Load plans, optimization, ULD assignments
-├── weight-balance/       # CG envelopes, fuel, weight constraints
-└── messaging/            # IATA messages (LDM, CPM, UCM)
+└── weight-balance/       # CG envelopes, fuel, weight constraints
 ```
 
 ## Feature Domains
 
-| Feature | Description | Key Entities |
-|---------|-------------|--------------|
-| `reference-data` | Static lookup data | Locations, Commodity Codes, DG Classes, Temp Zones |
-| `aircraft` | Aircraft & ULD management | Aircrafts, Decks, Positions, ULD Types, ULDs, Flights |
-| `cargo` | Cargo shipment data | Air Waybills, Parcel Groups, Cargo Items |
-| `planning` | Load optimization | Load Plans, ULD Assignments, Packed Items, Rules |
-| `weight-balance` | Weight & balance calcs | CG Envelopes, Loading Zones, Fuel, Constraints |
-| `messaging` | IATA messages | Load Messages (LDM, CPM, UCM) |
+| Feature          | Description               | Key Entities                                          |
+| ---------------- | ------------------------- | ----------------------------------------------------- |
+| `reference-data` | Static lookup data        | Locations, Commodity Codes, DG Classes, Temp Zones    |
+| `aircraft`       | Aircraft & ULD management | Aircrafts, Decks, Positions, ULD Types, ULDs, Flights |
+| `cargo`          | Cargo shipment data       | Air Waybills, Parcel Groups, Cargo Items              |
+| `planning`       | Load optimization         | Load Plans, ULD Assignments, Packed Items, Rules      |
+| `weight-balance` | Weight & balance calcs    | CG Envelopes, Loading Zones, Fuel, Constraints        |
 
 ## Feature Module Structure
 
@@ -60,6 +58,7 @@ feature-name/
 ### Feature Dependencies
 
 Features can import from:
+
 - `@/lib/*` - Core utilities and database
 - `@/components/ui/*` - Shared UI components
 - Other features (via their `index.ts` exports)
@@ -137,14 +136,6 @@ import { cn } from "@/lib/utils";
                │  - ULD Assignments      │
                │  - Packed Items         │
                │  - Optimization         │
-               └────────────┬────────────┘
-                            │
-                            ▼
-               ┌─────────────────────────┐
-               │       messaging         │
-               │                         │
-               │  - LDM, CPM, UCM        │
-               │  - Message Generation   │
                └─────────────────────────┘
 ```
 
@@ -152,11 +143,10 @@ import { cn } from "@/lib/utils";
 
 From `RUNNING_MILESTONES.md`:
 
-| Milestone | Primary Feature(s) |
-|-----------|-------------------|
-| M0: Foundation | All features (schema, types) |
-| M1: Core Algorithm | `planning` (optimization) |
-| M2: Visualization | `planning`, `aircraft` (components) |
-| M3: Polish | `messaging` (exports), `cargo` (UX) |
-| M4: WOW Factor | `planning` (3D visualization) |
-
+| Milestone          | Primary Feature(s)                  |
+| ------------------ | ----------------------------------- |
+| M0: Foundation     | All features (schema, types)        |
+| M1: Core Algorithm | `planning` (optimization)           |
+| M2: Visualization  | `planning`, `aircraft` (components) |
+| M3: Polish         | `cargo` (UX), exports               |
+| M4: WOW Factor     | `planning` (3D visualization)       |

@@ -32,14 +32,28 @@ components/
 - Install new components: `pnpm dlx shadcn@latest add [name]`
 
 Available components:
+
+- `avatar` - User avatars
 - `button` - Action buttons with variants
 - `card` - Content containers
 - `dialog` - Modal dialogs
-- `dropdown-menu` - Dropdown menus
+- `dropdown-menu` - Dropdown menus (hover: `bg-foreground/10`)
 - `input` - Text inputs
 - `label` - Form labels
+- `navigation-menu` - Navigation with hover popovers (hover: `bg-foreground/10`)
 - `sonner` - Toast notifications
 - `table` - Data tables
+
+#### Modified ShadCN Defaults
+
+The following components have been customized for consistent hover styling:
+
+| Component         | Modification                                               |
+| ----------------- | ---------------------------------------------------------- |
+| `navigation-menu` | Hover/focus uses `bg-foreground/10` instead of `bg-accent` |
+| `dropdown-menu`   | Focus uses `bg-foreground/10` instead of `bg-accent`       |
+
+**Hover styling convention:** Use 10% opacity backgrounds (`hover:bg-foreground/10`) to maintain text readability. Do NOT change text color on hover.
 
 ### Custom Shared Components
 
@@ -62,7 +76,12 @@ type PageHeaderProps = {
 /**
  * Consistent page header with title, optional description, and action area.
  */
-export function PageHeader({ title, description, actions, className }: PageHeaderProps) {
+export function PageHeader({
+  title,
+  description,
+  actions,
+  className,
+}: PageHeaderProps) {
   return (
     <header className={cn("...", className)}>
       <div>
@@ -78,11 +97,11 @@ export function PageHeader({ title, description, actions, className }: PageHeade
 ### When to Add Here vs Feature Folder
 
 | Add to `components/` | Add to `features/[name]/components/` |
-|---------------------|-------------------------------------|
-| Used by 3+ features | Used by single feature |
-| Generic UI patterns | Domain-specific display |
-| Layout primitives | Feature workflows |
-| Data display helpers | Feature-specific cards/lists |
+| -------------------- | ------------------------------------ |
+| Used by 3+ features  | Used by single feature               |
+| Generic UI patterns  | Domain-specific display              |
+| Layout primitives    | Feature workflows                    |
+| Data display helpers | Feature-specific cards/lists         |
 
 ## Utilities
 
@@ -91,6 +110,7 @@ The `cn()` utility from `@/lib/utils` merges Tailwind classes:
 ```typescript
 import { cn } from "@/lib/utils";
 
-<div className={cn("base-styles", conditional && "conditional-styles", className)} />
+<div
+  className={cn("base-styles", conditional && "conditional-styles", className)}
+/>;
 ```
-

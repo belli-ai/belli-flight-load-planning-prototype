@@ -13,10 +13,15 @@ app/
 ├── page.tsx          # Landing page
 ├── style-guide/      # Design system reference
 │   └── page.tsx
-└── (features)/       # Route groups for features (to be created)
-    ├── flights/
-    ├── cargo/
-    └── load-planning/
+└── dashboard/        # Dashboard with feature navigation
+    ├── layout.tsx    # Dashboard layout with Navbar
+    ├── page.tsx      # Dashboard home with stats & feature cards
+    ├── flights/      # Flight schedule
+    ├── build-up/     # ULD build up
+    ├── load-balancing/ # Weight & balance
+    ├── aircraft/     # Aircraft configuration
+    ├── cargo/        # Cargo management
+    └── reference-data/ # System settings
 ```
 
 ## Guidelines
@@ -24,6 +29,7 @@ app/
 ### Page Components
 
 Pages should:
+
 1. Import and compose feature components
 2. Handle route-specific data fetching (if server-side)
 3. Pass URL params/search params to features
@@ -55,22 +61,25 @@ export default async function FlightsPage() {
 ### Route Groups
 
 Use route groups `(groupName)` for:
+
 - Shared layouts within a section
 - Organizing related routes without affecting URL
 
 ## Theme Configuration
 
 CSS variables are defined in `globals.css`:
+
 - Dark mode is default (`html` has `class="dark"`)
 - Orange primary: `--primary: oklch(0.705 0.213 47.604)`
 - xs radius: `--radius: 0.25rem`
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `globals.css` | Theme variables, Tailwind imports |
-| `layout.tsx` | Root layout, Geist Mono font, Toaster |
-| `page.tsx` | Landing page |
-| `style-guide/page.tsx` | Visual design system reference |
-
+| File                   | Purpose                                                   |
+| ---------------------- | --------------------------------------------------------- |
+| `globals.css`          | Theme variables, Tailwind imports                         |
+| `layout.tsx`           | Root layout, Geist Mono font, Toaster                     |
+| `page.tsx`             | Landing page                                              |
+| `style-guide/page.tsx` | Visual design system reference                            |
+| `dashboard/layout.tsx` | Dashboard layout with Navbar                              |
+| `dashboard/page.tsx`   | Dashboard home with stats, feature cards, pending flights |

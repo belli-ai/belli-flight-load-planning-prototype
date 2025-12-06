@@ -918,37 +918,6 @@ export const packingRules = pgTable(
 );
 
 // ============================================================================
-// MESSAGING
-// ============================================================================
-
-/**
- * IATA load-related message records
- */
-export const loadMessages = pgTable(
-  "load_messages",
-  {
-    id: uuid("id").defaultRandom().primaryKey(),
-    loadPlanId: uuid("load_plan_id")
-      .notNull()
-      .references(() => loadPlans.id, { onDelete: "cascade" }),
-    messageType: varchar("message_type", { length: 10 }).notNull(), // LDM, CPM, UCM, MVT, LPM
-    format: varchar("format", { length: 20 }).notNull().default("TYPE_B"),
-    content: text("content").notNull(),
-    version: integer("version").notNull().default(1),
-    sentAt: timestamp("sent_at"),
-    recipient: varchar("recipient", { length: 100 }),
-    status: varchar("status", { length: 20 }).notNull().default("DRAFT"),
-    errorMessage: text("error_message"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-  },
-  (table) => [
-    index("idx_load_messages_plan").on(table.loadPlanId),
-    index("idx_load_messages_type").on(table.messageType),
-    index("idx_load_messages_status").on(table.status),
-  ]
-);
-
-// ============================================================================
 // RELATIONS
 // ============================================================================
 
@@ -1212,7 +1181,6 @@ export const loadPlansRelations = relations(loadPlans, ({ one, many }) => ({
   }),
   uldAssignments: many(uldAssignments),
   positionLoads: many(positionLoads),
-  messages: many(loadMessages),
 }));
 
 export const uldAssignmentsRelations = relations(
@@ -1258,13 +1226,6 @@ export const positionLoadsRelations = relations(positionLoads, ({ one }) => ({
   uldAssignment: one(uldAssignments, {
     fields: [positionLoads.uldAssignmentId],
     references: [uldAssignments.id],
-  }),
-}));
-
-export const loadMessagesRelations = relations(loadMessages, ({ one }) => ({
-  loadPlan: one(loadPlans, {
-    fields: [loadMessages.loadPlanId],
-    references: [loadPlans.id],
   }),
 }));
 
@@ -1365,7 +1326,3 @@ export type NewPositionLoad = typeof positionLoads.$inferInsert;
 
 export type PackingRule = typeof packingRules.$inferSelect;
 export type NewPackingRule = typeof packingRules.$inferInsert;
-
-// Messaging
-export type LoadMessage = typeof loadMessages.$inferSelect;
-export type NewLoadMessage = typeof loadMessages.$inferInsert;

@@ -35,6 +35,7 @@ await db.insert(flights).values({ ... });
 **All database tables must be defined here** with proper documentation.
 
 Documentation requirements:
+
 1. Table-level JSDoc explaining purpose and relationships
 2. Column comments for non-obvious fields
 3. Type exports for select/insert operations
@@ -59,4 +60,3 @@ When adding new integrations:
 2. Add `CURSOR.md` documenting the integration
 3. Export a singleton client
 4. Keep configuration in environment variables
-
