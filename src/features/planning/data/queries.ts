@@ -335,6 +335,9 @@ export async function saveOptimizationResults(
     computationTimeMs: number;
   }
 ) {
+  // Delete existing position loads for this load plan first (foreign key constraint)
+  await db.delete(positionLoads).where(eq(positionLoads.loadPlanId, loadPlanId));
+  
   // Delete existing assignments for this load plan
   await db.delete(uldAssignments).where(eq(uldAssignments.loadPlanId, loadPlanId));
 
