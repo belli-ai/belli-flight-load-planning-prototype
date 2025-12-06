@@ -73,7 +73,7 @@ export async function getCargoItemsForFlight(flightId: string): Promise<CargoIte
     lengthCm: Number(item.lengthCm),
     widthCm: Number(item.widthCm),
     heightCm: Number(item.heightCm),
-    volumeM3: item.volumeM3 ? Number(item.volumeM3) : 
+    volumeM3: item.volumeM3 ? Number(item.volumeM3) :
       (Number(item.lengthCm) * Number(item.widthCm) * Number(item.heightCm)) / 1_000_000,
     isStackable: item.isStackable,
     maxStackWeightKg: item.maxStackWeightKg ? Number(item.maxStackWeightKg) : null,
@@ -112,7 +112,7 @@ export async function getCargoItemsByIds(ids: string[]): Promise<CargoItemForPac
     lengthCm: Number(item.lengthCm),
     widthCm: Number(item.widthCm),
     heightCm: Number(item.heightCm),
-    volumeM3: item.volumeM3 ? Number(item.volumeM3) : 
+    volumeM3: item.volumeM3 ? Number(item.volumeM3) :
       (Number(item.lengthCm) * Number(item.widthCm) * Number(item.heightCm)) / 1_000_000,
     isStackable: item.isStackable,
     maxStackWeightKg: item.maxStackWeightKg ? Number(item.maxStackWeightKg) : null,
@@ -734,4 +734,3 @@ export async function getFlightWithOrigin(flightId: string) {
     },
   });
 }
-

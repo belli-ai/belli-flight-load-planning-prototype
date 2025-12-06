@@ -22,6 +22,7 @@ import {
   TrendingUp,
   ChevronLeft,
   ChevronRight,
+  BookOpen,
 } from "lucide-react";
 
 // Mock data for dashboard statistics
@@ -128,6 +129,13 @@ const secondaryFeatures = [
     href: "/dashboard/aircraft",
     icon: <Plane className="size-5" />,
     stat: "15 aircraft types",
+  },
+  {
+    title: "Packing Rules",
+    description: "Cargo constraints & policies",
+    href: "/dashboard/packing-rules",
+    icon: <BookOpen className="size-5" />,
+    stat: "Manage rules",
   },
   {
     title: "Cargo Management",
