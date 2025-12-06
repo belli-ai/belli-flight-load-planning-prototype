@@ -128,9 +128,63 @@ Required variables in `.env`:
 
 - `DATABASE_URL` - PostgreSQL connection string (format: `postgresql://[user]:[password]@[host]:[port]/[database]`)
 
+## Hackathon Context & WOW Factor
+
+> **This is a 24-hour hackathon project. Prioritize visual impact and demo-ability.**
+
+### WOW Factor Priorities (in order)
+
+1. **Real-time Optimization Animation** - Show cargo "flying" into ULDs during optimization
+2. **3D/Isometric Visualization** - Start with isometric 2D, upgrade to Three.js if time permits
+3. **Before/After Comparison** - "8 ULDs → 5 ULDs = $450 saved per flight"
+4. **AI Explanation Panel** - LLM-generated plain English loading instructions
+5. **Exploded View** - Dramatic cargo reveal animation
+
+### Algorithm Architecture
+
+Uses **hybrid LLM + bin-packing approach**:
+
+| Component            | Technology       | Purpose                                               |
+| -------------------- | ---------------- | ----------------------------------------------------- |
+| Rule Interpretation  | LLM (OpenAI)     | Parse natural language rules → structured constraints |
+| Spatial Optimization | 3D FFD Algorithm | Actual bin-packing computation                        |
+| Output Generation    | LLM (OpenAI)     | Human-readable build-up instructions                  |
+
+### Demo Flow
+
+1. Show unoptimized cargo list
+2. Display "traditional" estimate (manual planning)
+3. Run AI optimization with animation
+4. Reveal savings and optimized result
+5. 3D visualization with exploded view
+6. AI-generated loading instructions
+
+---
+
+## Data Structure Crosscheck
+
+**CRITICAL: Always verify data structures against actual implementation.**
+
+When data structure prompts are provided:
+
+1. **Before implementing**: Cross-reference with `src/lib/db/schema.ts`
+2. **Check type definitions**: Verify against `.types.ts` files in feature folders
+3. **Resolve conflicts**: Implementation in code takes precedence over prompts
+4. **Update documentation**: If implementation differs, update `RUNNING_MILESTONES.md`
+
+```typescript
+// Always check these files for source of truth:
+// - src/lib/db/schema.ts          (database schema)
+// - src/features/*/types.ts       (feature-specific types)
+// - RUNNING_MILESTONES.md         (architecture documentation)
+```
+
+---
+
 ## Quick Reference
 
 - **Add a new feature**: Create folder in `src/features/`, add `CURSOR.md`
 - **Add UI component**: Use ShadCN CLI: `pnpm dlx shadcn@latest add [component]`
 - **Add DB table**: Define in `src/lib/db/schema.ts`, run `pnpm db:push`
 - **Style guide**: Visit `/style-guide` route for visual reference
+- **Milestones**: See `RUNNING_MILESTONES.md` for technical roadmap
