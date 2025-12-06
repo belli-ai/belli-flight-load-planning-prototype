@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -23,16 +23,20 @@ import { MOCK_PACKING_RULES } from "../data/mock-data";
 // TYPES
 // ============================================================================
 
+export type OptimizationObjective = "MINIMIZE_ULDS" | "MAXIMIZE_UTILIZATION" | "BALANCED";
+
+type Objective = OptimizationObjective; // Internal alias
+
 type OptimizationPanelProps = {
   selectedCargoCount: number;
   selectedWeight: number;
-  onOptimize: () => Promise<void>;
+  onOptimize: (objective: Objective) => Promise<void>;
   isOptimizing: boolean;
   result: OptimizationResult | null;
   rules?: PackingRule[];
+  objective?: Objective;
+  onObjectiveChange?: (objective: Objective) => void;
 };
-
-type Objective = "MINIMIZE_ULDS" | "MAXIMIZE_UTILIZATION" | "BALANCED";
 
 // ============================================================================
 // COMPONENT
@@ -45,12 +49,28 @@ export function OptimizationPanel({
   isOptimizing,
   result,
   rules = MOCK_PACKING_RULES,
+  objective: controlledObjective,
+  onObjectiveChange,
 }: OptimizationPanelProps) {
-  const [objective, setObjective] = useState<Objective>("MINIMIZE_ULDS");
+  // Support both controlled and uncontrolled objective state
+  const [internalObjective, setInternalObjective] = useState<Objective>("MINIMIZE_ULDS");
+  const objective = controlledObjective ?? internalObjective;
+  
+  const handleObjectiveChange = (newObjective: Objective) => {
+    if (onObjectiveChange) {
+      onObjectiveChange(newObjective);
+    } else {
+      setInternalObjective(newObjective);
+    }
+  };
+  
   const [showRules, setShowRules] = useState(false);
-  const [activeRuleIds, setActiveRuleIds] = useState<Set<string>>(
-    new Set(rules.filter((r) => r.isActive).map((r) => r.id))
-  );
+  const [activeRuleIds, setActiveRuleIds] = useState<Set<string>>(new Set());
+
+  // Update active rules when rules prop changes - all rules active by default
+  useEffect(() => {
+    setActiveRuleIds(new Set(rules.map((r) => r.id)));
+  }, [rules]);
 
   const toggleRule = (ruleId: string) => {
     setActiveRuleIds((prev) => {
@@ -131,7 +151,7 @@ export function OptimizationPanel({
             {objectives.map((obj) => (
               <button
                 key={obj.id}
-                onClick={() => setObjective(obj.id)}
+                onClick={() => handleObjectiveChange(obj.id)}
                 className={cn(
                   "flex flex-col items-center gap-1 rounded-sm border p-2 transition-colors",
                   objective === obj.id
@@ -200,7 +220,7 @@ export function OptimizationPanel({
 
         {/* Optimize button */}
         <Button
-          onClick={onOptimize}
+          onClick={() => onOptimize(objective)}
           disabled={!canOptimize}
           className="w-full h-10 text-sm font-medium"
         >

@@ -11,7 +11,7 @@ export * from "./types";
 export { CargoList } from "./components/cargo-list";
 export { UldVisualization } from "./components/uld-visualization";
 export { UldViewer3D } from "./components/uld-viewer-3d";
-export { OptimizationPanel } from "./components/optimization-panel";
+export { OptimizationPanel, type OptimizationObjective } from "./components/optimization-panel";
 export { ResultsSummary } from "./components/results-summary";
 
 // Actions
@@ -22,7 +22,26 @@ export {
   parseRule,
   getCargoItems,
   getPackingRules,
+  getFlights,
 } from "./actions/optimize.actions";
+
+// Algorithm (for custom optimizer implementations)
+export type {
+  IUldOptimizer,
+  OptimizerFactory,
+  OptimizerInput,
+  OptimizationOutput,
+  CargoItemForPacking,
+  UldTypeForPacking,
+  PackingConstraint,
+} from "./lib/algorithm";
+
+export {
+  registerOptimizer,
+  getOptimizer,
+  setDefaultOptimizer,
+  getAvailableOptimizers,
+} from "./lib/algorithm";
 
 // Mock data (for development)
 export {

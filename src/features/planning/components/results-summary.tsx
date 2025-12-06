@@ -15,6 +15,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import type { OptimizationResult, BuildUpInstruction } from "../types";
+import type { CargoItemDisplay } from "@/features/cargo";
 import { UldViewer3D } from "./uld-viewer-3d";
 
 // ============================================================================
@@ -28,6 +29,7 @@ type ResultsSummaryProps = {
   onGenerateInstructions: (uldIndex: number) => Promise<void>;
   instructions: Map<number, BuildUpInstruction>;
   isGeneratingInstructions: boolean;
+  cargoItems?: CargoItemDisplay[];
 };
 
 // ============================================================================
@@ -41,6 +43,7 @@ export function ResultsSummary({
   onGenerateInstructions,
   instructions,
   isGeneratingInstructions,
+  cargoItems = [],
 }: ResultsSummaryProps) {
   const [expandedUld, setExpandedUld] = useState<number | null>(null);
 
@@ -63,6 +66,7 @@ export function ResultsSummary({
               assignments={result.assignments}
               selectedUldIndex={selectedUldIndex}
               onSelectUld={onSelectUld}
+              cargoItems={cargoItems}
             />
           </CardContent>
         </Card>

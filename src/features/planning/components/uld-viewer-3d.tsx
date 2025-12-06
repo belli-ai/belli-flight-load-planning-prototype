@@ -16,7 +16,8 @@ import {
   Layers,
 } from "lucide-react";
 import type { UldAssignmentResult, PackedItemResult } from "../types";
-import { MOCK_CARGO_ITEMS, getColorForAwb, MOCK_ULD_TYPES } from "../data/mock-data";
+import type { CargoItemDisplay } from "@/features/cargo";
+import { getColorForAwb } from "../data/mock-data";
 
 // ============================================================================
 // TYPES
@@ -27,6 +28,7 @@ type UldViewer3DProps = {
   selectedUldIndex?: number;
   onSelectUld?: (index: number) => void;
   className?: string;
+  cargoItems?: CargoItemDisplay[];
 };
 
 type PackedItemWithDetails = PackedItemResult & {
@@ -194,23 +196,24 @@ function Scene({
   hoveredItem,
   setHoveredItem,
   resetTrigger,
+  cargoItems,
 }: {
   assignment: UldAssignmentResult;
   hoveredItem: string | null;
   setHoveredItem: (id: string | null) => void;
   resetTrigger: number;
+  cargoItems: CargoItemDisplay[];
 }) {
-  // Get ULD dimensions
-  const uldType = MOCK_ULD_TYPES.find((t) => t.code === assignment.uldTypeCode);
+  // Get ULD dimensions from the assignment (provided by optimizer)
   const uldDimensions = {
-    length: uldType?.internalLengthCm || 156,
-    width: uldType?.internalWidthCm || 153,
-    height: uldType?.internalHeightCm || 163,
+    length: assignment.uldDimensions?.lengthCm || 156,
+    width: assignment.uldDimensions?.widthCm || 153,
+    height: assignment.uldDimensions?.heightCm || 163,
   };
 
   // Enrich cargo items with details
   const packedItems: PackedItemWithDetails[] = assignment.cargoItems.map((item) => {
-    const cargo = MOCK_CARGO_ITEMS.find((c) => c.id === item.cargoItemId);
+    const cargo = cargoItems.find((c) => c.id === item.cargoItemId);
     return {
       ...item,
       awbNumber: cargo?.awbNumber || "Unknown",
@@ -261,6 +264,7 @@ export function UldViewer3D({
   selectedUldIndex = 0,
   onSelectUld,
   className,
+  cargoItems = [],
 }: UldViewer3DProps) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const [resetTrigger, setResetTrigger] = useState(0);
@@ -297,7 +301,7 @@ export function UldViewer3D({
   // Get hovered item details
   const hoveredItemDetails = hoveredItem
     ? (() => {
-        const cargo = MOCK_CARGO_ITEMS.find((c) => c.id === hoveredItem);
+        const cargo = cargoItems.find((c) => c.id === hoveredItem);
         return cargo
           ? {
               awbNumber: cargo.awbNumber,
@@ -372,6 +376,7 @@ export function UldViewer3D({
               hoveredItem={hoveredItem}
               setHoveredItem={setHoveredItem}
               resetTrigger={resetTrigger}
+              cargoItems={cargoItems}
             />
           </Suspense>
         </Canvas>

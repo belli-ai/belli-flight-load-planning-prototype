@@ -11,8 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { Plane, Search, Clock, MapPin, ChevronDown } from "lucide-react";
+import { Plane, Search, Clock, MapPin, ChevronDown, Loader2 } from "lucide-react";
 import { MOCK_FLIGHTS } from "@/features/planning/data/mock-data";
+import { getFlights } from "@/features/planning";
 
 // ============================================================================
 // TYPES
@@ -32,6 +33,8 @@ type FlightContextType = {
   selectedFlight: SelectedFlight | null;
   setSelectedFlight: (flight: SelectedFlight | null) => void;
   isLoading: boolean;
+  flights: SelectedFlight[];
+  refreshFlights: () => Promise<void>;
 };
 
 // ============================================================================
@@ -42,17 +45,66 @@ const FlightContext = createContext<FlightContextType | undefined>(undefined);
 
 export function FlightProvider({ children }: { children: React.ReactNode }) {
   const [selectedFlight, setSelectedFlight] = useState<SelectedFlight | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [flights, setFlights] = useState<SelectedFlight[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Auto-select first flight for demo
-  useEffect(() => {
-    if (!selectedFlight && MOCK_FLIGHTS.length > 0) {
-      setSelectedFlight(MOCK_FLIGHTS[0]);
+  // Fetch flights on mount
+  const refreshFlights = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const result = await getFlights();
+      
+      if (result.success && result.flights.length > 0) {
+        // Convert to SelectedFlight format
+        const mappedFlights: SelectedFlight[] = result.flights.map((f) => ({
+          id: f.id,
+          flightNumber: f.flightNumber,
+          scheduledDeparture: new Date(f.scheduledDeparture),
+          status: f.status,
+          originCode: f.origin,
+          destinationCode: f.destination,
+          aircraftType: f.aircraftType,
+        }));
+        setFlights(mappedFlights);
+        
+        // Auto-select first flight if none selected
+        if (!selectedFlight) {
+          setSelectedFlight(mappedFlights[0]);
+        }
+      } else {
+        // Fall back to mock data
+        setFlights(MOCK_FLIGHTS);
+        if (!selectedFlight && MOCK_FLIGHTS.length > 0) {
+          setSelectedFlight(MOCK_FLIGHTS[0]);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch flights:", error);
+      // Fall back to mock data on error
+      setFlights(MOCK_FLIGHTS);
+      if (!selectedFlight && MOCK_FLIGHTS.length > 0) {
+        setSelectedFlight(MOCK_FLIGHTS[0]);
+      }
+    } finally {
+      setIsLoading(false);
     }
   }, [selectedFlight]);
 
+  useEffect(() => {
+    refreshFlights();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <FlightContext.Provider value={{ selectedFlight, setSelectedFlight, isLoading }}>
+    <FlightContext.Provider 
+      value={{ 
+        selectedFlight, 
+        setSelectedFlight, 
+        isLoading, 
+        flights,
+        refreshFlights,
+      }}
+    >
       {children}
     </FlightContext.Provider>
   );
@@ -76,11 +128,11 @@ type FlightSelectorProps = {
 };
 
 export function FlightSelector({ className, variant = "default" }: FlightSelectorProps) {
-  const { selectedFlight, setSelectedFlight } = useSelectedFlight();
+  const { selectedFlight, setSelectedFlight, isLoading, flights } = useSelectedFlight();
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const filteredFlights = MOCK_FLIGHTS.filter(
+  const filteredFlights = flights.filter(
     (flight) =>
       flight.flightNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       flight.originCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -134,8 +186,14 @@ export function FlightSelector({ className, variant = "default" }: FlightSelecto
             variant === "compact" ? "h-9 px-3" : "h-11 px-4",
             className
           )}
+          disabled={isLoading}
         >
-          {selectedFlight ? (
+          {isLoading ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="size-4 animate-spin" />
+              <span className="text-muted-foreground">Loading...</span>
+            </div>
+          ) : selectedFlight ? (
             <div className="flex items-center gap-3">
               <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-primary/10">
                 <Plane className="size-3.5 text-primary" />
@@ -287,4 +345,3 @@ export function FlightInfoBadge({ className }: { className?: string }) {
     </div>
   );
 }
-

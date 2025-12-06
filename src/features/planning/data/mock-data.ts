@@ -528,6 +528,8 @@ export const MOCK_OPTIMIZATION_RESULT: OptimizationResult = {
       volumeUsedM3: 1.52,
       volumeUtilization: 0.78,
       weightUtilization: 0.37,
+      uldDimensions: { lengthCm: 147, widthCm: 145, heightCm: 155 },
+      maxGrossWeightKg: 1588,
     },
     {
       uldTypeId: "uld-type-ake",
@@ -553,6 +555,8 @@ export const MOCK_OPTIMIZATION_RESULT: OptimizationResult = {
       volumeUsedM3: 0.46,
       volumeUtilization: 0.52,
       weightUtilization: 0.32,
+      uldDimensions: { lengthCm: 147, widthCm: 145, heightCm: 155 },
+      maxGrossWeightKg: 1588,
     },
     {
       uldTypeId: "uld-type-pmc",
@@ -599,15 +603,19 @@ export const MOCK_OPTIMIZATION_RESULT: OptimizationResult = {
       volumeUsedM3: 3.94,
       volumeUtilization: 0.85,
       weightUtilization: 0.27,
+      uldDimensions: { lengthCm: 317.5, widthCm: 243.8, heightCm: 160 },
+      maxGrossWeightKg: 4626,
     },
   ],
   unassignedCargoIds: [],
   stats: {
     uldsUsed: 3,
+    totalCargoItems: 12,
     avgVolumeUtilization: 0.72,
     avgWeightUtilization: 0.32,
     totalCargoWeight: 2220,
     totalCargoVolume: 5.92,
+    unassignedCount: 0,
     unassignedWeight: 0,
     unassignedVolume: 0,
   },
@@ -691,7 +699,15 @@ export const CARGO_COLORS = [
 ];
 
 export function getColorForAwb(awbNumber: string): string {
-  const index = MOCK_AWBS.findIndex((a) => a.awbNumber === awbNumber);
-  return CARGO_COLORS[index % CARGO_COLORS.length];
+  // Use a simple hash to consistently map AWB numbers to colors
+  // This works for both mock and real database AWB numbers
+  let hash = 0;
+  for (let i = 0; i < awbNumber.length; i++) {
+    const char = awbNumber.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  const index = Math.abs(hash) % CARGO_COLORS.length;
+  return CARGO_COLORS[index];
 }
 
