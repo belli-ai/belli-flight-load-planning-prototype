@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/shared/navbar";
+import { FlightProvider } from "@/components/shared/flight-selector";
 
 export default function DashboardLayout({
   children,
@@ -6,10 +7,11 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main>{children}</main>
-    </div>
+    <FlightProvider>
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main>{children}</main>
+      </div>
+    </FlightProvider>
   );
 }
-

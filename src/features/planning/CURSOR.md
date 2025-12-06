@@ -6,13 +6,13 @@ The core feature for load plan optimization. Manages load plans, ULD assignments
 
 ## Domain Entities
 
-| Entity | Description | Key Fields |
-|--------|-------------|------------|
-| `LoadPlan` | Planning session and results | `status`, `payloadKg`, `zfwCgPercentMac`, `validationErrors` |
-| `UldAssignment` | Cargo-to-ULD mapping | `uldTypeId`, `totalWeightKg`, `volumeUtilization` |
-| `PackedItem` | 3D coordinates in ULD | `x/y/zPositionCm`, `rotated`, `packedDimensions` |
-| `PositionLoad` | ULD-to-position assignment | `positionCode`, `grossWeightKg`, `calculatedMoment` |
-| `PackingRule` | Natural language rules | `ruleText`, `ruleType`, `structuredRule` |
+| Entity          | Description                  | Key Fields                                                   |
+| --------------- | ---------------------------- | ------------------------------------------------------------ |
+| `LoadPlan`      | Planning session and results | `status`, `payloadKg`, `zfwCgPercentMac`, `validationErrors` |
+| `UldAssignment` | Cargo-to-ULD mapping         | `uldTypeId`, `totalWeightKg`, `volumeUtilization`            |
+| `PackedItem`    | 3D coordinates in ULD        | `x/y/zPositionCm`, `rotated`, `packedDimensions`             |
+| `PositionLoad`  | ULD-to-position assignment   | `positionCode`, `grossWeightKg`, `calculatedMoment`          |
+| `PackingRule`   | Natural language rules       | `ruleText`, `ruleType`, `structuredRule`                     |
 
 ## Structure
 
@@ -55,29 +55,34 @@ planning/
 ## Key Responsibilities
 
 ### 1. Load Plan Management
+
 - Create load plans for flights
 - Track optimization status (Draft → Optimizing → Optimized → Final → Released)
 - Store weight and CG calculation results
 - Validate against aircraft limits
 
 ### 2. ULD Build-Up Optimization
+
 - Pack cargo items into ULDs using 3D bin-packing
 - Minimize number of ULDs used
 - Maximize volume/weight utilization
 - Apply compatibility rules (DG, temperature, etc.)
 
 ### 3. Position Assignment
+
 - Assign ULDs to aircraft positions
 - Calculate moments for CG
 - Validate against position weight limits
 - Check combined weight constraints
 
 ### 4. LLM Integration
+
 - Parse natural language packing rules
 - Generate human-readable build-up instructions
 - Explain optimization decisions
 
 ### 5. Visualization Data
+
 - Provide 3D coordinates for packed items
 - Support isometric and full 3D views
 - Color-code by AWB, priority, or SHC
@@ -128,6 +133,7 @@ planning/
 ## Usage Examples
 
 ### Create and Optimize Load Plan
+
 ```typescript
 import { createLoadPlan, runOptimization } from "@/features/planning";
 
@@ -151,6 +157,7 @@ const result = await runOptimization({
 ```
 
 ### Display Optimization Results
+
 ```typescript
 import { ResultsSummary, useLoadPlan } from "@/features/planning";
 
@@ -168,6 +175,7 @@ function LoadPlanResults({ planId }: { planId: string }) {
 ```
 
 ### Generate Build-Up Instructions
+
 ```typescript
 import { generateBuildUpInstructions } from "@/features/planning";
 
@@ -231,7 +239,8 @@ const exampleRules: PackingRule[] = [
     category: "PRIORITY",
   },
   {
-    ruleText: "Temperature-controlled items must be grouped in refrigerated ULDs",
+    ruleText:
+      "Temperature-controlled items must be grouped in refrigerated ULDs",
     ruleType: "CONSTRAINT",
     priority: 95,
     category: "TEMPERATURE",
@@ -241,16 +250,17 @@ const exampleRules: PackingRule[] = [
 
 ## Integration Points
 
-| Feature | Integration |
-|---------|-------------|
-| Aircraft | Uses positions, aircraft limits, ULD types |
-| Cargo | Receives cargo items for optimization |
-| Weight Balance | CG envelope validation, fuel impact |
-| Reference Data | DG segregation, temperature compatibility |
+| Feature        | Integration                                |
+| -------------- | ------------------------------------------ |
+| Aircraft       | Uses positions, aircraft limits, ULD types |
+| Cargo          | Receives cargo items for optimization      |
+| Weight Balance | CG envelope validation, fuel impact        |
+| Reference Data | DG segregation, temperature compatibility  |
 
 ## Milestone Alignment (from RUNNING_MILESTONES.md)
 
 ### M1: Core Algorithm (Hours 2-6)
+
 - [M1.1] Implement 3D FFD bin-packing algorithm
 - [M1.2] Create LLM prompt for rule interpretation
 - [M1.3] Build optimization server action
@@ -258,6 +268,7 @@ const exampleRules: PackingRule[] = [
 - [M1.5] Display results summary
 
 ### M2: Visualization (Hours 6-12)
+
 - [M2.1] Create isometric ULD component
 - [M2.2] Implement cargo item rendering with colors
 - [M2.3] Add aircraft top-down view
@@ -265,6 +276,7 @@ const exampleRules: PackingRule[] = [
 - [M2.5] Add hover states and tooltips
 
 ### M4: WOW Factor (Hours 18-24)
+
 - [M4.1] Upgrade to Three.js 3D visualization
 - [M4.2] Add real-time optimization animation
 - [M4.3] Implement "exploded view" for ULD
@@ -276,4 +288,3 @@ const exampleRules: PackingRule[] = [
 - **Cache rule parsing**: LLM rule interpretation is expensive
 - **Batch DB writes**: Write all assignments in single transaction
 - **Timeout handling**: Set max optimization time (30s default)
-
