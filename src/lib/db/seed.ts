@@ -11,6 +11,7 @@ import {
   uldTypes,
   ulds,
   aircrafts,
+  deckConfigurationPresets,
   deckConfigurations,
   loadingPositions,
   cgEnvelopes,
@@ -106,6 +107,12 @@ export const COMMODITY_CODE_IDS = {
 // Aircraft ID
 export const AIRCRAFT_IDS = {
   A321_P2F: "b7e7ac27-9059-4539-878d-0928a05ed14c",
+} as const;
+
+// Deck Configuration Preset IDs
+export const PRESET_IDS = {
+  A321_P2F_STANDARD: "f8c9a1b2-3d4e-5f6a-7b8c-9d0e1f2a3b4c",
+  A321_P2F_HIGH_DENSITY: "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6",
 } as const;
 
 // Deck Configuration IDs
@@ -685,11 +692,31 @@ const aircraftsData = [
   },
 ];
 
-// Deck Configurations
+// Deck Configuration Presets
+const deckConfigurationPresetsData = [
+  {
+    id: PRESET_IDS.A321_P2F_STANDARD,
+    aircraftId: AIRCRAFT_IDS.A321_P2F,
+    presetName: "Standard Configuration",
+    presetCode: "STD",
+    description: "Standard cargo configuration with 14 main deck positions and lower deck containers",
+    isDefault: true,
+  },
+  {
+    id: PRESET_IDS.A321_P2F_HIGH_DENSITY,
+    aircraftId: AIRCRAFT_IDS.A321_P2F,
+    presetName: "High Density Configuration",
+    presetCode: "HD",
+    description: "High density configuration optimized for smaller containers",
+    isDefault: false,
+  },
+];
+
+// Deck Configurations (linked to presets)
 const deckConfigurationsData = [
   {
     id: DECK_CONFIG_IDS.MAIN_DECK,
-    aircraftId: AIRCRAFT_IDS.A321_P2F,
+    presetId: PRESET_IDS.A321_P2F_STANDARD,
     deckCode: "MAIN",
     deckName: "Main Deck",
     maxStructuralWeightKg: "27500.00",
@@ -697,7 +724,7 @@ const deckConfigurationsData = [
   },
   {
     id: DECK_CONFIG_IDS.LOWER_FWD,
-    aircraftId: AIRCRAFT_IDS.A321_P2F,
+    presetId: PRESET_IDS.A321_P2F_STANDARD,
     deckCode: "LOWER_FWD",
     deckName: "Lower Deck Forward",
     maxStructuralWeightKg: "5670.00",
@@ -705,7 +732,7 @@ const deckConfigurationsData = [
   },
   {
     id: DECK_CONFIG_IDS.LOWER_AFT,
-    aircraftId: AIRCRAFT_IDS.A321_P2F,
+    presetId: PRESET_IDS.A321_P2F_STANDARD,
     deckCode: "LOWER_AFT",
     deckName: "Lower Deck Aft",
     maxStructuralWeightKg: "6286.00",
@@ -713,7 +740,7 @@ const deckConfigurationsData = [
   },
   {
     id: DECK_CONFIG_IDS.BULK,
-    aircraftId: AIRCRAFT_IDS.A321_P2F,
+    presetId: PRESET_IDS.A321_P2F_STANDARD,
     deckCode: "BULK",
     deckName: "Bulk Cargo",
     maxStructuralWeightKg: "770.00",
@@ -939,7 +966,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: false,
     floorAreaM2: "5.80",
     maxHeightCm: "160.00",
-    contourCode: "CONTOURED",
+    contourCode: "ONE_COLUMN",
     xOffset: "1200.00",
     yOffset: "0.00",
     colIndex: 12,
@@ -956,7 +983,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: true,
     floorAreaM2: "3.00",
     maxHeightCm: "120.00",
-    contourCode: "CONTOURED",
+    contourCode: "ONE_COLUMN",
     xOffset: "1300.00",
     yOffset: "0.00",
     colIndex: 13,
@@ -974,7 +1001,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
-    contourCode: "HALF_WIDTH",
+    contourCode: "ONE_COLUMN",
     xOffset: "0.00",
     yOffset: "0.00",
     colIndex: 0,
@@ -991,7 +1018,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
-    contourCode: "HALF_WIDTH",
+    contourCode: "ONE_COLUMN",
     xOffset: "0.00",
     yOffset: "80.00",
     colIndex: 0,
@@ -1008,7 +1035,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
-    contourCode: "HALF_WIDTH",
+    contourCode: "ONE_COLUMN",
     xOffset: "100.00",
     yOffset: "0.00",
     colIndex: 1,
@@ -1025,7 +1052,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
-    contourCode: "HALF_WIDTH",
+    contourCode: "ONE_COLUMN",
     xOffset: "100.00",
     yOffset: "80.00",
     colIndex: 1,
@@ -1042,7 +1069,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
-    contourCode: "HALF_WIDTH",
+    contourCode: "ONE_COLUMN",
     xOffset: "200.00",
     yOffset: "0.00",
     colIndex: 2,
@@ -1060,7 +1087,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
-    contourCode: "HALF_WIDTH",
+    contourCode: "ONE_COLUMN",
     xOffset: "0.00",
     yOffset: "0.00",
     colIndex: 0,
@@ -1077,7 +1104,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
-    contourCode: "HALF_WIDTH",
+    contourCode: "ONE_COLUMN",
     xOffset: "0.00",
     yOffset: "80.00",
     colIndex: 0,
@@ -1094,7 +1121,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
-    contourCode: "HALF_WIDTH",
+    contourCode: "ONE_COLUMN",
     xOffset: "100.00",
     yOffset: "0.00",
     colIndex: 1,
@@ -1111,7 +1138,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
-    contourCode: "HALF_WIDTH",
+    contourCode: "ONE_COLUMN",
     xOffset: "100.00",
     yOffset: "80.00",
     colIndex: 1,
@@ -1128,7 +1155,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
-    contourCode: "HALF_WIDTH",
+    contourCode: "ONE_COLUMN",
     xOffset: "200.00",
     yOffset: "0.00",
     colIndex: 2,
@@ -1146,7 +1173,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: true,
     floorAreaM2: "1.50",
     maxHeightCm: "100.00",
-    contourCode: "CONTOURED",
+    contourCode: "ONE_COLUMN",
     xOffset: "0.00",
     yOffset: "0.00",
     colIndex: 0,
@@ -1163,7 +1190,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: true,
     floorAreaM2: "1.50",
     maxHeightCm: "100.00",
-    contourCode: "CONTOURED",
+    contourCode: "ONE_COLUMN",
     xOffset: "50.00",
     yOffset: "0.00",
     colIndex: 1,
@@ -1180,7 +1207,7 @@ const loadingPositionsData = [
     acceptsBulkCargo: true,
     floorAreaM2: "1.50",
     maxHeightCm: "100.00",
-    contourCode: "CONTOURED",
+    contourCode: "ONE_COLUMN",
     xOffset: "100.00",
     yOffset: "0.00",
     colIndex: 2,
@@ -3310,6 +3337,7 @@ export async function seed() {
     await db.delete(cgEnvelopes);
     await db.delete(loadingPositions);
     await db.delete(deckConfigurations);
+    await db.delete(deckConfigurationPresets);
     await db.delete(aircrafts);
     await db.delete(dgSegregationRules);
     await db.delete(dangerousGoodsClasses);
@@ -3340,6 +3368,9 @@ export async function seed() {
     // Seed aircraft configuration
     console.log("✈️  Seeding aircraft...");
     await db.insert(aircrafts).values(aircraftsData);
+
+    console.log("🔧 Seeding deck configuration presets...");
+    await db.insert(deckConfigurationPresets).values(deckConfigurationPresetsData);
 
     console.log("🛫 Seeding deck configurations...");
     await db.insert(deckConfigurations).values(deckConfigurationsData);
@@ -3415,6 +3446,7 @@ Summary:
   
   Aircraft Configuration:
   - ${aircraftsData.length} aircraft
+  - ${deckConfigurationPresetsData.length} deck configuration presets
   - ${deckConfigurationsData.length} deck configurations
   - ${loadingPositionsData.length} loading positions
   - ${cgEnvelopesData.length} CG envelopes

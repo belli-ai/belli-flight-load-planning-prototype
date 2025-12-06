@@ -5,6 +5,7 @@ import {
   uldAssignments,
   cargoItems,
   aircrafts,
+  deckConfigurationPresets,
   deckConfigurations,
   loadingPositions,
 } from "@/lib/db/schema";
@@ -144,11 +145,22 @@ export async function updateFlightCapacity(
     const bulkCargoWeightKg = Number(bulkCargo[0]?.totalWeight || 0);
     const bulkCargoVolumeM3 = Number(bulkCargo[0]?.totalVolume || 0);
 
-    // Get total positions
-    const decks = await db
+    // Get total positions via default preset
+    const [defaultPreset] = await db
       .select()
-      .from(deckConfigurations)
-      .where(eq(deckConfigurations.aircraftId, aircraft.id));
+      .from(deckConfigurationPresets)
+      .where(and(
+        eq(deckConfigurationPresets.aircraftId, aircraft.id),
+        eq(deckConfigurationPresets.isDefault, true)
+      ))
+      .limit(1);
+    
+    const decks = defaultPreset 
+      ? await db
+          .select()
+          .from(deckConfigurations)
+          .where(eq(deckConfigurations.presetId, defaultPreset.id))
+      : [];
 
     let totalPositions = 0;
     for (const deck of decks) {

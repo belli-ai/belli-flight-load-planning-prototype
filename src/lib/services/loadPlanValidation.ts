@@ -7,6 +7,7 @@ import {
   loadingPositions,
   cgEnvelopes,
   weightConstraints,
+  deckConfigurationPresets,
   deckConfigurations,
 } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -227,11 +228,22 @@ export async function validateLoadPlan(loadPlanId: string): Promise<ValidationRe
     }
   }
 
-  // Check individual position limits
-  const decks = await db
+  // Check individual position limits - get via default preset
+  const [defaultPreset] = await db
     .select()
-    .from(deckConfigurations)
-    .where(eq(deckConfigurations.aircraftId, aircraft.id));
+    .from(deckConfigurationPresets)
+    .where(and(
+      eq(deckConfigurationPresets.aircraftId, aircraft.id),
+      eq(deckConfigurationPresets.isDefault, true)
+    ))
+    .limit(1);
+
+  const decks = defaultPreset
+    ? await db
+        .select()
+        .from(deckConfigurations)
+        .where(eq(deckConfigurations.presetId, defaultPreset.id))
+    : [];
 
   for (const deck of decks) {
     const deckPositions = await db

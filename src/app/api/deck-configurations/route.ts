@@ -1,21 +1,50 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { deckConfigurations, loadingPositions } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { deckConfigurations, deckConfigurationPresets, loadingPositions } from "@/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 
-// GET - List all deck configurations or filter by aircraft
+// GET - List all deck configurations or filter by preset
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const presetId = searchParams.get("presetId");
     const aircraftId = searchParams.get("aircraftId");
 
-    let query = db.select().from(deckConfigurations);
+    let decks: (typeof deckConfigurations.$inferSelect)[] = [];
 
-    if (aircraftId) {
-      query = query.where(eq(deckConfigurations.aircraftId, aircraftId)) as typeof query;
+    if (presetId) {
+      // Direct preset lookup
+      decks = await db
+        .select()
+        .from(deckConfigurations)
+        .where(eq(deckConfigurations.presetId, presetId))
+        .orderBy(deckConfigurations.sequence);
+    } else if (aircraftId) {
+      // Find default preset for aircraft
+      const [defaultPreset] = await db
+        .select()
+        .from(deckConfigurationPresets)
+        .where(and(
+          eq(deckConfigurationPresets.aircraftId, aircraftId),
+          eq(deckConfigurationPresets.isDefault, true)
+        ))
+        .limit(1);
+
+      if (defaultPreset) {
+        decks = await db
+          .select()
+          .from(deckConfigurations)
+          .where(eq(deckConfigurations.presetId, defaultPreset.id))
+          .orderBy(deckConfigurations.sequence);
+      } else {
+        decks = [];
+      }
+    } else {
+      decks = await db
+        .select()
+        .from(deckConfigurations)
+        .orderBy(deckConfigurations.sequence);
     }
-
-    const decks = await query.orderBy(deckConfigurations.sequence);
 
     // Get positions for each deck
     const decksWithPositions = await Promise.all(
@@ -45,10 +74,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { deck, positions } = body;
 
-    // Validate required fields
-    if (!deck?.aircraftId || !deck?.deckCode || !deck?.deckName || deck?.sequence === undefined) {
+    // Validate required fields - now uses presetId
+    if (!deck?.presetId || !deck?.deckCode || !deck?.deckName || deck?.sequence === undefined) {
       return NextResponse.json(
-        { success: false, error: "Missing required deck fields (aircraftId, deckCode, deckName, sequence)" },
+        { success: false, error: "Missing required deck fields (presetId, deckCode, deckName, sequence)" },
         { status: 400 }
       );
     }
@@ -58,7 +87,7 @@ export async function POST(request: NextRequest) {
       const [newDeck] = await tx
         .insert(deckConfigurations)
         .values({
-          aircraftId: deck.aircraftId,
+          presetId: deck.presetId,
           deckCode: deck.deckCode,
           deckName: deck.deckName,
           maxStructuralWeightKg: deck.maxStructuralWeightKg,
@@ -96,7 +125,7 @@ export async function POST(request: NextRequest) {
               acceptsBulkCargo: pos.acceptsBulkCargo ?? false,
               floorAreaM2: pos.floorAreaM2,
               maxHeightCm: pos.maxHeightCm,
-              contourCode: pos.contourCode,
+              contourCode: pos.contourCode || "FULL_WIDTH",
               xOffset: pos.xOffset,
               yOffset: pos.yOffset,
               colIndex: pos.colIndex,
@@ -119,4 +148,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-

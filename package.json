@@ -13,6 +13,7 @@
     "db:studio": "drizzle-kit studio",
     "db:test": "npx tsx scripts/test-db-connection.ts",
     "db:seed": "npx tsx src/lib/db/seed.ts",
+    "db:drop": "npx tsx scripts/db-drop-all.ts",
     "test:load-planning": "npx tsx scripts/test-load-planning.ts"
   },
   "dependencies": {

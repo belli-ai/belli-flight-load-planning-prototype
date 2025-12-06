@@ -253,15 +253,38 @@ export const aircrafts = pgTable(
 );
 
 /**
- * Deck configuration per aircraft
+ * Deck configuration presets per aircraft (an aircraft can have multiple presets)
  */
-export const deckConfigurations = pgTable(
-  "deck_configurations",
+export const deckConfigurationPresets = pgTable(
+  "deck_configuration_presets",
   {
     id: uuid("id").defaultRandom().primaryKey(),
     aircraftId: uuid("aircraft_id")
       .notNull()
       .references(() => aircrafts.id, { onDelete: "cascade" }),
+    presetName: varchar("preset_name", { length: 50 }).notNull(),
+    presetCode: varchar("preset_code", { length: 20 }).notNull(),
+    description: text("description"),
+    isDefault: boolean("is_default").notNull().default(false),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  },
+  (table) => [
+    unique("preset_unique").on(table.aircraftId, table.presetCode),
+    index("idx_preset_aircraft").on(table.aircraftId),
+  ]
+);
+
+/**
+ * Deck configuration per preset
+ */
+export const deckConfigurations = pgTable(
+  "deck_configurations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    presetId: uuid("preset_id")
+      .notNull()
+      .references(() => deckConfigurationPresets.id, { onDelete: "cascade" }),
     deckCode: varchar("deck_code", { length: 20 }).notNull(),
     deckName: varchar("deck_name", { length: 50 }).notNull(),
     maxStructuralWeightKg: decimal("max_structural_weight_kg", {
@@ -272,10 +295,18 @@ export const deckConfigurations = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    unique("deck_config_unique").on(table.aircraftId, table.deckCode),
-    index("idx_deck_aircraft").on(table.aircraftId),
+    unique("deck_config_unique").on(table.presetId, table.deckCode),
+    index("idx_deck_preset").on(table.presetId),
   ]
 );
+
+/**
+ * Contour code values for loading positions
+ * FULL_WIDTH: Position spans full width (2 columns) - for PMC/PAG pallets
+ * ONE_COLUMN: Position spans one column - for AKE/DPE containers
+ */
+export const CONTOUR_CODES = ["FULL_WIDTH", "ONE_COLUMN"] as const;
+export type ContourCode = (typeof CONTOUR_CODES)[number];
 
 /**
  * Individual cargo loading positions
@@ -301,7 +332,7 @@ export const loadingPositions = pgTable(
     acceptsBulkCargo: boolean("accepts_bulk_cargo").notNull().default(false),
     floorAreaM2: decimal("floor_area_m2", { precision: 10, scale: 4 }),
     maxHeightCm: decimal("max_height_cm", { precision: 10, scale: 2 }),
-    contourCode: varchar("contour_code", { length: 20 }),
+    contourCode: varchar("contour_code", { length: 20 }).notNull().default("FULL_WIDTH"), // FULL_WIDTH or ONE_COLUMN
     xOffset: decimal("x_offset", { precision: 10, scale: 2 }),
     yOffset: decimal("y_offset", { precision: 10, scale: 2 }),
     colIndex: integer("col_index"),
@@ -989,12 +1020,23 @@ export const aircraftsRelations = relations(aircrafts, ({ one, many }) => ({
   loadPlans: many(loadPlans),
 }));
 
+export const deckConfigurationPresetsRelations = relations(
+  deckConfigurationPresets,
+  ({ one, many }) => ({
+    aircraft: one(aircrafts, {
+      fields: [deckConfigurationPresets.aircraftId],
+      references: [aircrafts.id],
+    }),
+    deckConfigurations: many(deckConfigurations),
+  })
+);
+
 export const deckConfigurationsRelations = relations(
   deckConfigurations,
   ({ one, many }) => ({
-    aircraft: one(aircrafts, {
-      fields: [deckConfigurations.aircraftId],
-      references: [aircrafts.id],
+    preset: one(deckConfigurationPresets, {
+      fields: [deckConfigurations.presetId],
+      references: [deckConfigurationPresets.id],
     }),
     loadingPositions: many(loadingPositions),
   })

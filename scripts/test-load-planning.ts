@@ -19,6 +19,7 @@ import {
   cargoItems,
   packingRules,
   aircrafts,
+  deckConfigurationPresets,
   deckConfigurations,
   loadingPositions,
   weightConstraints,
@@ -438,8 +439,14 @@ async function validateResults(loadPlanId: string) {
   console.log(`  • Lower Deck: ${lowerDeckWeight.toFixed(0)} kg (max: ${aircraft.lowerDeckMaxWeightKg} kg)`);
   console.log(`  • Total: ${(mainDeckWeight + lowerDeckWeight).toFixed(0)} kg`);
 
-  // Check position limits
-  const decks = await db.select().from(deckConfigurations).where(eq(deckConfigurations.aircraftId, aircraft.id));
+  // Check position limits - get via preset
+  const [defaultPreset] = await db.select().from(deckConfigurationPresets)
+    .where(and(eq(deckConfigurationPresets.aircraftId, aircraft.id), eq(deckConfigurationPresets.isDefault, true)));
+  
+  const presetId = defaultPreset?.id;
+  const decks = presetId 
+    ? await db.select().from(deckConfigurations).where(eq(deckConfigurations.presetId, presetId))
+    : [];
   
   let positionLimitsOk = true;
   console.log("\n📍 Position Limit Check:");

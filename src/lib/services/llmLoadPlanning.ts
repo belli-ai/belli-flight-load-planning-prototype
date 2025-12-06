@@ -6,6 +6,7 @@ import {
   uldAssignments,
   positionLoads,
   loadingPositions,
+  deckConfigurationPresets,
   deckConfigurations,
   cgEnvelopes,
   loadingZones,
@@ -99,12 +100,24 @@ async function getAircraftContext(aircraftId: string): Promise<AircraftContext> 
 
   if (!aircraft) throw new Error("Aircraft not found");
 
-  // Get deck configurations with positions
-  const decks = await db
+  // Get default preset for this aircraft
+  const [defaultPreset] = await db
     .select()
-    .from(deckConfigurations)
-    .where(eq(deckConfigurations.aircraftId, aircraftId))
-    .orderBy(deckConfigurations.sequence);
+    .from(deckConfigurationPresets)
+    .where(and(
+      eq(deckConfigurationPresets.aircraftId, aircraftId),
+      eq(deckConfigurationPresets.isDefault, true)
+    ))
+    .limit(1);
+
+  // Get deck configurations with positions via preset
+  const decks = defaultPreset
+    ? await db
+        .select()
+        .from(deckConfigurations)
+        .where(eq(deckConfigurations.presetId, defaultPreset.id))
+        .orderBy(deckConfigurations.sequence)
+    : [];
 
   const decksWithPositions = await Promise.all(
     decks.map(async (deck) => {
