@@ -15,6 +15,13 @@
       "when": 1765025771760,
       "tag": "0001_silky_dust",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1765041178553,
+      "tag": "0002_loud_the_phantom",
+      "breakpoints": true
     }
   ]
 }
