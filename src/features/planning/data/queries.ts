@@ -5,6 +5,7 @@ import {
   cargoItems,
   airWaybills,
   uldTypes,
+  ulds,
   packingRules,
   flights,
   aircrafts,
@@ -14,6 +15,7 @@ import {
   loadPlans,
   uldAssignments,
   packedItems,
+  deckConfigurationPresets,
   deckConfigurations,
   loadingPositions,
   cgEnvelopes,
@@ -25,6 +27,7 @@ import type { PackingRule } from "../types";
 import type {
   CargoItemForPacking,
   UldTypeForPacking,
+  UldInventoryItem,
   AircraftConfigForPacking,
   DeckConfigForPacking,
   LoadingPositionForPacking,
@@ -253,7 +256,9 @@ export async function getFlightById(id: string) {
     aircraftType: flight.aircraft?.typeCode ?? "Unknown",
     aircraftName: flight.aircraft?.name ?? "Unknown",
     aircraftId: flight.aircraftId,
+    originId: flight.originId,
     origin: flight.origin?.airportCode ?? "Unknown",
+    destinationId: flight.destinationId,
     destination: flight.destination?.airportCode ?? "Unknown",
     scheduledDeparture: flight.scheduledDeparture,
     scheduledArrival: flight.scheduledArrival,
@@ -419,9 +424,40 @@ export async function getAircraftConfigById(
     return null;
   }
 
-  // Get deck configurations with positions
+  // Get the default preset for this aircraft
+  const defaultPreset = await db.query.deckConfigurationPresets.findFirst({
+    where: and(
+      eq(deckConfigurationPresets.aircraftId, aircraftId),
+      eq(deckConfigurationPresets.isDefault, true)
+    ),
+  });
+
+  // If no default preset, try to get any preset
+  const preset = defaultPreset ?? await db.query.deckConfigurationPresets.findFirst({
+    where: eq(deckConfigurationPresets.aircraftId, aircraftId),
+  });
+
+  if (!preset) {
+    // No preset found, return aircraft config without deck configurations
+    return {
+      id: aircraft.id,
+      name: aircraft.name,
+      typeCode: aircraft.typeCode,
+      operatingEmptyWeightKg: Number(aircraft.operatingEmptyWeightKg),
+      maxZeroFuelWeightKg: Number(aircraft.maxZeroFuelWeightKg),
+      maxTakeoffWeightKg: Number(aircraft.maxTakeoffWeightKg),
+      maxLandingWeightKg: Number(aircraft.maxLandingWeightKg),
+      totalMaxPayloadKg: Number(aircraft.totalMaxPayloadKg),
+      macLeadingEdgeCm: Number(aircraft.macLeadingEdgeCm),
+      macLengthCm: Number(aircraft.macLengthCm),
+      decks: [],
+      cgEnvelopes: [],
+    };
+  }
+
+  // Get deck configurations with positions using presetId
   const decks = await db.query.deckConfigurations.findMany({
-    where: eq(deckConfigurations.aircraftId, aircraftId),
+    where: eq(deckConfigurations.presetId, preset.id),
     orderBy: [asc(deckConfigurations.sequence)],
   });
 
@@ -580,5 +616,122 @@ export async function updateLoadPlanCgResults(
       updatedAt: new Date(),
     })
     .where(eq(loadPlans.id, loadPlanId));
+}
+
+// ============================================================================
+// ULD INVENTORY QUERIES
+// ============================================================================
+
+/**
+ * Get available ULDs at a specific location
+ * Returns ULDs with status "AVAILABLE" at the given location, including type details
+ */
+export async function getAvailableUldsAtLocation(
+  locationId: string
+): Promise<UldInventoryItem[]> {
+  const uldsAtLocation = await db.query.ulds.findMany({
+    where: and(
+      eq(ulds.locationId, locationId),
+      eq(ulds.status, "AVAILABLE")
+    ),
+    with: {
+      uldType: true,
+    },
+    orderBy: [asc(ulds.uldNumber)],
+  });
+
+  return uldsAtLocation.map((uld) => ({
+    id: uld.id,
+    uldNumber: uld.uldNumber,
+    uldTypeId: uld.uldTypeId,
+    uldType: {
+      id: uld.uldType.id,
+      code: uld.uldType.code,
+      name: uld.uldType.name,
+      category: uld.uldType.category as "CONTAINER" | "PALLET",
+      maxGrossWeightKg: Number(uld.uldType.maxGrossWeightKg),
+      tareWeightKg: Number(uld.uldType.tareWeightKg),
+      maxVolumeM3: Number(uld.uldType.maxVolumeM3),
+      internalLengthCm: uld.uldType.internalLengthCm
+        ? Number(uld.uldType.internalLengthCm)
+        : Number(uld.uldType.lengthCm),
+      internalWidthCm: uld.uldType.internalWidthCm
+        ? Number(uld.uldType.internalWidthCm)
+        : Number(uld.uldType.widthCm),
+      internalHeightCm: uld.uldType.internalHeightCm
+        ? Number(uld.uldType.internalHeightCm)
+        : Number(uld.uldType.heightCm),
+      isRefrigerated: uld.uldType.isRefrigerated,
+    },
+    locationId: uld.locationId ?? "",
+    ownerCode: uld.ownerCode,
+    status: uld.status,
+  }));
+}
+
+/**
+ * Update ULD status
+ */
+export async function updateUldStatus(
+  uldId: string,
+  status: "AVAILABLE" | "ASSIGNED" | "IN_USE" | "MAINTENANCE"
+): Promise<void> {
+  await db.update(ulds)
+    .set({
+      status,
+      updatedAt: new Date(),
+    })
+    .where(eq(ulds.id, uldId));
+}
+
+/**
+ * Update multiple ULD statuses
+ */
+export async function updateUldsStatus(
+  uldIds: string[],
+  status: "AVAILABLE" | "ASSIGNED" | "IN_USE" | "MAINTENANCE"
+): Promise<void> {
+  if (uldIds.length === 0) return;
+
+  await db.update(ulds)
+    .set({
+      status,
+      updatedAt: new Date(),
+    })
+    .where(inArray(ulds.id, uldIds));
+}
+
+/**
+ * Release ULDs from a load plan (set status back to AVAILABLE)
+ * Finds all ULD assignments for the load plan and releases those ULDs
+ */
+export async function releaseUldsFromLoadPlan(loadPlanId: string): Promise<void> {
+  // Get all ULD assignments for this load plan
+  const assignments = await db.query.uldAssignments.findMany({
+    where: eq(uldAssignments.loadPlanId, loadPlanId),
+  });
+
+  // Get the ULD IDs that were used (not virtual)
+  const uldIds = assignments
+    .filter((a) => a.uldId !== null)
+    .map((a) => a.uldId as string);
+
+  if (uldIds.length > 0) {
+    await updateUldsStatus(uldIds, "AVAILABLE");
+  }
+}
+
+/**
+ * Get flight with origin location for ULD availability check
+ */
+export async function getFlightWithOrigin(flightId: string) {
+  return db.query.flights.findFirst({
+    where: eq(flights.id, flightId),
+    with: {
+      origin: true,
+      destination: true,
+      aircraft: true,
+    },
+  });
 }
 

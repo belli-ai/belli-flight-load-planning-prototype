@@ -384,6 +384,10 @@ export type OptimizationStatus =
   (typeof OPTIMIZATION_STATUSES)[keyof typeof OPTIMIZATION_STATUSES];
 
 export type UldAssignmentResult = {
+  /** Physical ULD ID from inventory (null if virtual ULD) */
+  uldId: string | null;
+  /** ULD number in IATA format (null if virtual ULD) */
+  uldNumber: string | null;
   uldTypeId: string;
   uldTypeCode: string;
   positionCode: string | null;

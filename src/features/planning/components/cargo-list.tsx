@@ -23,7 +23,7 @@ import {
   X,
 } from "lucide-react";
 import type { CargoItemDisplay } from "@/features/cargo";
-import { getColorForAwb } from "../data/mock-data";
+import { getColorForAwb } from "../lib/utils/colors";
 
 // ============================================================================
 // TYPES

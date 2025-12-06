@@ -498,6 +498,8 @@ export const MOCK_OPTIMIZATION_RESULT: OptimizationResult = {
   computationTimeMs: 1247,
   assignments: [
     {
+      uldId: null,
+      uldNumber: null,
       uldTypeId: "uld-type-ake",
       uldTypeCode: "AKE",
       positionCode: "11L",
@@ -532,6 +534,8 @@ export const MOCK_OPTIMIZATION_RESULT: OptimizationResult = {
       maxGrossWeightKg: 1588,
     },
     {
+      uldId: null,
+      uldNumber: null,
       uldTypeId: "uld-type-ake",
       uldTypeCode: "AKE",
       positionCode: "12L",
@@ -559,6 +563,8 @@ export const MOCK_OPTIMIZATION_RESULT: OptimizationResult = {
       maxGrossWeightKg: 1588,
     },
     {
+      uldId: null,
+      uldNumber: null,
       uldTypeId: "uld-type-pmc",
       uldTypeCode: "PMC",
       positionCode: "21P",

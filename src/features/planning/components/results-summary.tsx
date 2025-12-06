@@ -164,7 +164,14 @@ export function ResultsSummary({
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{assignment.uldTypeCode}</span>
+                          <span className="font-medium">
+                            {assignment.uldNumber || assignment.uldTypeCode}
+                          </span>
+                          {!assignment.uldNumber && (
+                            <span className="text-[10px] text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">
+                              Virtual
+                            </span>
+                          )}
                           <span className="text-xs text-muted-foreground">
                             @ {assignment.positionCode || "Unassigned"}
                           </span>
@@ -286,10 +293,46 @@ export function ResultsSummary({
                   {result.unassignedCargoIds.length} items could not be assigned
                 </span>
               </div>
-              <p className="text-xs text-muted-foreground">
-                These items may exceed ULD capacity or violate packing constraints.
-                Consider using additional ULDs or reviewing cargo specifications.
+              <p className="text-xs text-muted-foreground mb-3">
+                These items may exceed ULD capacity, violate packing constraints, or there may not be enough ULDs available at the origin.
               </p>
+              
+              {/* List unassigned cargo items */}
+              {cargoItems.length > 0 && (
+                <div className="space-y-2 mt-2">
+                  {result.unassignedCargoIds
+                    .slice(0, 10) // Show max 10 items
+                    .map((cargoId) => {
+                      const cargo = cargoItems.find((c) => c.id === cargoId);
+                      if (!cargo) return null;
+                      return (
+                        <div
+                          key={cargoId}
+                          className="flex items-center justify-between rounded-sm border border-red-500/20 bg-background/50 p-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <Box className="size-3.5 text-red-400" />
+                            <span className="text-xs font-medium">{cargo.awbNumber}</span>
+                            <span className="text-xs text-muted-foreground">
+                              Pc {cargo.pieceNumber}
+                            </span>
+                          </div>
+                          <div className="flex gap-3 text-xs text-muted-foreground">
+                            <span>{cargo.weightKg} kg</span>
+                            <span>
+                              {cargo.lengthCm}×{cargo.widthCm}×{cargo.heightCm} cm
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  {result.unassignedCargoIds.length > 10 && (
+                    <div className="text-xs text-muted-foreground text-center pt-1">
+                      ... and {result.unassignedCargoIds.length - 10} more items
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </CardContent>

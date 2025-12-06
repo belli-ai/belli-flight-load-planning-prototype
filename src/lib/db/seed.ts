@@ -399,7 +399,8 @@ const commodityCodesData = [
   {
     id: COMMODITY_CODE_IDS.GEN,
     code: "GEN",
-    description: "General Cargo - Standard freight with no special requirements",
+    description:
+      "General Cargo - Standard freight with no special requirements",
     isDangerousGoods: false,
     dangerousGoodsCodes: null,
     specialHandlingCodes: null,
@@ -1282,7 +1283,8 @@ const dgSegregationRulesData = [
     classBId: DG_CLASS_IDS.CLASS_4_2,
     isSegregated: true,
     segregationType: "PROHIBITED",
-    notes: "Oxidizers must not be loaded with spontaneously combustible materials",
+    notes:
+      "Oxidizers must not be loaded with spontaneously combustible materials",
   },
   // Class 8 (Corrosives) + Class 4 (Flammable solids) - Can react dangerously
   {
@@ -1980,8 +1982,7 @@ const packingRulesData = [
     isActive: true,
     examples: ["Chemical samples cannot be loaded with food shipments"],
     structuredRule: {
-      condition:
-        "(cargo1.dgClassCode in ['6.1', '6.2']) && cargo2.isFoodstuff",
+      condition: "(cargo1.dgClassCode in ['6.1', '6.2']) && cargo2.isFoodstuff",
       action: "SEGREGATE",
     },
   },
@@ -2123,11 +2124,15 @@ const packingRulesData = [
 // ============================================================================
 
 // Physical ULD instances
+// ULD numbers follow IATA format: [3-letter type][5-digit serial][2-letter owner code]
 const uldsData = [
+  // ============================================================================
+  // KUL (Kuala Lumpur) - Main hub
+  // ============================================================================
   // PMC Pallets for main deck
   {
     id: "0aae3c94-5f4c-40d3-9b21-2d80e26574a9",
-    uldNumber: "PMC12345AA",
+    uldNumber: "PMC12345RY",
     uldTypeId: ULD_TYPE_IDS.PMC,
     locationId: LOCATION_IDS.KUL,
     ownerCode: "RY",
@@ -2135,7 +2140,7 @@ const uldsData = [
   },
   {
     id: "dc715c45-2194-4538-8269-ccab09d10bc8",
-    uldNumber: "PMC12346AA",
+    uldNumber: "PMC12346RY",
     uldTypeId: ULD_TYPE_IDS.PMC,
     locationId: LOCATION_IDS.KUL,
     ownerCode: "RY",
@@ -2143,7 +2148,7 @@ const uldsData = [
   },
   {
     id: "21c31fd4-0538-495e-8bad-2e42bb6d7bb8",
-    uldNumber: "PMC12347AA",
+    uldNumber: "PMC12347RY",
     uldTypeId: ULD_TYPE_IDS.PMC,
     locationId: LOCATION_IDS.KUL,
     ownerCode: "RY",
@@ -2151,7 +2156,7 @@ const uldsData = [
   },
   {
     id: "cd3260b9-96c9-4be1-b111-5cf05aacf517",
-    uldNumber: "PMC12348AA",
+    uldNumber: "PMC12348RY",
     uldTypeId: ULD_TYPE_IDS.PMC,
     locationId: LOCATION_IDS.KUL,
     ownerCode: "RY",
@@ -2159,8 +2164,33 @@ const uldsData = [
   },
   {
     id: "af9d97ac-a969-49dd-bea5-a8c5fc895f37",
-    uldNumber: "PMC12349AA",
+    uldNumber: "PMC12349RY",
     uldTypeId: ULD_TYPE_IDS.PMC,
+    locationId: LOCATION_IDS.KUL,
+    ownerCode: "RY",
+    status: "AVAILABLE",
+  },
+  {
+    id: "b1c2d3e4-5f6a-7b8c-9d0e-f1a2b3c4d5e6",
+    uldNumber: "PMC12350RY",
+    uldTypeId: ULD_TYPE_IDS.PMC,
+    locationId: LOCATION_IDS.KUL,
+    ownerCode: "RY",
+    status: "AVAILABLE",
+  },
+  // PAG Pallets for main deck
+  {
+    id: "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d6",
+    uldNumber: "PAG23456RY",
+    uldTypeId: ULD_TYPE_IDS.PAG,
+    locationId: LOCATION_IDS.KUL,
+    ownerCode: "RY",
+    status: "AVAILABLE",
+  },
+  {
+    id: "b2c3d4e5-f6a7-8b9c-0d1e-f2a3b4c5d6e7",
+    uldNumber: "PAG23457RY",
+    uldTypeId: ULD_TYPE_IDS.PAG,
     locationId: LOCATION_IDS.KUL,
     ownerCode: "RY",
     status: "AVAILABLE",
@@ -2168,7 +2198,7 @@ const uldsData = [
   // AKE containers for lower deck
   {
     id: "15f69fa5-8ab7-44fd-a608-4f62a609f3bc",
-    uldNumber: "AKE54321AA",
+    uldNumber: "AKE54321RY",
     uldTypeId: ULD_TYPE_IDS.AKE,
     locationId: LOCATION_IDS.KUL,
     ownerCode: "RY",
@@ -2176,7 +2206,7 @@ const uldsData = [
   },
   {
     id: "deb2552c-c837-4ed9-a108-29ff93c03d6c",
-    uldNumber: "AKE54322AA",
+    uldNumber: "AKE54322RY",
     uldTypeId: ULD_TYPE_IDS.AKE,
     locationId: LOCATION_IDS.KUL,
     ownerCode: "RY",
@@ -2184,7 +2214,7 @@ const uldsData = [
   },
   {
     id: "089432d7-4c51-4b3e-ae50-b39a0affa016",
-    uldNumber: "AKE54323AA",
+    uldNumber: "AKE54323RY",
     uldTypeId: ULD_TYPE_IDS.AKE,
     locationId: LOCATION_IDS.KUL,
     ownerCode: "RY",
@@ -2192,8 +2222,41 @@ const uldsData = [
   },
   {
     id: "6757f096-22eb-462f-86b7-d524bae91686",
-    uldNumber: "AKE54324AA",
+    uldNumber: "AKE54324RY",
     uldTypeId: ULD_TYPE_IDS.AKE,
+    locationId: LOCATION_IDS.KUL,
+    ownerCode: "RY",
+    status: "AVAILABLE",
+  },
+  {
+    id: "c3d4e5f6-a7b8-9c0d-1e2f-a3b4c5d6e7f8",
+    uldNumber: "AKE54325RY",
+    uldTypeId: ULD_TYPE_IDS.AKE,
+    locationId: LOCATION_IDS.KUL,
+    ownerCode: "RY",
+    status: "AVAILABLE",
+  },
+  {
+    id: "d4e5f6a7-b8c9-0d1e-2f3a-b4c5d6e7f8a9",
+    uldNumber: "AKE54326RY",
+    uldTypeId: ULD_TYPE_IDS.AKE,
+    locationId: LOCATION_IDS.KUL,
+    ownerCode: "RY",
+    status: "AVAILABLE",
+  },
+  // DPE (LD-2) containers
+  {
+    id: "e5f6a7b8-c9d0-1e2f-3a4b-c5d6e7f8a9b0",
+    uldNumber: "DPE34567RY",
+    uldTypeId: ULD_TYPE_IDS.DPE,
+    locationId: LOCATION_IDS.KUL,
+    ownerCode: "RY",
+    status: "AVAILABLE",
+  },
+  {
+    id: "f6a7b8c9-d0e1-2f3a-4b5c-d6e7f8a9b0c1",
+    uldNumber: "DPE34568RY",
+    uldTypeId: ULD_TYPE_IDS.DPE,
     locationId: LOCATION_IDS.KUL,
     ownerCode: "RY",
     status: "AVAILABLE",
@@ -2201,10 +2264,236 @@ const uldsData = [
   // RKN refrigerated container
   {
     id: "f6c308e8-06e9-4ddd-98b0-f175175617e3",
-    uldNumber: "RKN98765AA",
+    uldNumber: "RKN98765RY",
     uldTypeId: ULD_TYPE_IDS.RKN,
     locationId: LOCATION_IDS.KUL,
     ownerCode: "RY",
+    status: "AVAILABLE",
+  },
+  {
+    id: "a7b8c9d0-e1f2-3a4b-5c6d-e7f8a9b0c1d2",
+    uldNumber: "RKN98766RY",
+    uldTypeId: ULD_TYPE_IDS.RKN,
+    locationId: LOCATION_IDS.KUL,
+    ownerCode: "RY",
+    status: "AVAILABLE",
+  },
+  // RAP refrigerated pallet
+  {
+    id: "b8c9d0e1-f2a3-4b5c-6d7e-f8a9b0c1d2e3",
+    uldNumber: "RAP45678RY",
+    uldTypeId: ULD_TYPE_IDS.RAP,
+    locationId: LOCATION_IDS.KUL,
+    ownerCode: "RY",
+    status: "AVAILABLE",
+  },
+
+  // ============================================================================
+  // SIN (Singapore)
+  // ============================================================================
+  // PMC Pallets
+  {
+    id: "c9d0e1f2-a3b4-5c6d-7e8f-a9b0c1d2e3f4",
+    uldNumber: "PMC61234SQ",
+    uldTypeId: ULD_TYPE_IDS.PMC,
+    locationId: LOCATION_IDS.SIN,
+    ownerCode: "SQ",
+    status: "AVAILABLE",
+  },
+  {
+    id: "d0e1f2a3-b4c5-6d7e-8f9a-b0c1d2e3f4a5",
+    uldNumber: "PMC61235SQ",
+    uldTypeId: ULD_TYPE_IDS.PMC,
+    locationId: LOCATION_IDS.SIN,
+    ownerCode: "SQ",
+    status: "AVAILABLE",
+  },
+  {
+    id: "e1f2a3b4-c5d6-7e8f-9a0b-c1d2e3f4a5b6",
+    uldNumber: "PMC61236SQ",
+    uldTypeId: ULD_TYPE_IDS.PMC,
+    locationId: LOCATION_IDS.SIN,
+    ownerCode: "SQ",
+    status: "AVAILABLE",
+  },
+  {
+    id: "f2a3b4c5-d6e7-8f9a-0b1c-d2e3f4a5b6c7",
+    uldNumber: "PMC61237SQ",
+    uldTypeId: ULD_TYPE_IDS.PMC,
+    locationId: LOCATION_IDS.SIN,
+    ownerCode: "SQ",
+    status: "AVAILABLE",
+  },
+  // PAG Pallets
+  {
+    id: "a3b4c5d6-e7f8-9a0b-1c2d-e3f4a5b6c7d8",
+    uldNumber: "PAG71234SQ",
+    uldTypeId: ULD_TYPE_IDS.PAG,
+    locationId: LOCATION_IDS.SIN,
+    ownerCode: "SQ",
+    status: "AVAILABLE",
+  },
+  {
+    id: "b4c5d6e7-f8a9-0b1c-2d3e-f4a5b6c7d8e9",
+    uldNumber: "PAG71235SQ",
+    uldTypeId: ULD_TYPE_IDS.PAG,
+    locationId: LOCATION_IDS.SIN,
+    ownerCode: "SQ",
+    status: "AVAILABLE",
+  },
+  // AKE containers
+  {
+    id: "c5d6e7f8-a9b0-1c2d-3e4f-a5b6c7d8e9f0",
+    uldNumber: "AKE81234SQ",
+    uldTypeId: ULD_TYPE_IDS.AKE,
+    locationId: LOCATION_IDS.SIN,
+    ownerCode: "SQ",
+    status: "AVAILABLE",
+  },
+  {
+    id: "d6e7f8a9-b0c1-2d3e-4f5a-b6c7d8e9f0a1",
+    uldNumber: "AKE81235SQ",
+    uldTypeId: ULD_TYPE_IDS.AKE,
+    locationId: LOCATION_IDS.SIN,
+    ownerCode: "SQ",
+    status: "AVAILABLE",
+  },
+  {
+    id: "e7f8a9b0-c1d2-3e4f-5a6b-c7d8e9f0a1b2",
+    uldNumber: "AKE81236SQ",
+    uldTypeId: ULD_TYPE_IDS.AKE,
+    locationId: LOCATION_IDS.SIN,
+    ownerCode: "SQ",
+    status: "AVAILABLE",
+  },
+  {
+    id: "f8a9b0c1-d2e3-4f5a-6b7c-d8e9f0a1b2c3",
+    uldNumber: "AKE81237SQ",
+    uldTypeId: ULD_TYPE_IDS.AKE,
+    locationId: LOCATION_IDS.SIN,
+    ownerCode: "SQ",
+    status: "AVAILABLE",
+  },
+  // RKN refrigerated containers
+  {
+    id: "a9b0c1d2-e3f4-5a6b-7c8d-e9f0a1b2c3d4",
+    uldNumber: "RKN91234SQ",
+    uldTypeId: ULD_TYPE_IDS.RKN,
+    locationId: LOCATION_IDS.SIN,
+    ownerCode: "SQ",
+    status: "AVAILABLE",
+  },
+  {
+    id: "b0c1d2e3-f4a5-6b7c-8d9e-f0a1b2c3d4e5",
+    uldNumber: "RKN91235SQ",
+    uldTypeId: ULD_TYPE_IDS.RKN,
+    locationId: LOCATION_IDS.SIN,
+    ownerCode: "SQ",
+    status: "AVAILABLE",
+  },
+
+  // ============================================================================
+  // HKG (Hong Kong)
+  // ============================================================================
+  // PMC Pallets
+  {
+    id: "c1d2e3f4-a5b6-7c8d-9e0f-a1b2c3d4e5f6",
+    uldNumber: "PMC41234CX",
+    uldTypeId: ULD_TYPE_IDS.PMC,
+    locationId: LOCATION_IDS.HKG,
+    ownerCode: "CX",
+    status: "AVAILABLE",
+  },
+  {
+    id: "d2e3f4a5-b6c7-8d9e-0f1a-b2c3d4e5f6a7",
+    uldNumber: "PMC41235CX",
+    uldTypeId: ULD_TYPE_IDS.PMC,
+    locationId: LOCATION_IDS.HKG,
+    ownerCode: "CX",
+    status: "AVAILABLE",
+  },
+  {
+    id: "e3f4a5b6-c7d8-9e0f-1a2b-c3d4e5f6a7b8",
+    uldNumber: "PMC41236CX",
+    uldTypeId: ULD_TYPE_IDS.PMC,
+    locationId: LOCATION_IDS.HKG,
+    ownerCode: "CX",
+    status: "AVAILABLE",
+  },
+  // PAG Pallets
+  {
+    id: "f4a5b6c7-d8e9-0f1a-2b3c-d4e5f6a7b8c9",
+    uldNumber: "PAG51234CX",
+    uldTypeId: ULD_TYPE_IDS.PAG,
+    locationId: LOCATION_IDS.HKG,
+    ownerCode: "CX",
+    status: "AVAILABLE",
+  },
+  {
+    id: "a5b6c7d8-e9f0-1a2b-3c4d-e5f6a7b8c9d0",
+    uldNumber: "PAG51235CX",
+    uldTypeId: ULD_TYPE_IDS.PAG,
+    locationId: LOCATION_IDS.HKG,
+    ownerCode: "CX",
+    status: "AVAILABLE",
+  },
+  // AKE containers
+  {
+    id: "b6c7d8e9-f0a1-2b3c-4d5e-f6a7b8c9d0e1",
+    uldNumber: "AKE61234CX",
+    uldTypeId: ULD_TYPE_IDS.AKE,
+    locationId: LOCATION_IDS.HKG,
+    ownerCode: "CX",
+    status: "AVAILABLE",
+  },
+  {
+    id: "c7d8e9f0-a1b2-3c4d-5e6f-a7b8c9d0e1f2",
+    uldNumber: "AKE61235CX",
+    uldTypeId: ULD_TYPE_IDS.AKE,
+    locationId: LOCATION_IDS.HKG,
+    ownerCode: "CX",
+    status: "AVAILABLE",
+  },
+  {
+    id: "d8e9f0a1-b2c3-4d5e-6f7a-b8c9d0e1f2a3",
+    uldNumber: "AKE61236CX",
+    uldTypeId: ULD_TYPE_IDS.AKE,
+    locationId: LOCATION_IDS.HKG,
+    ownerCode: "CX",
+    status: "AVAILABLE",
+  },
+  {
+    id: "e9f0a1b2-c3d4-5e6f-7a8b-c9d0e1f2a3b4",
+    uldNumber: "AKE61237CX",
+    uldTypeId: ULD_TYPE_IDS.AKE,
+    locationId: LOCATION_IDS.HKG,
+    ownerCode: "CX",
+    status: "AVAILABLE",
+  },
+  // RKN refrigerated containers
+  {
+    id: "f0a1b2c3-d4e5-6f7a-8b9c-d0e1f2a3b4c5",
+    uldNumber: "RKN71234CX",
+    uldTypeId: ULD_TYPE_IDS.RKN,
+    locationId: LOCATION_IDS.HKG,
+    ownerCode: "CX",
+    status: "AVAILABLE",
+  },
+  // DPE containers
+  {
+    id: "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d7",
+    uldNumber: "DPE81234CX",
+    uldTypeId: ULD_TYPE_IDS.DPE,
+    locationId: LOCATION_IDS.HKG,
+    ownerCode: "CX",
+    status: "AVAILABLE",
+  },
+  {
+    id: "b2c3d4e5-f6a7-8b9c-0d1e-f2a3b4c5d6e8",
+    uldNumber: "DPE81235CX",
+    uldTypeId: ULD_TYPE_IDS.DPE,
+    locationId: LOCATION_IDS.HKG,
+    ownerCode: "CX",
     status: "AVAILABLE",
   },
 ];
@@ -2908,7 +3197,7 @@ const uldAssignmentsData = [
     loadPlanId: "050e8669-6d19-4f75-9f02-ce5ee307f8e8",
     uldId: "0aae3c94-5f4c-40d3-9b21-2d80e26574a9",
     uldTypeId: ULD_TYPE_IDS.PMC,
-    uldNumber: "PMC12345AA",
+    uldNumber: "PMC12345RY",
     positionCode: "U3",
     sequence: 1,
     totalWeightKg: "420.00",
@@ -2927,7 +3216,7 @@ const uldAssignmentsData = [
     loadPlanId: "050e8669-6d19-4f75-9f02-ce5ee307f8e8",
     uldId: "dc715c45-2194-4538-8269-ccab09d10bc8",
     uldTypeId: ULD_TYPE_IDS.PMC,
-    uldNumber: "PMC12346AA",
+    uldNumber: "PMC12346RY",
     positionCode: "U4",
     sequence: 2,
     totalWeightKg: "440.00",
@@ -2946,7 +3235,7 @@ const uldAssignmentsData = [
     loadPlanId: "050e8669-6d19-4f75-9f02-ce5ee307f8e8",
     uldId: "21c31fd4-0538-495e-8bad-2e42bb6d7bb8",
     uldTypeId: ULD_TYPE_IDS.PMC,
-    uldNumber: "PMC12347AA",
+    uldNumber: "PMC12347RY",
     positionCode: "U7",
     sequence: 3,
     totalWeightKg: "370.00",
@@ -2965,7 +3254,7 @@ const uldAssignmentsData = [
     loadPlanId: "050e8669-6d19-4f75-9f02-ce5ee307f8e8",
     uldId: "15f69fa5-8ab7-44fd-a608-4f62a609f3bc",
     uldTypeId: ULD_TYPE_IDS.AKE,
-    uldNumber: "AKE54321AA",
+    uldNumber: "AKE54321RY",
     positionCode: "11",
     sequence: 4,
     totalWeightKg: "232.00",
@@ -2984,7 +3273,7 @@ const uldAssignmentsData = [
     loadPlanId: "050e8669-6d19-4f75-9f02-ce5ee307f8e8",
     uldId: "f6c308e8-06e9-4ddd-98b0-f175175617e3",
     uldTypeId: ULD_TYPE_IDS.RKN,
-    uldNumber: "RKN98765AA",
+    uldNumber: "RKN98765RY",
     positionCode: "21",
     sequence: 5,
     totalWeightKg: "330.00",
@@ -3003,7 +3292,7 @@ const uldAssignmentsData = [
     loadPlanId: "050e8669-6d19-4f75-9f02-ce5ee307f8e8",
     uldId: "deb2552c-c837-4ed9-a108-29ff93c03d6c",
     uldTypeId: ULD_TYPE_IDS.AKE,
-    uldNumber: "AKE54322AA",
+    uldNumber: "AKE54322RY",
     positionCode: "12",
     sequence: 6,
     totalWeightKg: "97.00",
@@ -3388,7 +3677,9 @@ export async function seed() {
     await db.insert(loadingZones).values(loadingZonesData);
 
     console.log("📐 Seeding loading zone index entries...");
-    await db.insert(loadingZoneIndexEntries).values(loadingZoneIndexEntriesData);
+    await db
+      .insert(loadingZoneIndexEntries)
+      .values(loadingZoneIndexEntriesData);
 
     console.log("⛽ Seeding fuel configurations...");
     await db.insert(fuelConfigurations).values(fuelConfigurationsData);
@@ -3480,4 +3771,3 @@ Summary:
 seed()
   .then(() => process.exit(0))
   .catch(() => process.exit(1));
-

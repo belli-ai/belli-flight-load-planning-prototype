@@ -43,19 +43,5 @@ export {
   getAvailableOptimizers,
 } from "./lib/algorithm";
 
-// Mock data (for development)
-export {
-  MOCK_FLIGHTS,
-  MOCK_CARGO_ITEMS,
-  MOCK_CARGO_FOR_PACKING,
-  MOCK_AWBS,
-  MOCK_ULD_TYPES,
-  MOCK_PACKING_RULES,
-  MOCK_OPTIMIZATION_RESULT,
-  MOCK_BUILD_UP_INSTRUCTIONS,
-  getFlightById,
-  getCargoForFlight,
-  getAwbsForFlight,
-  getColorForAwb,
-  CARGO_COLORS,
-} from "./data/mock-data";
+// Utilities
+export { getColorForAwb, CARGO_COLORS } from "./lib/utils/colors";

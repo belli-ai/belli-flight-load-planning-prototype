@@ -15,7 +15,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import type { UldAssignmentResult, PackedItemResult } from "../types";
-import { MOCK_CARGO_ITEMS, getColorForAwb, MOCK_ULD_TYPES } from "../data/mock-data";
+import type { CargoItemDisplay } from "@/features/cargo";
+import { getColorForAwb } from "../lib/utils/colors";
 
 // ============================================================================
 // TYPES
@@ -25,6 +26,7 @@ type UldVisualizationProps = {
   assignments: UldAssignmentResult[];
   selectedUldIndex?: number;
   onSelectUld?: (index: number) => void;
+  cargoItems?: CargoItemDisplay[];
 };
 
 type PackedItemWithDetails = PackedItemResult & {
@@ -41,23 +43,24 @@ type PackedItemWithDetails = PackedItemResult & {
 function IsometricUldView({
   assignment,
   scale = 0.5,
+  cargoItems = [],
 }: {
   assignment: UldAssignmentResult;
   scale?: number;
+  cargoItems?: CargoItemDisplay[];
 }) {
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
-  // Get ULD dimensions
-  const uldType = MOCK_ULD_TYPES.find((t) => t.code === assignment.uldTypeCode);
-  const uldDimensions = {
-    length: uldType?.internalLengthCm || 156,
-    width: uldType?.internalWidthCm || 153,
-    height: uldType?.internalHeightCm || 163,
+  // Get ULD dimensions from assignment (populated by optimizer)
+  const uldDimensions = assignment.uldDimensions ?? {
+    lengthCm: 156,
+    widthCm: 153,
+    heightCm: 163,
   };
 
   // Enrich cargo items with details
   const packedItems: PackedItemWithDetails[] = assignment.cargoItems.map((item) => {
-    const cargo = MOCK_CARGO_ITEMS.find((c) => c.id === item.cargoItemId);
+    const cargo = cargoItems.find((c) => c.id === item.cargoItemId);
     return {
       ...item,
       awbNumber: cargo?.awbNumber || "Unknown",
@@ -140,7 +143,7 @@ function IsometricUldView({
 
   // Draw ULD outline
   const drawUldOutline = () => {
-    const { length, width, height } = uldDimensions;
+    const { lengthCm: length, widthCm: width, heightCm: height } = uldDimensions;
     const p1 = toIsometric(0, 0, 0);
     const p2 = toIsometric(length, 0, 0);
     const p3 = toIsometric(length, width, 0);
@@ -242,6 +245,7 @@ export function UldVisualization({
   assignments,
   selectedUldIndex = 0,
   onSelectUld,
+  cargoItems = [],
 }: UldVisualizationProps) {
   const [viewMode, setViewMode] = useState<"isometric" | "top" | "side">("isometric");
   const [zoom, setZoom] = useState(1);
@@ -383,7 +387,7 @@ export function UldVisualization({
               height: "100%",
             }}
           >
-            <IsometricUldView assignment={currentAssignment} scale={0.45} />
+            <IsometricUldView assignment={currentAssignment} scale={0.45} cargoItems={cargoItems} />
           </div>
         </div>
       </CardContent>

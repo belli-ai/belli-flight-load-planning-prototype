@@ -18,6 +18,9 @@ import {
   getAircraftConfigForFlight,
   savePositionLoads,
   updateLoadPlanCgResults,
+  getFlightById,
+  getAvailableUldsAtLocation,
+  updateUldsStatus,
 } from "../data/queries";
 import {
   getOptimizer,
@@ -53,6 +56,15 @@ export async function runOptimization(
     // Get or create load plan
     const loadPlan = await getOrCreateLoadPlan(input.flightId);
 
+    // Fetch flight details to get origin location
+    const flight = await getFlightById(input.flightId);
+    if (!flight) {
+      return {
+        success: false,
+        error: "Flight not found",
+      };
+    }
+
     // Fetch cargo items from database
     const cargoItems = await getCargoItemsByIds(input.cargoItemIds);
 
@@ -72,6 +84,9 @@ export async function runOptimization(
         error: "No ULD types available in database",
       };
     }
+
+    // Fetch available ULDs from inventory at origin location
+    const uldInventory = await getAvailableUldsAtLocation(flight.originId);
 
     // Fetch packing rules
     const rules = input.rules ?? (await getActivePackingRules());
@@ -94,7 +109,7 @@ export async function runOptimization(
     // Get optimizer (defaults to FFD-3D)
     const optimizer = getOptimizer(input.algorithmName);
 
-    // Run optimization with aircraft configuration
+    // Run optimization with aircraft configuration and ULD inventory
     const optimizationResult = await optimizer.optimize({
       cargoItems,
       uldTypes,
@@ -107,12 +122,15 @@ export async function runOptimization(
         targetCgPercentMac: input.options.targetCgPercentMac,
       },
       aircraftConfig: aircraftConfig ?? undefined,
+      uldInventory,
     });
 
     // Save results to database
     await saveOptimizationResults(loadPlan.id, {
       assignments: optimizationResult.assignments.map((a) => ({
         uldTypeId: a.uldTypeId,
+        uldId: a.uldId,
+        uldNumber: a.uldNumber,
         sequence: a.sequence,
         positionCode: a.positionCode,
         totalWeightKg: a.totalWeightKg,
@@ -136,6 +154,15 @@ export async function runOptimization(
       })),
       computationTimeMs: optimizationResult.computationTimeMs,
     });
+
+    // Update status of assigned physical ULDs to ASSIGNED
+    const usedUldIds = optimizationResult.assignments
+      .filter((a) => a.uldId !== null)
+      .map((a) => a.uldId as string);
+
+    if (usedUldIds.length > 0) {
+      await updateUldsStatus(usedUldIds, "ASSIGNED");
+    }
 
     // Save position loads if aircraft config was used
     if (aircraftConfig && optimizationResult.assignments.length > 0) {
@@ -193,6 +220,8 @@ function convertToOptimizationResult(
     objectiveValue: output.stats.uldsUsed,
     computationTimeMs: output.computationTimeMs,
     assignments: output.assignments.map((a) => ({
+      uldId: a.uldId,
+      uldNumber: a.uldNumber,
       uldTypeId: a.uldTypeId,
       uldTypeCode: a.uldTypeCode,
       positionCode: a.positionCode,

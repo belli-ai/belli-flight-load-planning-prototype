@@ -25,8 +25,6 @@ import {
   generateInstructions,
   getCargoItems,
   getPackingRules,
-  MOCK_CARGO_ITEMS,
-  MOCK_PACKING_RULES,
   type OptimizationObjective,
 } from "@/features/planning";
 import type {
@@ -47,7 +45,6 @@ export default function BuildUpPage() {
   const [cargoItems, setCargoItems] = useState<CargoItemDisplay[]>([]);
   const [packingRules, setPackingRules] = useState<PackingRule[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
-  const [useMockData, setUseMockData] = useState(false);
 
   // UI state
   const [selectedCargoIds, setSelectedCargoIds] = useState<string[]>([]);
@@ -75,33 +72,18 @@ export default function BuildUpPage() {
 
       setIsLoadingData(true);
       try {
-        // Try to fetch real data
+        // Fetch data from database
         const [cargoResult, rulesResult] = await Promise.all([
           getCargoItems(selectedFlight.id),
           getPackingRules(),
         ]);
 
-        // Use real data if available, otherwise fall back to mock
-        if (cargoResult.items.length > 0) {
-          setCargoItems(cargoResult.items);
-          setUseMockData(false);
-        } else {
-          // Fall back to mock data for development
-          setCargoItems(MOCK_CARGO_ITEMS);
-          setUseMockData(true);
-        }
-
-        if (rulesResult.rules.length > 0) {
-          setPackingRules(rulesResult.rules);
-        } else {
-          setPackingRules(MOCK_PACKING_RULES);
-        }
+        setCargoItems(cargoResult.items);
+        setPackingRules(rulesResult.rules);
       } catch (error) {
         console.error("Failed to fetch data:", error);
-        // Fall back to mock data on error
-        setCargoItems(MOCK_CARGO_ITEMS);
-        setPackingRules(MOCK_PACKING_RULES);
-        setUseMockData(true);
+        setCargoItems([]);
+        setPackingRules([]);
       } finally {
         setIsLoadingData(false);
       }
@@ -206,9 +188,6 @@ export default function BuildUpPage() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Pack cargo into ULDs with AI-powered optimization
-            {useMockData && (
-              <span className="ml-2 text-xs text-amber-500">(Demo Mode)</span>
-            )}
           </p>
         </div>
 

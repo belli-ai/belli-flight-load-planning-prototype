@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import type { UldAssignmentResult, PackedItemResult } from "../types";
 import type { CargoItemDisplay } from "@/features/cargo";
-import { getColorForAwb } from "../data/mock-data";
+import { getColorForAwb } from "../lib/utils/colors";
 
 // ============================================================================
 // TYPES

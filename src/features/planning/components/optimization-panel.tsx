@@ -17,7 +17,6 @@ import {
   Scale,
 } from "lucide-react";
 import type { OptimizationResult, PackingRule } from "../types";
-import { MOCK_PACKING_RULES } from "../data/mock-data";
 
 // ============================================================================
 // TYPES
@@ -48,7 +47,7 @@ export function OptimizationPanel({
   onOptimize,
   isOptimizing,
   result,
-  rules = MOCK_PACKING_RULES,
+  rules = [],
   objective: controlledObjective,
   onObjectiveChange,
 }: OptimizationPanelProps) {

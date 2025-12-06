@@ -22,6 +22,7 @@ import type {
   Dimensions3D,
   AircraftConfigForPacking,
   CgResultOutput,
+  UldInventoryItem,
 } from "./types";
 import {
   assignPositions,
@@ -51,6 +52,10 @@ type OpenUld = {
   packedItems: PackedItemOutput[];
   currentWeightKg: number;
   currentVolumeM3: number;
+  /** Physical ULD ID from inventory (null if virtual) */
+  uldId: string | null;
+  /** ULD number in IATA format (null if virtual) */
+  uldNumber: string | null;
 };
 
 type ItemOrientation = {
@@ -135,7 +140,8 @@ export class Ffd3dOptimizer implements IUldOptimizer {
         selectedUldTypes,
         input.constraints,
         input.options,
-        warnings
+        warnings,
+        input.uldInventory
       );
 
       // Build initial assignments (without position info)
@@ -356,11 +362,22 @@ export class Ffd3dOptimizer implements IUldOptimizer {
     uldTypes: UldTypeForPacking[],
     constraints: PackingConstraint[],
     options: OptimizerInput["options"],
-    warnings: string[]
+    warnings: string[],
+    uldInventory?: UldInventoryItem[]
   ): { openUlds: OpenUld[]; unassignedItems: CargoItemForPacking[] } {
     const openUlds: OpenUld[] = [];
     const unassignedItems: CargoItemForPacking[] = [];
     let uldSequence = 0;
+
+    // Track available physical ULDs from inventory (grouped by type)
+    const availableInventory = new Map<string, UldInventoryItem[]>();
+    if (uldInventory) {
+      for (const uld of uldInventory) {
+        const existing = availableInventory.get(uld.uldTypeId) || [];
+        existing.push(uld);
+        availableInventory.set(uld.uldTypeId, existing);
+      }
+    }
 
     for (const item of items) {
       let placed = false;
@@ -428,8 +445,18 @@ export class Ffd3dOptimizer implements IUldOptimizer {
           continue;
         }
 
-        // Create new ULD
-        const newUld = this.createNewUld(bestUldType, ++uldSequence);
+        // Try to get a physical ULD from inventory first
+        const inventoryItem = this.consumeInventoryUld(
+          bestUldType.id,
+          availableInventory
+        );
+
+        // Create new ULD (with inventory info if available)
+        const newUld = this.createNewUld(
+          bestUldType,
+          ++uldSequence,
+          inventoryItem
+        );
         const placement = this.tryPlaceItem(
           item,
           newUld,
@@ -446,11 +473,32 @@ export class Ffd3dOptimizer implements IUldOptimizer {
             `Failed to place item ${item.awbNumber}-${item.pieceNumber} in new ULD`
           );
           unassignedItems.push(item);
+          // Return the inventory ULD back to available pool if we couldn't use it
+          if (inventoryItem) {
+            const pool = availableInventory.get(bestUldType.id) || [];
+            pool.push(inventoryItem);
+            availableInventory.set(bestUldType.id, pool);
+          }
         }
       }
     }
 
     return { openUlds, unassignedItems };
+  }
+
+  /**
+   * Consume a physical ULD from inventory for the given ULD type
+   * Returns the inventory item if available, null otherwise (virtual ULD will be used)
+   */
+  private consumeInventoryUld(
+    uldTypeId: string,
+    availableInventory: Map<string, UldInventoryItem[]>
+  ): UldInventoryItem | null {
+    const pool = availableInventory.get(uldTypeId);
+    if (!pool || pool.length === 0) {
+      return null;
+    }
+    return pool.shift() ?? null;
   }
 
   // --------------------------------------------------------------------------
@@ -610,7 +658,11 @@ export class Ffd3dOptimizer implements IUldOptimizer {
   // 3D PACKING LOGIC
   // --------------------------------------------------------------------------
 
-  private createNewUld(uldType: UldTypeForPacking, sequence: number): OpenUld {
+  private createNewUld(
+    uldType: UldTypeForPacking,
+    sequence: number,
+    inventoryItem?: UldInventoryItem | null
+  ): OpenUld {
     return {
       uldType,
       sequence,
@@ -627,6 +679,8 @@ export class Ffd3dOptimizer implements IUldOptimizer {
       packedItems: [],
       currentWeightKg: uldType.tareWeightKg,
       currentVolumeM3: 0,
+      uldId: inventoryItem?.id ?? null,
+      uldNumber: inventoryItem?.uldNumber ?? null,
     };
   }
 
@@ -855,6 +909,8 @@ export class Ffd3dOptimizer implements IUldOptimizer {
 
   private buildAssignments(openUlds: OpenUld[]): UldAssignmentOutput[] {
     return openUlds.map((uld) => ({
+      uldId: uld.uldId,
+      uldNumber: uld.uldNumber,
       uldTypeId: uld.uldType.id,
       uldTypeCode: uld.uldType.code,
       sequence: uld.sequence,

@@ -142,6 +142,25 @@ export type UldTypeForPacking = {
 };
 
 /**
+ * Physical ULD from inventory
+ * Represents an actual ULD instance that can be assigned to a load plan
+ */
+export type UldInventoryItem = {
+  id: string;
+  /** Unique ULD number in IATA format (e.g., "AKE12345BA") */
+  uldNumber: string;
+  uldTypeId: string;
+  /** Full ULD type details */
+  uldType: UldTypeForPacking;
+  /** Current location (airport) where the ULD is stored */
+  locationId: string;
+  /** Owner airline code (e.g., "RY", "TH") */
+  ownerCode: string | null;
+  /** Current status of the ULD */
+  status: string;
+};
+
+/**
  * Packing constraint from rules
  */
 export type PackingConstraint = {
@@ -203,6 +222,10 @@ export type PackedItemOutput = {
  * ULD assignment result from algorithm
  */
 export type UldAssignmentOutput = {
+  /** Physical ULD ID from inventory (null if virtual ULD) */
+  uldId: string | null;
+  /** ULD number in IATA format (null if virtual ULD) */
+  uldNumber: string | null;
   uldTypeId: string;
   uldTypeCode: string;
   sequence: number;
@@ -304,6 +327,8 @@ export type OptimizerInput = {
   options: OptimizerOptions;
   /** Aircraft configuration for position assignment and CG calculations (optional) */
   aircraftConfig?: AircraftConfigForPacking;
+  /** Available ULDs from inventory at origin location (optional) */
+  uldInventory?: UldInventoryItem[];
 };
 
 /**
