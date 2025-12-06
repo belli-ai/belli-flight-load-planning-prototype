@@ -12,7 +12,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:test": "npx tsx scripts/test-db-connection.ts",
-    "db:seed": "npx tsx src/lib/db/seed.ts"
+    "db:seed": "npx tsx src/lib/db/seed.ts",
+    "test:load-planning": "npx tsx scripts/test-load-planning.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
