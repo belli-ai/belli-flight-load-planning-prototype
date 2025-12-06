@@ -754,6 +754,7 @@ function LoadBalancingPageContent() {
               <CardContent className="pt-4">
                 <AircraftViewer3D
                   assignments={displayAssignments}
+                  deckConfig={loadPlan.deckConfig}
                   selectedUldIndex={selectedUldIndex}
                   onUldSelect={setSelectedUldIndex}
                 />

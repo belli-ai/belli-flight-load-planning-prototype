@@ -56,6 +56,25 @@ export type BalanceOptimizationResult = {
   error?: string;
 };
 
+export type DeckConfigPosition = {
+  positionCode: string;
+  xOffset: number;
+  yOffset: number;
+  colIndex: number;
+  rowIndex: number;
+  contourCode: string;
+  maxWeightKg: number;
+  armStationCm: number;
+};
+
+export type DeckConfigForVisualization = {
+  id: string;
+  deckCode: string;
+  deckName: string;
+  sequence: number;
+  positions: DeckConfigPosition[];
+};
+
 export type LoadPlanWithAssignments = {
   id: string;
   flightId: string;
@@ -89,6 +108,9 @@ export type LoadPlanWithAssignments = {
     takeoffWeightKg: number;
     landingWeightKg: number;
   };
+  deckConfig: {
+    decks: DeckConfigForVisualization[];
+  };
 };
 
 // ============================================================================
@@ -97,7 +119,11 @@ export type LoadPlanWithAssignments = {
 
 export async function getLoadPlanWithAssignments(
   loadPlanId: string
-): Promise<{ success: boolean; data?: LoadPlanWithAssignments; error?: string }> {
+): Promise<{
+  success: boolean;
+  data?: LoadPlanWithAssignments;
+  error?: string;
+}> {
   try {
     // Get load plan
     const loadPlan = await db.query.loadPlans.findFirst({
@@ -126,6 +152,69 @@ export async function getLoadPlanWithAssignments(
       },
     });
 
+    // Get deck configurations with positions through presets
+    const presets = await db.query.deckConfigurationPresets.findMany({
+      where: and(
+        eq(deckConfigurationPresets.aircraftId, loadPlan.aircraftId),
+        eq(deckConfigurationPresets.isDefault, true)
+      ),
+      with: {
+        deckConfigurations: {
+          with: {
+            loadingPositions: true,
+          },
+        },
+      },
+    });
+
+    // If no default preset, get the first available preset
+    let decks: (typeof presets)[0]["deckConfigurations"] = [];
+    if (presets.length > 0) {
+      decks = presets[0].deckConfigurations;
+    } else {
+      // Fallback to first preset if no default
+      const fallbackPresets = await db.query.deckConfigurationPresets.findMany({
+        where: eq(deckConfigurationPresets.aircraftId, loadPlan.aircraftId),
+        with: {
+          deckConfigurations: {
+            with: {
+              loadingPositions: true,
+            },
+          },
+        },
+        limit: 1,
+      });
+      if (fallbackPresets.length > 0) {
+        decks = fallbackPresets[0].deckConfigurations;
+      }
+    }
+
+    // Helper to parse decimal strings to numbers
+    const toNum = (val: string | number | null | undefined): number => {
+      if (val === null || val === undefined) return 0;
+      return typeof val === "number" ? val : parseFloat(val);
+    };
+
+    // Transform deck configurations for visualization
+    const deckConfigForVisualization: DeckConfigForVisualization[] = decks.map(
+      (deck, idx) => ({
+        id: deck.id,
+        deckCode: deck.deckCode,
+        deckName: deck.deckName,
+        sequence: deck.sequence ?? idx,
+        positions: deck.loadingPositions.map((pos) => ({
+          positionCode: pos.positionCode,
+          xOffset: toNum(pos.xOffset),
+          yOffset: toNum(pos.yOffset),
+          colIndex: pos.colIndex ?? 0,
+          rowIndex: pos.rowIndex ?? 0,
+          contourCode: pos.contourCode ?? "FULL_WIDTH",
+          maxWeightKg: toNum(pos.maxWeightKg),
+          armStationCm: toNum(pos.armStationCm),
+        })),
+      })
+    );
+
     // Transform to response format
     const transformedAssignments = assignments.map((a) => ({
       id: a.id,
@@ -143,7 +232,8 @@ export async function getLoadPlanWithAssignments(
       (sum, a) => sum + a.totalWeightKg,
       0
     );
-    const zeroFuelWeightKg = parseFloat(String(aircraft.operatingEmptyWeightKg)) + payloadKg;
+    const zeroFuelWeightKg =
+      parseFloat(String(aircraft.operatingEmptyWeightKg)) + payloadKg;
 
     return {
       success: true,
@@ -157,7 +247,9 @@ export async function getLoadPlanWithAssignments(
           id: aircraft.id,
           name: aircraft.name,
           typeCode: aircraft.typeCode,
-          operatingEmptyWeightKg: parseFloat(String(aircraft.operatingEmptyWeightKg)),
+          operatingEmptyWeightKg: parseFloat(
+            String(aircraft.operatingEmptyWeightKg)
+          ),
           maxZeroFuelWeightKg: parseFloat(String(aircraft.maxZeroFuelWeightKg)),
           maxTakeoffWeightKg: parseFloat(String(aircraft.maxTakeoffWeightKg)),
           maxLandingWeightKg: parseFloat(String(aircraft.maxLandingWeightKg)),
@@ -168,8 +260,15 @@ export async function getLoadPlanWithAssignments(
         weights: {
           payloadKg,
           zeroFuelWeightKg,
-          takeoffWeightKg: parseFloat(String(loadPlan.takeoffWeightKg ?? zeroFuelWeightKg)),
-          landingWeightKg: parseFloat(String(loadPlan.landingWeightKg ?? zeroFuelWeightKg)),
+          takeoffWeightKg: parseFloat(
+            String(loadPlan.takeoffWeightKg ?? zeroFuelWeightKg)
+          ),
+          landingWeightKg: parseFloat(
+            String(loadPlan.landingWeightKg ?? zeroFuelWeightKg)
+          ),
+        },
+        deckConfig: {
+          decks: deckConfigForVisualization,
         },
       },
     };
@@ -248,17 +347,19 @@ async function getAircraftConfigForBalancing(
       })),
     }));
 
-    const cgEnvelopesForPacking: CgEnvelopeForPacking[] = envelopes.map((env) => ({
-      id: env.id,
-      envelopeType: env.envelopeType as CgEnvelopeForPacking["envelopeType"],
-      forwardLimitPercentMac: toNum(env.forwardLimitPercentMac) ?? 0,
-      aftLimitPercentMac: toNum(env.aftLimitPercentMac) ?? 0,
-      points: env.points.map((p) => ({
-        sequence: p.sequence,
-        weightKg: toNum(p.weightKg) ?? 0,
-        cgPercentMac: toNum(p.cgPercentMac) ?? 0,
-      })),
-    }));
+    const cgEnvelopesForPacking: CgEnvelopeForPacking[] = envelopes.map(
+      (env) => ({
+        id: env.id,
+        envelopeType: env.envelopeType as CgEnvelopeForPacking["envelopeType"],
+        forwardLimitPercentMac: toNum(env.forwardLimitPercentMac) ?? 0,
+        aftLimitPercentMac: toNum(env.aftLimitPercentMac) ?? 0,
+        points: env.points.map((p) => ({
+          sequence: p.sequence,
+          weightKg: toNum(p.weightKg) ?? 0,
+          cgPercentMac: toNum(p.cgPercentMac) ?? 0,
+        })),
+      })
+    );
 
     return {
       id: aircraft.id,
@@ -290,7 +391,7 @@ export async function optimizeBalance(
   try {
     // Get load plan with assignments
     const loadPlanResult = await getLoadPlanWithAssignments(input.loadPlanId);
-    
+
     if (!loadPlanResult.success || !loadPlanResult.data) {
       return {
         success: false,
@@ -305,7 +406,9 @@ export async function optimizeBalance(
     const loadPlan = loadPlanResult.data;
 
     // Get aircraft configuration
-    const aircraftConfig = await getAircraftConfigForBalancing(loadPlan.aircraftId);
+    const aircraftConfig = await getAircraftConfigForBalancing(
+      loadPlan.aircraftId
+    );
 
     if (!aircraftConfig) {
       return {
@@ -319,8 +422,8 @@ export async function optimizeBalance(
     }
 
     // Transform assignments to algorithm format
-    const uldAssignmentsForOptimization: UldAssignmentOutput[] = loadPlan.assignments.map(
-      (a, idx) => ({
+    const uldAssignmentsForOptimization: UldAssignmentOutput[] =
+      loadPlan.assignments.map((a, idx) => ({
         uldId: null,
         uldNumber: a.uldNumber,
         uldTypeId: a.uldTypeId,
@@ -336,12 +439,11 @@ export async function optimizeBalance(
         cargoItems: [],
         uldDimensions: { lengthCm: 150, widthCm: 150, heightCm: 150 },
         maxGrossWeightKg: 1500,
-      })
-    );
+      }));
 
     // Run position assignment based on strategy
     const targetCg = input.targetCgPercentMac ?? 28; // Default target CG
-    
+
     const assignmentResult =
       input.strategy === "CG_OPTIMIZED"
         ? assignPositionsForCgTarget(
@@ -349,7 +451,10 @@ export async function optimizeBalance(
             aircraftConfig,
             targetCg
           )
-        : assignPositionsSequential(uldAssignmentsForOptimization, aircraftConfig);
+        : assignPositionsSequential(
+            uldAssignmentsForOptimization,
+            aircraftConfig
+          );
 
     // Calculate CG result
     const cgResult = calculateCgFromAssignments(
@@ -431,7 +536,11 @@ export async function optimizeBalance(
 
 export async function getLoadPlansForFlight(
   flightId: string
-): Promise<{ success: boolean; plans: Array<{ id: string; status: string; createdAt: Date }>; error?: string }> {
+): Promise<{
+  success: boolean;
+  plans: Array<{ id: string; status: string; createdAt: Date }>;
+  error?: string;
+}> {
   try {
     const plans = await db.query.loadPlans.findMany({
       where: eq(loadPlans.flightId, flightId),
@@ -455,4 +564,3 @@ export async function getLoadPlansForFlight(
     };
   }
 }
-

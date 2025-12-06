@@ -55,3 +55,17 @@ export {
 
 // Utilities
 export { getColorForAwb, CARGO_COLORS } from "./lib/utils/colors";
+
+// Build-Up PDF Generation
+export {
+  generateBuildUpPdf,
+  downloadBuildUpPdf,
+  getBuildUpPdfFilename,
+  getCargoColor,
+} from "./lib/build-up-pdf";
+
+export type {
+  BuildUpPdfInput,
+  PackedItemData,
+  RotationType,
+} from "./lib/build-up-pdf";

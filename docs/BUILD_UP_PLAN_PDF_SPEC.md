@@ -52,12 +52,12 @@ Generated per flight, showing complete aircraft load distribution with CG calcul
 
 ### Page Layout
 
-| Property | Value |
-|----------|-------|
-| Page Size | A4 Portrait (210mm × 297mm) |
-| Margins | 20mm all sides |
-| Font Family | Helvetica |
-| Base Font Size | 9pt |
+| Property       | Value                       |
+| -------------- | --------------------------- |
+| Page Size      | A4 Portrait (210mm × 297mm) |
+| Margins        | 20mm all sides              |
+| Font Family    | Helvetica                   |
+| Base Font Size | 9pt                         |
 
 ### Document Structure
 
@@ -113,17 +113,18 @@ Generated per flight, showing complete aircraft load distribution with CG calcul
 ```typescript
 type BuildUpHeader = {
   documentTitle: "ULD BUILD-UP INSTRUCTION SHEET";
-  flightNumber: string;        // e.g., "RY123"
-  flightDate: string;          // e.g., "06 DEC 2024"
-  route: string;               // e.g., "KUL → SIN"
-  uldTypeCode: string;         // e.g., "PMC", "AKE"
-  uldNumber: string;           // e.g., "PMC-12345GA"
-  positionCode: string;        // e.g., "U1", "11"
+  flightNumber: string; // e.g., "RY123"
+  flightDate: string; // e.g., "06 DEC 2024"
+  route: string; // e.g., "KUL → SIN"
+  uldTypeCode: string; // e.g., "PMC", "AKE"
+  uldNumber: string; // e.g., "PMC-12345GA"
+  positionCode: string; // e.g., "U1", "11"
   aircraftRegistration: string;
 };
 ```
 
 **Visual Layout:**
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │  ULD BUILD-UP INSTRUCTION SHEET                                 │
@@ -148,24 +149,24 @@ Display an isometric or top-down view of the ULD showing:
 
 **Visualization Specifications:**
 
-| Element | Specification |
-|---------|---------------|
-| ULD Outline | 1pt black stroke, light gray fill |
-| Cargo Items | Colored fills with 0.5pt dark stroke |
-| Labels | 7pt Helvetica, positioned at item center |
-| Dimensions | 6pt gray text with dimension lines |
-| Grid | Optional 10cm reference grid, 0.25pt gray dashed |
+| Element     | Specification                                    |
+| ----------- | ------------------------------------------------ |
+| ULD Outline | 1pt black stroke, light gray fill                |
+| Cargo Items | Colored fills with 0.5pt dark stroke             |
+| Labels      | 7pt Helvetica, positioned at item center         |
+| Dimensions  | 6pt gray text with dimension lines               |
+| Grid        | Optional 10cm reference grid, 0.25pt gray dashed |
 
 **Color Coding Scheme:**
 
-| Cargo Type | Fill Color | Hex Code |
-|------------|------------|----------|
-| General Cargo | Light Blue | #93C5FD |
-| Priority/Express | Orange | #FDBA74 |
-| Dangerous Goods | Red | #FCA5A5 |
-| Perishable | Green | #86EFAC |
-| Valuable | Purple | #D8B4FE |
-| Temperature Controlled | Cyan | #67E8F9 |
+| Cargo Type             | Fill Color | Hex Code |
+| ---------------------- | ---------- | -------- |
+| General Cargo          | Light Blue | #93C5FD  |
+| Priority/Express       | Orange     | #FDBA74  |
+| Dangerous Goods        | Red        | #FCA5A5  |
+| Perishable             | Green      | #86EFAC  |
+| Valuable               | Purple     | #D8B4FE  |
+| Temperature Controlled | Cyan       | #67E8F9  |
 
 #### 3. Item Placement Table
 
@@ -184,16 +185,16 @@ Display an isometric or top-down view of the ULD showing:
 
 **Column Definitions:**
 
-| Column | Width | Description |
-|--------|-------|-------------|
-| SEQ | 8% | Loading sequence (1 = first to load, bottom layer) |
-| AWB NUMBER | 18% | Air Waybill number |
-| PC ID | 10% | Piece identifier within AWB |
-| DIMENSIONS | 15% | Length × Width × Height in cm |
-| WEIGHT | 10% | Gross weight in kg |
-| POSITION | 22% | X, Y, Z coordinates from ULD origin |
-| ROTATION | 10% | Applied rotation (None, Z-90°, Z-180°, etc.) |
-| SHC | 7% | Special Handling Codes |
+| Column     | Width | Description                                        |
+| ---------- | ----- | -------------------------------------------------- |
+| SEQ        | 8%    | Loading sequence (1 = first to load, bottom layer) |
+| AWB NUMBER | 18%   | Air Waybill number                                 |
+| PC ID      | 10%   | Piece identifier within AWB                        |
+| DIMENSIONS | 15%   | Length × Width × Height in cm                      |
+| WEIGHT     | 10%   | Gross weight in kg                                 |
+| POSITION   | 22%   | X, Y, Z coordinates from ULD origin                |
+| ROTATION   | 10%   | Applied rotation (None, Z-90°, Z-180°, etc.)       |
+| SHC        | 7%    | Special Handling Codes                             |
 
 #### 4. Build-Up Notes Section
 
@@ -219,15 +220,15 @@ Display contextual instructions based on cargo characteristics:
 
 **Note Categories:**
 
-| Category | Icon | Trigger Condition |
-|----------|------|-------------------|
-| Loading Sequence | ⚠ | Always shown |
-| Heavy Cargo | ⚡ | Items > 100kg |
-| Fragile | ⚠ | SHC contains "FRA" |
-| Perishable | ❄ | SHC contains "PER" |
-| Dangerous Goods | ☢ | isDangerousGoods = true |
-| Temperature | 🌡 | temperatureControlled = true |
-| Orientation | ↑ | orientationRestricted = true |
+| Category         | Icon | Trigger Condition            |
+| ---------------- | ---- | ---------------------------- |
+| Loading Sequence | ⚠    | Always shown                 |
+| Heavy Cargo      | ⚡   | Items > 100kg                |
+| Fragile          | ⚠    | SHC contains "FRA"           |
+| Perishable       | ❄    | SHC contains "PER"           |
+| Dangerous Goods  | ☢    | isDangerousGoods = true      |
+| Temperature      | 🌡    | temperatureControlled = true |
+| Orientation      | ↑    | orientationRestricted = true |
 
 #### 5. Summary Section
 
@@ -270,13 +271,13 @@ Display contextual instructions based on cargo characteristics:
 
 ### Page Layout
 
-| Property | Value |
-|----------|-------|
-| Page Size | A4 Portrait (210mm × 297mm) |
-| Margins | 30pt all sides |
-| Font Family | Helvetica |
-| Base Font Size | 9pt |
-| Pages | Multi-page (typically 2-3 pages) |
+| Property       | Value                            |
+| -------------- | -------------------------------- |
+| Page Size      | A4 Portrait (210mm × 297mm)      |
+| Margins        | 30pt all sides                   |
+| Font Family    | Helvetica                        |
+| Base Font Size | 9pt                              |
+| Pages          | Multi-page (typically 2-3 pages) |
 
 ### Document Structure
 
@@ -439,32 +440,32 @@ Based on the Raya Airways A321-211P2F BZB Loadsheet, index values are determined
 
 ```typescript
 type LoadingZoneIndexTable = {
-  zoneCode: string;           // U1, U2, ... U14
+  zoneCode: string; // U1, U2, ... U14
   entries: IndexEntry[];
 };
 
 type IndexEntry = {
-  weightMinKg: number;        // Lower bound (inclusive)
-  weightMaxKg: number;        // Upper bound (inclusive)
-  indexUnits: number;         // Index value for this weight range
+  weightMinKg: number; // Lower bound (inclusive)
+  weightMaxKg: number; // Upper bound (inclusive)
+  indexUnits: number; // Index value for this weight range
 };
 ```
 
 ### Sample Index Values (A321-211P2F Reference)
 
-| Total Load (kg) | U1 | U2 | U3 | U4 | U5 | U6 | U7 | U8 | U9 | U10 | U11 | U12 | U13 | U14 |
-|-----------------|----|----|----|----|----|----|----|----|----|----|-----|-----|-----|-----|
-| 100 | -1 | -1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | +0.5 | +0.5 | +0.5 | +0.5 | +0.7 |
-| 500 | -3 | -3 | -1 | -1 | -1 | 0 | 0 | +1 | +2 | +2 | +3 | +3 | +4 | +4 |
-| 1000 | -6 | -5 | -3 | -2 | -2 | -1 | 0 | +2 | +4 | +5 | +6 | +7 | +8 | +9 |
-| 2000 | -10 | -9 | -5 | -4 | -4 | -2 | 0 | +3 | +7 | +10 | +12 | +14 | +15 | +17 |
-| 5000 | -18 | -16 | -10 | -8 | -7 | -4 | 0 | +5 | +11 | +18 | +22 | +26 | +28 | +30 |
-| MAX | -25 | -47 | -28 | -28 | -9 | -5 | -1 | +4 | +15 | +30 | +30 | +37 | +30 | +31 |
+| Total Load (kg) | U1  | U2  | U3  | U4  | U5  | U6  | U7  | U8  | U9  | U10  | U11  | U12  | U13  | U14  |
+| --------------- | --- | --- | --- | --- | --- | --- | --- | --- | --- | ---- | ---- | ---- | ---- | ---- |
+| 100             | -1  | -1  | 0   | 0   | 0   | 0   | 0   | 0   | 0   | +0.5 | +0.5 | +0.5 | +0.5 | +0.7 |
+| 500             | -3  | -3  | -1  | -1  | -1  | 0   | 0   | +1  | +2  | +2   | +3   | +3   | +4   | +4   |
+| 1000            | -6  | -5  | -3  | -2  | -2  | -1  | 0   | +2  | +4  | +5   | +6   | +7   | +8   | +9   |
+| 2000            | -10 | -9  | -5  | -4  | -4  | -2  | 0   | +3  | +7  | +10  | +12  | +14  | +15  | +17  |
+| 5000            | -18 | -16 | -10 | -8  | -7  | -4  | 0   | +5  | +11 | +18  | +22  | +26  | +28  | +30  |
+| MAX             | -25 | -47 | -28 | -28 | -9  | -5  | -1  | +4  | +15 | +30  | +30  | +37  | +30  | +31  |
 
 ### LMC (Last Minute Change) Index Impacts
 
-| Zone | U1 | U2 | U3 | U4 | U5 | U6 | U7 | U8 | U9 | U10 | U11 | U12 | U13 | U14 |
-|------|----|----|----|----|----|----|----|----|----|----|-----|-----|-----|-----|
+| Zone       | U1   | U2   | U3   | U4   | U5   | U6   | U7  | U8   | U9   | U10  | U11  | U12  | U13  | U14  |
+| ---------- | ---- | ---- | ---- | ---- | ---- | ---- | --- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
 | LMC Impact | -1.4 | -1.2 | -0.5 | -0.3 | -0.5 | -0.3 | 0.0 | +0.2 | +0.4 | +0.7 | +0.9 | +1.1 | +1.3 | +1.5 |
 
 ---
@@ -473,45 +474,45 @@ type IndexEntry = {
 
 ### Typography
 
-| Element | Font | Size | Weight | Color |
-|---------|------|------|--------|-------|
-| Document Title | Helvetica-Bold | 16pt | Bold | #000000 |
-| Section Title | Helvetica-Bold | 10pt | Bold | #000000 |
-| Section Background | - | - | - | #F0F0F0 |
-| Body Text | Helvetica | 9pt | Normal | #333333 |
-| Table Header | Helvetica-Bold | 8pt | Bold | #000000 |
-| Table Cell | Helvetica | 8pt | Normal | #333333 |
-| Labels | Helvetica | 8pt | Normal | #666666 |
-| Emphasis Values | Helvetica-Bold | 10pt | Bold | #000000 |
-| Warning Text | Helvetica-Bold | 9pt | Bold | #DC2626 |
-| Success Text | Helvetica-Bold | 9pt | Bold | #16A34A |
-| Footer | Helvetica | 7pt | Normal | #666666 |
+| Element            | Font           | Size | Weight | Color   |
+| ------------------ | -------------- | ---- | ------ | ------- |
+| Document Title     | Helvetica-Bold | 16pt | Bold   | #000000 |
+| Section Title      | Helvetica-Bold | 10pt | Bold   | #000000 |
+| Section Background | -              | -    | -      | #F0F0F0 |
+| Body Text          | Helvetica      | 9pt  | Normal | #333333 |
+| Table Header       | Helvetica-Bold | 8pt  | Bold   | #000000 |
+| Table Cell         | Helvetica      | 8pt  | Normal | #333333 |
+| Labels             | Helvetica      | 8pt  | Normal | #666666 |
+| Emphasis Values    | Helvetica-Bold | 10pt | Bold   | #000000 |
+| Warning Text       | Helvetica-Bold | 9pt  | Bold   | #DC2626 |
+| Success Text       | Helvetica-Bold | 9pt  | Bold   | #16A34A |
+| Footer             | Helvetica      | 7pt  | Normal | #666666 |
 
 ### Colors
 
-| Purpose | Hex Code | Usage |
-|---------|----------|-------|
-| Primary Black | #000000 | Titles, borders |
-| Body Text | #333333 | Main content |
-| Secondary Text | #666666 | Labels, descriptions |
-| Muted Text | #999999 | Placeholders |
-| Section Background | #F0F0F0 | Section headers |
-| Row Highlight | #F5F5F5 | Alternating rows |
-| Table Header | #E0E0E0 | Table headers |
-| Border Light | #CCCCCC | Table borders |
-| Success | #16A34A | ✓ indicators |
-| Warning | #F97316 | ⚠ indicators |
-| Error | #DC2626 | Exceeded limits |
+| Purpose            | Hex Code | Usage                |
+| ------------------ | -------- | -------------------- |
+| Primary Black      | #000000  | Titles, borders      |
+| Body Text          | #333333  | Main content         |
+| Secondary Text     | #666666  | Labels, descriptions |
+| Muted Text         | #999999  | Placeholders         |
+| Section Background | #F0F0F0  | Section headers      |
+| Row Highlight      | #F5F5F5  | Alternating rows     |
+| Table Header       | #E0E0E0  | Table headers        |
+| Border Light       | #CCCCCC  | Table borders        |
+| Success            | #16A34A  | ✓ indicators         |
+| Warning            | #F97316  | ⚠ indicators         |
+| Error              | #DC2626  | Exceeded limits      |
 
 ### Spacing
 
-| Element | Value |
-|---------|-------|
-| Page Margin | 30pt (top, right, bottom, left) |
-| Section Gap | 12pt |
-| Row Padding | 3pt vertical |
-| Table Cell Padding | 4pt |
-| CG Box Padding | 8pt |
+| Element            | Value                           |
+| ------------------ | ------------------------------- |
+| Page Margin        | 30pt (top, right, bottom, left) |
+| Section Gap        | 12pt                            |
+| Row Padding        | 3pt vertical                    |
+| Table Cell Padding | 4pt                             |
+| CG Box Padding     | 8pt                             |
 
 ---
 
@@ -528,7 +529,7 @@ type BuildUpPdfInput = {
   origin: string;
   destination: string;
   aircraftRegistration: string;
-  
+
   // ULD context
   uldAssignment: {
     uldTypeCode: string;
@@ -542,15 +543,15 @@ type BuildUpPdfInput = {
       heightCm: number;
     };
   };
-  
+
   // Packed items with coordinates
   packedItems: PackedItemData[];
-  
+
   // Summary statistics
   totalWeightKg: number;
   volumeUtilization: number;
   weightUtilization: number;
-  
+
   // Build-up instructions (optional, from LLM)
   instructions?: BuildUpInstruction;
 };
@@ -560,7 +561,7 @@ type PackedItemData = {
   awbNumber: string;
   pieceId: string;
   sequenceNumber: number;
-  
+
   // Physical properties
   weightKg: number;
   originalDimensions: {
@@ -573,17 +574,17 @@ type PackedItemData = {
     widthCm: number;
     heightCm: number;
   };
-  
+
   // Position in ULD (origin at bottom-front-left corner)
   position: {
-    xCm: number;  // Along length (front to back)
-    yCm: number;  // Along width (left to right)
-    zCm: number;  // Along height (bottom to top)
+    xCm: number; // Along length (front to back)
+    yCm: number; // Along width (left to right)
+    zCm: number; // Along height (bottom to top)
   };
-  
+
   // Rotation applied
   rotationApplied: "NONE" | "Z_90" | "Z_180" | "Z_270" | "XY_SWAP";
-  
+
   // Special handling
   specialHandlingCodes: string[];
   isDangerousGoods: boolean;
@@ -595,17 +596,17 @@ type PackedItemData = {
 
 ### Data Sources Mapping
 
-| Data | Source Location | Type |
-|------|-----------------|------|
-| Flight Info | `flights` table via `useSelectedFlight` | Database |
-| ULD Assignment | `UldAssignmentResult` from optimization | Runtime |
-| Packed Items | `PackedItem[]` from FFD-3D optimizer | Runtime |
-| Build-Up Instructions | `BuildUpInstruction` from LLM | Runtime |
-| Cargo Details | `cargo_items` table | Database |
-| Index Tables | `loading_zone_index_entries` table | Database |
-| Aircraft Positions | `loading_positions` table | Database |
-| Weight Limits | `aircrafts` table | Database |
-| CG Data | Calculated from `optimizeBalance()` | Runtime |
+| Data                  | Source Location                         | Type     |
+| --------------------- | --------------------------------------- | -------- |
+| Flight Info           | `flights` table via `useSelectedFlight` | Database |
+| ULD Assignment        | `UldAssignmentResult` from optimization | Runtime  |
+| Packed Items          | `PackedItem[]` from FFD-3D optimizer    | Runtime  |
+| Build-Up Instructions | `BuildUpInstruction` from LLM           | Runtime  |
+| Cargo Details         | `cargo_items` table                     | Database |
+| Index Tables          | `loading_zone_index_entries` table      | Database |
+| Aircraft Positions    | `loading_positions` table               | Database |
+| Weight Limits         | `aircrafts` table                       | Database |
+| CG Data               | Calculated from `optimizeBalance()`     | Runtime  |
 
 ---
 
@@ -631,7 +632,14 @@ src/features/planning/lib/
 ### React-PDF Component Pattern
 
 ```typescript
-import { Document, Page, Text, View, StyleSheet, pdf } from "@react-pdf/renderer";
+import {
+  Document,
+  Page,
+  Text,
+  View,
+  StyleSheet,
+  pdf,
+} from "@react-pdf/renderer";
 
 // Generate PDF blob
 export async function generateBuildUpPdf(data: BuildUpPdfInput): Promise<Blob> {
@@ -656,10 +664,12 @@ export function downloadBuildUpPdf(blob: Blob, filename: string): void {
 ### Integration Points
 
 1. **Build-Up Page** (`src/app/dashboard/build-up/page.tsx`)
+
    - Add "Export Build-Up Instructions" button per ULD
    - Trigger `generateBuildUpPdf()` after optimization
 
 2. **Load Balancing Page** (`src/app/dashboard/load-balancing/page.tsx`)
+
    - Enhance existing "Export Load Sheet" with index table sections
    - Add complete load plan PDF with all calculations
 
@@ -692,4 +702,3 @@ Example: LoadPlan_RY123_2024-12-06.pdf
 
 _Document Version: 1.0_  
 _Last Updated: December 2024_
-

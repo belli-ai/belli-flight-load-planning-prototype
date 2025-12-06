@@ -22,6 +22,8 @@ export {
   type BalanceOptimizationInput,
   type BalanceOptimizationResult,
   type LoadPlanWithAssignments,
+  type DeckConfigForVisualization,
+  type DeckConfigPosition,
 } from "./actions/balance.actions";
 
 // Lib exports
@@ -54,4 +56,3 @@ export type {
   CgResult,
   WeightBalanceResult,
 } from "./types";
-

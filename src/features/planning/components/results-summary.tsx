@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,10 +17,44 @@ import {
   Check,
   ArrowRight,
   Scale,
+  Download,
 } from "lucide-react";
-import type { OptimizationResult, BuildUpInstruction } from "../types";
+import type {
+  OptimizationResult,
+  BuildUpInstruction,
+  UldAssignmentResult,
+} from "../types";
 import type { CargoItemDisplay } from "@/features/cargo";
 import { UldViewer3D } from "./uld-viewer-3d";
+import {
+  generateBuildUpPdf,
+  downloadBuildUpPdf,
+  getBuildUpPdfFilename,
+  getCargoColor,
+  type BuildUpPdfInput,
+  type PackedItemData,
+} from "../lib/build-up-pdf";
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/**
+ * Convert priority string to numeric value for PDF
+ */
+function getPriorityValue(priority?: string): number {
+  switch (priority) {
+    case "HIGH":
+      return 90;
+    case "MEDIUM":
+      return 70;
+    case "LOW":
+      return 30;
+    case "STANDARD":
+    default:
+      return 50;
+  }
+}
 
 // ============================================================================
 // TYPES
@@ -42,6 +76,15 @@ type ResultsSummaryProps = {
   onConfirm?: () => Promise<void>;
   /** Whether confirmation is in progress */
   isConfirming?: boolean;
+  /** Flight information for PDF export */
+  flightInfo?: {
+    flightNumber: string;
+    flightDate: Date;
+    origin: string;
+    destination: string;
+    aircraftRegistration?: string;
+    aircraftType?: string;
+  };
 };
 
 // ============================================================================
@@ -60,8 +103,12 @@ export function ResultsSummary({
   isConfirmed = false,
   onConfirm,
   isConfirming = false,
+  flightInfo,
 }: ResultsSummaryProps) {
   const [expandedUld, setExpandedUld] = useState<number | null>(null);
+  const [exportingUldIndex, setExportingUldIndex] = useState<number | null>(
+    null
+  );
 
   // Calculate savings (mock: assume manual would use 2 more ULDs)
   const estimatedManualUlds = result.stats.uldsUsed + 2;
@@ -71,6 +118,141 @@ export function ResultsSummary({
 
   // Format number consistently for SSR/client hydration
   const formatNumber = (num: number) => num.toLocaleString("en-US");
+
+  // Handle PDF export for a ULD
+  const handleExportPdf = useCallback(
+    async (assignment: UldAssignmentResult, uldIndex: number) => {
+      if (!flightInfo) {
+        console.warn("Flight info not available for PDF export");
+        return;
+      }
+
+      setExportingUldIndex(uldIndex);
+
+      try {
+        // Build packed items data from assignment
+        const packedItems: PackedItemData[] = assignment.cargoItems.map(
+          (item, idx) => {
+            // Find cargo item details
+            const cargoItem = cargoItems.find((c) => c.id === item.cargoItemId);
+
+            const isDangerousGoods = cargoItem?.isDangerousGoods ?? false;
+            const shCodes = cargoItem?.specialHandling ?? [];
+            const isPerishable = shCodes.some(
+              (c: string) => c === "PER" || c === "PEP" || c === "PES"
+            );
+            const isFragile = shCodes.some(
+              (c: string) => c === "FRA" || c === "FRG"
+            );
+            const isValuable = shCodes.some((c: string) => c === "VAL");
+            const isTemperatureControlled = shCodes.some(
+              (c: string) => c === "COL" || c === "FRO" || c === "TMP"
+            );
+
+            const packedItem: PackedItemData = {
+              cargoItemId: item.cargoItemId,
+              awbNumber: cargoItem?.awbNumber ?? "Unknown",
+              pieceId: `P${String(cargoItem?.pieceNumber ?? idx + 1).padStart(
+                3,
+                "0"
+              )}`,
+              sequenceNumber: idx + 1,
+              weightKg: cargoItem?.weightKg ?? 0,
+              originalDimensions: {
+                lengthCm: cargoItem?.lengthCm ?? item.dimensions.length,
+                widthCm: cargoItem?.widthCm ?? item.dimensions.width,
+                heightCm: cargoItem?.heightCm ?? item.dimensions.height,
+              },
+              packedDimensions: {
+                lengthCm: item.dimensions.length,
+                widthCm: item.dimensions.width,
+                heightCm: item.dimensions.height,
+              },
+              position: {
+                xCm: item.position.x,
+                yCm: item.position.y,
+                zCm: item.position.z,
+              },
+              rotationApplied: item.rotated
+                ? item.rotationAxis === "Z"
+                  ? "Z_90"
+                  : item.rotationAxis === "X"
+                  ? "X_90"
+                  : item.rotationAxis === "Y"
+                  ? "Y_90"
+                  : "XY_SWAP"
+                : "NONE",
+              specialHandlingCodes: shCodes,
+              isDangerousGoods,
+              isPerishable,
+              isFragile,
+              isValuable,
+              isTemperatureControlled,
+              orientationRestricted:
+                isFragile || shCodes.some((c: string) => c === "ORI"),
+              priority: getPriorityValue(cargoItem?.priority),
+              color: getCargoColor({
+                isDangerousGoods,
+                isPerishable,
+                isValuable,
+                isTemperatureControlled,
+                priority: getPriorityValue(cargoItem?.priority),
+              }),
+            };
+
+            return packedItem;
+          }
+        );
+
+        // Build PDF input
+        const uldNumber =
+          assignment.uldNumber ||
+          `${assignment.uldTypeCode}-${String(uldIndex + 1).padStart(
+            5,
+            "0"
+          )}GA`;
+
+        const pdfInput: BuildUpPdfInput = {
+          flightNumber: flightInfo.flightNumber,
+          flightDate: flightInfo.flightDate,
+          origin: flightInfo.origin,
+          destination: flightInfo.destination,
+          aircraftRegistration: flightInfo.aircraftRegistration,
+          aircraftType: flightInfo.aircraftType,
+          uldAssignment: {
+            uldTypeCode: assignment.uldTypeCode,
+            uldNumber,
+            positionCode: assignment.positionCode,
+            tareWeightKg: 82, // Default tare weight for ULD
+            maxGrossWeightKg: assignment.maxGrossWeightKg,
+            dimensions: {
+              lengthCm: assignment.uldDimensions.lengthCm,
+              widthCm: assignment.uldDimensions.widthCm,
+              heightCm: assignment.uldDimensions.heightCm,
+            },
+          },
+          packedItems,
+          totalWeightKg: assignment.totalWeightKg,
+          volumeUtilization: assignment.volumeUtilization,
+          weightUtilization: assignment.weightUtilization,
+        };
+
+        // Generate and download PDF
+        const blob = await generateBuildUpPdf(pdfInput);
+        const filename = getBuildUpPdfFilename(
+          flightInfo.flightNumber,
+          uldNumber,
+          flightInfo.flightDate
+        );
+        downloadBuildUpPdf(blob, filename);
+      } catch (error) {
+        console.error("Failed to export PDF:", error);
+      } finally {
+        setExportingUldIndex(null);
+      }
+    },
+    [flightInfo, cargoItems]
+  );
 
   return (
     <div className="space-y-4">
@@ -135,7 +317,8 @@ export function ResultsSummary({
                   Estimated Savings: ${formatNumber(savingsAmount)}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {savedUlds} fewer ULDs vs manual planning ({estimatedManualUlds} → {result.stats.uldsUsed})
+                  {savedUlds} fewer ULDs vs manual planning (
+                  {estimatedManualUlds} → {result.stats.uldsUsed})
                 </div>
               </div>
             </div>
@@ -160,7 +343,9 @@ export function ResultsSummary({
                     key={index}
                     className={cn(
                       "rounded-sm border overflow-hidden transition-colors",
-                      isSelected ? "border-primary bg-primary/5" : "border-border"
+                      isSelected
+                        ? "border-primary bg-primary/5"
+                        : "border-border"
                     )}
                   >
                     {/* ULD header */}
@@ -171,10 +356,14 @@ export function ResultsSummary({
                       }}
                       className="flex w-full items-center gap-3 p-3 text-left hover:bg-muted/30 transition-colors"
                     >
-                      <div className={cn(
-                        "flex h-8 w-8 items-center justify-center rounded-sm",
-                        isSelected ? "bg-primary text-primary-foreground" : "bg-primary/10"
-                      )}>
+                      <div
+                        className={cn(
+                          "flex h-8 w-8 items-center justify-center rounded-sm",
+                          isSelected
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-primary/10"
+                        )}
+                      >
                         <Box className="size-4" />
                       </div>
 
@@ -194,8 +383,13 @@ export function ResultsSummary({
                         </div>
                         <div className="flex gap-4 text-xs text-muted-foreground">
                           <span>{assignment.cargoItems.length} items</span>
-                          <span>{formatNumber(assignment.totalWeightKg)} kg</span>
-                          <span>{Math.round(assignment.volumeUtilization * 100)}% vol</span>
+                          <span>
+                            {formatNumber(assignment.totalWeightKg)} kg
+                          </span>
+                          <span>
+                            {Math.round(assignment.volumeUtilization * 100)}%
+                            vol
+                          </span>
                         </div>
                       </div>
 
@@ -224,8 +418,27 @@ export function ResultsSummary({
                             ) : (
                               <Sparkles className="mr-1.5 size-3" />
                             )}
-                            {instruction ? "Regenerate" : "Generate"} Instructions
+                            {instruction ? "Regenerate" : "Generate"}{" "}
+                            Instructions
                           </Button>
+
+                          {/* Export PDF Button */}
+                          {flightInfo && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-8 text-xs"
+                              onClick={() => handleExportPdf(assignment, index)}
+                              disabled={exportingUldIndex === index}
+                            >
+                              {exportingUldIndex === index ? (
+                                <Loader2 className="mr-1.5 size-3 animate-spin" />
+                              ) : (
+                                <Download className="mr-1.5 size-3" />
+                              )}
+                              Export PDF
+                            </Button>
+                          )}
                         </div>
 
                         {/* Build-up instructions */}
@@ -243,21 +456,30 @@ export function ResultsSummary({
 
                             <ol className="space-y-2">
                               {instruction.steps.map((step) => (
-                                <li key={step.sequence} className="flex gap-2 text-xs">
+                                <li
+                                  key={step.sequence}
+                                  className="flex gap-2 text-xs"
+                                >
                                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] font-medium text-primary shrink-0">
                                     {step.sequence}
                                   </span>
                                   <div>
-                                    <div className="font-medium">{step.action}</div>
-                                    <div className="text-muted-foreground">
-                                      {step.cargoDescription} ({step.awbNumber}) - {step.weightKg}kg
+                                    <div className="font-medium">
+                                      {step.action}
                                     </div>
-                                    {step.warnings && step.warnings.length > 0 && (
-                                      <div className="mt-1 flex items-center gap-1 text-amber-400">
-                                        <AlertTriangle className="size-3" />
-                                        <span className="text-[10px]">{step.warnings[0]}</span>
-                                      </div>
-                                    )}
+                                    <div className="text-muted-foreground">
+                                      {step.cargoDescription} ({step.awbNumber})
+                                      - {step.weightKg}kg
+                                    </div>
+                                    {step.warnings &&
+                                      step.warnings.length > 0 && (
+                                        <div className="mt-1 flex items-center gap-1 text-amber-400">
+                                          <AlertTriangle className="size-3" />
+                                          <span className="text-[10px]">
+                                            {step.warnings[0]}
+                                          </span>
+                                        </div>
+                                      )}
                                   </div>
                                 </li>
                               ))}
@@ -310,9 +532,11 @@ export function ResultsSummary({
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mb-3">
-                These items may exceed ULD capacity, violate packing constraints, or there may not be enough ULDs available at the origin.
+                These items may exceed ULD capacity, violate packing
+                constraints, or there may not be enough ULDs available at the
+                origin.
               </p>
-              
+
               {/* List unassigned cargo items */}
               {cargoItems.length > 0 && (
                 <div className="space-y-2 mt-2">
@@ -328,7 +552,9 @@ export function ResultsSummary({
                         >
                           <div className="flex items-center gap-2">
                             <Box className="size-3.5 text-red-400" />
-                            <span className="text-xs font-medium">{cargo.awbNumber}</span>
+                            <span className="text-xs font-medium">
+                              {cargo.awbNumber}
+                            </span>
                             <span className="text-xs text-muted-foreground">
                               Pc {cargo.pieceNumber}
                             </span>
@@ -336,7 +562,8 @@ export function ResultsSummary({
                           <div className="flex gap-3 text-xs text-muted-foreground">
                             <span>{cargo.weightKg} kg</span>
                             <span>
-                              {cargo.lengthCm}×{cargo.widthCm}×{cargo.heightCm} cm
+                              {cargo.lengthCm}×{cargo.widthCm}×{cargo.heightCm}{" "}
+                              cm
                             </span>
                           </div>
                         </div>
@@ -362,10 +589,13 @@ export function ResultsSummary({
                     <span className="font-medium">Build-Up Plan Confirmed</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    The build-up plan has been saved. You can now proceed to load balancing.
+                    The build-up plan has been saved. You can now proceed to
+                    load balancing.
                   </p>
                   <Button asChild className="w-full">
-                    <Link href={`/dashboard/load-balancing?loadPlanId=${loadPlanId}`}>
+                    <Link
+                      href={`/dashboard/load-balancing?loadPlanId=${loadPlanId}`}
+                    >
                       <Scale className="mr-2 size-4" />
                       Go to Load Balancing
                       <ArrowRight className="ml-2 size-4" />
@@ -375,7 +605,8 @@ export function ResultsSummary({
               ) : (
                 <div className="space-y-3">
                   <p className="text-xs text-muted-foreground">
-                    Review the build-up plan above. Once confirmed, the plan will be saved and you can proceed to load balancing.
+                    Review the build-up plan above. Once confirmed, the plan
+                    will be saved and you can proceed to load balancing.
                   </p>
                   <Button
                     onClick={onConfirm}

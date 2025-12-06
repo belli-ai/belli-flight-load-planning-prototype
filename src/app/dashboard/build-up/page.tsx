@@ -364,6 +364,17 @@ export default function BuildUpPage() {
               isConfirmed={isConfirmed}
               onConfirm={handleConfirm}
               isConfirming={isConfirming}
+              flightInfo={
+                selectedFlight
+                  ? {
+                      flightNumber: selectedFlight.flightNumber,
+                      flightDate: new Date(selectedFlight.scheduledDeparture),
+                      origin: selectedFlight.originCode,
+                      destination: selectedFlight.destinationCode,
+                      aircraftType: selectedFlight.aircraftType,
+                    }
+                  : undefined
+              }
             />
           ) : null}
         </div>
