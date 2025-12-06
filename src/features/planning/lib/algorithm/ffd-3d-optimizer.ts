@@ -384,16 +384,6 @@ export class Ffd3dOptimizer implements IUldOptimizer {
     let uldSequence = 0;
     const rotationLevel = this.getRotationLevel(options);
 
-    // Track available physical ULDs from inventory (grouped by type)
-    const availableInventory = new Map<string, UldInventoryItem[]>();
-    if (uldInventory) {
-      for (const uld of uldInventory) {
-        const existing = availableInventory.get(uld.uldTypeId) || [];
-        existing.push(uld);
-        availableInventory.set(uld.uldTypeId, existing);
-      }
-    }
-
     // Handle pre-selected ULDs (must all be used)
     if (options.selectedUldIds && options.selectedUldIds.length > 0) {
       return this.packItemsWithSelectedUlds(
@@ -405,6 +395,38 @@ export class Ffd3dOptimizer implements IUldOptimizer {
         uldInventory,
         rotationLevel
       );
+    }
+
+    // Auto-select best-fit ULDs from inventory when none are manually selected
+    let autoSelectedUlds: UldInventoryItem[] = [];
+    if (uldInventory && uldInventory.length > 0) {
+      autoSelectedUlds = this.autoSelectUldsFromInventory(
+        items,
+        uldInventory,
+        options.objective
+      );
+    }
+
+    // Track available physical ULDs: prioritize auto-selected, then remaining inventory
+    const autoSelectedIds = new Set(autoSelectedUlds.map((u) => u.id));
+    const availableInventory = new Map<string, UldInventoryItem[]>();
+
+    // Add auto-selected ULDs first (they are prioritized)
+    for (const uld of autoSelectedUlds) {
+      const existing = availableInventory.get(uld.uldTypeId) || [];
+      existing.push(uld);
+      availableInventory.set(uld.uldTypeId, existing);
+    }
+
+    // Add remaining inventory ULDs (as fallback)
+    if (uldInventory) {
+      for (const uld of uldInventory) {
+        if (!autoSelectedIds.has(uld.id)) {
+          const existing = availableInventory.get(uld.uldTypeId) || [];
+          existing.push(uld);
+          availableInventory.set(uld.uldTypeId, existing);
+        }
+      }
     }
 
     for (const item of items) {
@@ -616,6 +638,118 @@ export class Ffd3dOptimizer implements IUldOptimizer {
       return null;
     }
     return pool.shift() ?? null;
+  }
+
+  /**
+   * Auto-select ULDs from inventory using best-fit strategy.
+   * Scores ULDs based on how well they match the total cargo requirements,
+   * prioritizing ULDs that minimize wasted capacity.
+   */
+  private autoSelectUldsFromInventory(
+    items: CargoItemForPacking[],
+    uldInventory: UldInventoryItem[],
+    objective?: OptimizerInput["options"]["objective"]
+  ): UldInventoryItem[] {
+    if (uldInventory.length === 0) {
+      return [];
+    }
+
+    // Calculate total cargo requirements
+    const totalWeight = items.reduce((sum, item) => sum + item.weightKg, 0);
+    const totalVolume = items.reduce((sum, item) => {
+      // Use actual dimensions to calculate volume consistently
+      return sum + (item.lengthCm * item.widthCm * item.heightCm) / 1_000_000;
+    }, 0);
+
+    // Score each ULD type based on fit
+    type ScoredUld = UldInventoryItem & { score: number };
+
+    const scoredUlds: ScoredUld[] = uldInventory.map((uld) => {
+      const uldType = uld.uldType;
+      const netPayloadKg = uldType.maxGrossWeightKg - uldType.tareWeightKg;
+
+      // Calculate how well this ULD's capacity matches cargo needs
+      // Lower score = better fit (less wasted capacity)
+      let score: number;
+
+      switch (objective) {
+        case "MAXIMIZE_UTILIZATION":
+          // Prefer smaller ULDs that can be filled more completely
+          // Score based on ULD size relative to average cargo size
+          const avgCargoVolume = totalVolume / items.length;
+          const avgCargoWeight = totalWeight / items.length;
+          const volumeRatio = uldType.maxVolumeM3 / avgCargoVolume;
+          const weightRatio = netPayloadKg / avgCargoWeight;
+          // Prefer ULDs where both ratios are close to optimal (3-5x cargo size)
+          score = Math.abs(volumeRatio - 4) + Math.abs(weightRatio - 4);
+          break;
+
+        case "BALANCED":
+          // Score based on how balanced the weight/volume capacity is
+          const volToWeightRatio = uldType.maxVolumeM3 / netPayloadKg;
+          const cargoVolToWeightRatio = totalVolume / totalWeight;
+          // Prefer ULDs where capacity ratio matches cargo ratio
+          score = Math.abs(volToWeightRatio - cargoVolToWeightRatio) * 100;
+          break;
+
+        case "MINIMIZE_ULDS":
+        default:
+          // For minimize ULDs, prefer larger ULDs (higher capacity = lower score)
+          // Combine volume and weight capacity
+          score = -(uldType.maxVolumeM3 * 0.5 + netPayloadKg * 0.0005);
+          break;
+      }
+
+      return { ...uld, score };
+    });
+
+    // Sort by score (lower is better)
+    scoredUlds.sort((a, b) => a.score - b.score);
+
+    // Select ULDs greedily until we have enough capacity
+    const selectedUlds: UldInventoryItem[] = [];
+    let accumulatedWeight = 0;
+    let accumulatedVolume = 0;
+
+    // Group by ULD type to balance selection
+    const uldsByType = new Map<string, ScoredUld[]>();
+    for (const uld of scoredUlds) {
+      const existing = uldsByType.get(uld.uldTypeId) || [];
+      existing.push(uld);
+      uldsByType.set(uld.uldTypeId, existing);
+    }
+
+    // Select ULDs round-robin from best types until we have enough capacity
+    let hasCapacity = true;
+    while (
+      hasCapacity &&
+      (accumulatedWeight < totalWeight || accumulatedVolume < totalVolume)
+    ) {
+      hasCapacity = false;
+
+      for (const [, uldsOfType] of uldsByType.entries()) {
+        if (uldsOfType.length > 0) {
+          const uld = uldsOfType.shift()!;
+          const netPayload =
+            uld.uldType.maxGrossWeightKg - uld.uldType.tareWeightKg;
+
+          selectedUlds.push(uld);
+          accumulatedWeight += netPayload;
+          accumulatedVolume += uld.uldType.maxVolumeM3;
+          hasCapacity = true;
+
+          // Stop if we have enough capacity
+          if (
+            accumulatedWeight >= totalWeight &&
+            accumulatedVolume >= totalVolume
+          ) {
+            break;
+          }
+        }
+      }
+    }
+
+    return selectedUlds;
   }
 
   // --------------------------------------------------------------------------
@@ -1028,7 +1162,10 @@ export class Ffd3dOptimizer implements IUldOptimizer {
 
     // Update ULD stats
     uld.currentWeightKg += item.weightKg;
-    uld.currentVolumeM3 += item.volumeM3;
+    // Calculate volume from actual packed dimensions (in cm³ → m³)
+    const packedVolumeM3 =
+      (orientation.length * orientation.width * orientation.height) / 1_000_000;
+    uld.currentVolumeM3 += packedVolumeM3;
 
     // Update free spaces using MaxRects algorithm
     this.updateFreeSpacesMaxRects(uld, orientation, position);

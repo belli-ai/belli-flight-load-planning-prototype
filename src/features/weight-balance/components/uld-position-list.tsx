@@ -41,17 +41,23 @@ type DeckGroup = {
 // HELPER FUNCTIONS
 // ============================================================================
 
-function getDeckFromPosition(positionCode: string | null): "MAIN" | "LOWER" | "UNASSIGNED" {
+function getDeckFromPosition(
+  positionCode: string | null
+): "MAIN" | "LOWER" | "UNASSIGNED" {
   if (!positionCode) return "UNASSIGNED";
-  
+
   // Main deck positions typically start with numbers like 11, 12, 21, etc.
   if (/^\d/.test(positionCode)) return "MAIN";
-  
+
   // Lower deck positions: FWD, AFT, BULK
-  if (positionCode.startsWith("FWD") || positionCode.startsWith("AFT") || positionCode === "BULK") {
+  if (
+    positionCode.startsWith("FWD") ||
+    positionCode.startsWith("AFT") ||
+    positionCode === "BULK"
+  ) {
     return "LOWER";
   }
-  
+
   return "UNASSIGNED";
 }
 
@@ -100,10 +106,10 @@ function UldItem({
       </div>
 
       {/* ULD icon and type */}
-      <div className="flex items-center gap-2 min-w-[80px]">
+      <div className="flex items-center gap-2 min-w-0 flex-1">
         <div
           className={cn(
-            "p-1.5 rounded-sm",
+            "p-1.5 rounded-sm shrink-0",
             getUtilizationBg(assignment.volumeUtilization)
           )}
         >
@@ -114,10 +120,12 @@ function UldItem({
             )}
           />
         </div>
-        <div>
-          <div className="font-medium text-sm">{assignment.uldTypeCode}</div>
+        <div className="min-w-0">
+          <div className="font-medium text-sm truncate">
+            {assignment.uldTypeCode}
+          </div>
           {!compact && (
-            <div className="text-[10px] text-muted-foreground">
+            <div className="text-[10px] text-muted-foreground truncate">
               {assignment.uldNumber || `Virtual #${index + 1}`}
             </div>
           )}
@@ -125,7 +133,7 @@ function UldItem({
       </div>
 
       {/* Position */}
-      <div className="flex-1 min-w-[60px]">
+      <div className="shrink-0">
         <Badge
           variant="outline"
           className={cn(
@@ -141,23 +149,29 @@ function UldItem({
 
       {/* Stats */}
       {!compact && (
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1" title="Weight">
-            <Weight className="size-3" />
+        <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+          <div
+            className="flex items-center gap-1 whitespace-nowrap"
+            title="Weight"
+          >
+            <Weight className="size-3 shrink-0" />
             <span>{assignment.totalWeightKg.toLocaleString()}</span>
           </div>
           <div
             className={cn(
-              "flex items-center gap-1",
+              "flex items-center gap-1 whitespace-nowrap",
               getUtilizationColor(assignment.volumeUtilization)
             )}
             title="Volume utilization"
           >
-            <Percent className="size-3" />
+            <Percent className="size-3 shrink-0" />
             <span>{Math.round(assignment.volumeUtilization * 100)}</span>
           </div>
-          <div className="flex items-center gap-1" title="Items">
-            <Package className="size-3" />
+          <div
+            className="flex items-center gap-1 whitespace-nowrap"
+            title="Items"
+          >
+            <Package className="size-3 shrink-0" />
             <span>{assignment.cargoItems.length}</span>
           </div>
         </div>
@@ -315,18 +329,21 @@ export function UldPositionList({
   return (
     <Card className={className}>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium flex items-center gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <CardTitle className="text-sm font-medium flex items-center gap-2 shrink-0">
             <Box className="size-4 text-primary" />
             ULD Assignments
           </CardTitle>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span>{assignments.length} ULDs</span>
-            <span className="h-3 w-px bg-border" />
-            <span>{totalWeight.toLocaleString()} kg</span>
-            <span className="h-3 w-px bg-border" />
+          <div className="flex items-center flex-wrap justify-end gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <span className="whitespace-nowrap">{assignments.length} ULDs</span>
+            <span className="whitespace-nowrap">
+              {totalWeight.toLocaleString()} kg
+            </span>
             <span
-              className={getUtilizationColor(avgUtilization)}
+              className={cn(
+                "whitespace-nowrap",
+                getUtilizationColor(avgUtilization)
+              )}
             >
               {Math.round(avgUtilization * 100)}% avg
             </span>
@@ -347,4 +364,3 @@ export function UldPositionList({
     </Card>
   );
 }
-

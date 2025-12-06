@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import {
   BarChart3,
   Box,
-  DollarSign,
   FileText,
   Loader2,
   Sparkles,
@@ -109,12 +108,6 @@ export function ResultsSummary({
   const [exportingUldIndex, setExportingUldIndex] = useState<number | null>(
     null
   );
-
-  // Calculate savings (mock: assume manual would use 2 more ULDs)
-  const estimatedManualUlds = result.stats.uldsUsed + 2;
-  const savedUlds = estimatedManualUlds - result.stats.uldsUsed;
-  const costPerUld = 150; // USD
-  const savingsAmount = savedUlds * costPerUld;
 
   // Format number consistently for SSR/client hydration
   const formatNumber = (num: number) => num.toLocaleString("en-US");
@@ -304,22 +297,6 @@ export function ResultsSummary({
               </div>
               <div className="mt-1 text-[10px] uppercase text-muted-foreground tracking-wide">
                 Avg Weight
-              </div>
-            </div>
-          </div>
-
-          {/* Savings highlight */}
-          <div className="rounded-sm border border-green-500/30 bg-green-500/5 p-3">
-            <div className="flex items-center gap-2">
-              <DollarSign className="size-5 text-green-400" />
-              <div>
-                <div className="text-sm font-medium text-green-400">
-                  Estimated Savings: ${formatNumber(savingsAmount)}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {savedUlds} fewer ULDs vs manual planning (
-                  {estimatedManualUlds} → {result.stats.uldsUsed})
-                </div>
               </div>
             </div>
           </div>
