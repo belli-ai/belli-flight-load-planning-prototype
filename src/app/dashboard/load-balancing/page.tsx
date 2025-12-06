@@ -3,6 +3,11 @@
 import { useState, useCallback, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import {
   Scale,
@@ -14,6 +19,9 @@ import {
   BarChart3,
   AlertTriangle,
   CheckCircle2,
+  ChevronDown,
+  Weight,
+  Target,
 } from "lucide-react";
 import {
   FlightSelector,
@@ -34,6 +42,325 @@ import {
   type BalanceOptimizationResult,
 } from "@/features/weight-balance";
 import type { UldAssignmentResult } from "@/features/planning";
+
+// ============================================================================
+// COLLAPSIBLE WEIGHT SUMMARY COMPONENT
+// ============================================================================
+
+function CollapsibleWeightSummary({
+  loadPlan,
+  defaultOpen = true,
+}: {
+  loadPlan: LoadPlanWithAssignments;
+  defaultOpen?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  const weights = [
+    {
+      label: "Operating Empty Weight",
+      value: loadPlan.aircraft.operatingEmptyWeightKg,
+      limit: null,
+    },
+    {
+      label: "Payload",
+      value: loadPlan.weights.payloadKg,
+      limit: loadPlan.aircraft.totalMaxPayloadKg,
+    },
+    {
+      label: "Zero Fuel Weight",
+      value: loadPlan.weights.zeroFuelWeightKg,
+      limit: loadPlan.aircraft.maxZeroFuelWeightKg,
+      highlight: true,
+    },
+    {
+      label: "Takeoff Weight",
+      value: loadPlan.weights.takeoffWeightKg,
+      limit: loadPlan.aircraft.maxTakeoffWeightKg,
+      highlight: true,
+    },
+    {
+      label: "Landing Weight",
+      value: loadPlan.weights.landingWeightKg,
+      limit: loadPlan.aircraft.maxLandingWeightKg,
+      highlight: true,
+    },
+  ];
+
+  const hasExceeded = weights.some((w) => w.limit && w.value > w.limit);
+
+  return (
+    <Card>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-2 cursor-pointer hover:bg-muted/30 transition-colors">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Weight className="size-4 text-primary" />
+                Weight Summary
+                {hasExceeded && (
+                  <AlertTriangle className="size-3.5 text-red-500" />
+                )}
+              </CardTitle>
+              <ChevronDown
+                className={cn(
+                  "size-4 text-muted-foreground transition-transform",
+                  isOpen && "rotate-180"
+                )}
+              />
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="pt-0 pb-3">
+            <div className="space-y-2">
+              {weights.map((w) => {
+                const utilization = w.limit ? (w.value / w.limit) * 100 : 0;
+                const isOverLimit = w.limit && w.value > w.limit;
+
+                return (
+                  <div
+                    key={w.label}
+                    className={cn(
+                      "flex items-center justify-between py-1.5",
+                      w.highlight && "border-t border-border pt-2"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "text-xs",
+                        w.highlight ? "font-medium" : "text-muted-foreground"
+                      )}
+                    >
+                      {w.label}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          "text-xs font-medium tabular-nums",
+                          isOverLimit && "text-red-500"
+                        )}
+                      >
+                        {(w.value / 1000).toFixed(1)}t
+                      </span>
+                      {w.limit && (
+                        <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all",
+                              isOverLimit
+                                ? "bg-red-500"
+                                : utilization > 95
+                                ? "bg-yellow-500"
+                                : "bg-primary"
+                            )}
+                            style={{ width: `${Math.min(utilization, 100)}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Limits reference */}
+            <div className="mt-3 pt-3 border-t border-border">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[10px] text-muted-foreground">
+                <div className="flex justify-between">
+                  <span>MZFW:</span>
+                  <span className="tabular-nums">
+                    {(loadPlan.aircraft.maxZeroFuelWeightKg / 1000).toFixed(1)}t
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>MTOW:</span>
+                  <span className="tabular-nums">
+                    {(loadPlan.aircraft.maxTakeoffWeightKg / 1000).toFixed(1)}t
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>MLW:</span>
+                  <span className="tabular-nums">
+                    {(loadPlan.aircraft.maxLandingWeightKg / 1000).toFixed(1)}t
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Max Payload:</span>
+                  <span className="tabular-nums">
+                    {(loadPlan.aircraft.totalMaxPayloadKg / 1000).toFixed(1)}t
+                  </span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
+  );
+}
+
+// ============================================================================
+// COLLAPSIBLE CG DATA COMPONENT
+// ============================================================================
+
+function CollapsibleCgData({
+  cgResult,
+  defaultOpen = true,
+}: {
+  cgResult?: {
+    zeroFuelWeightKg: number;
+    zfwCgPercentMac: number;
+    zfwWithinEnvelope: boolean;
+    payloadWeightKg: number;
+    totalMomentKgCm: number;
+    forwardLimitPercentMac: number;
+    aftLimitPercentMac: number;
+  } | null;
+  defaultOpen?: boolean;
+}) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  const hasCgData = !!cgResult;
+
+  return (
+    <Card>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="pb-2 cursor-pointer hover:bg-muted/30 transition-colors">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Target className="size-4 text-primary" />
+                CG Data
+                {cgResult &&
+                  (cgResult.zfwWithinEnvelope ? (
+                    <CheckCircle2 className="size-3.5 text-green-500" />
+                  ) : (
+                    <AlertTriangle className="size-3.5 text-red-500" />
+                  ))}
+              </CardTitle>
+              <ChevronDown
+                className={cn(
+                  "size-4 text-muted-foreground transition-transform",
+                  isOpen && "rotate-180"
+                )}
+              />
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent className="pt-0 pb-3">
+            {hasCgData ? (
+              <div className="space-y-3">
+                {/* CG Position */}
+                <div className="p-3 rounded-sm bg-muted/30">
+                  <div className="text-center">
+                    <div
+                      className={cn(
+                        "text-2xl font-bold tabular-nums",
+                        cgResult.zfwWithinEnvelope
+                          ? "text-green-500"
+                          : "text-red-500"
+                      )}
+                    >
+                      {cgResult.zfwCgPercentMac.toFixed(1)}%
+                    </div>
+                    <div className="text-[10px] uppercase text-muted-foreground mt-1">
+                      ZFW CG (% MAC)
+                    </div>
+                  </div>
+
+                  {/* CG Bar indicator */}
+                  <div className="mt-3 px-2">
+                    <div className="relative h-3 bg-muted rounded-full overflow-hidden">
+                      {/* Envelope range */}
+                      <div
+                        className="absolute h-full bg-green-500/30"
+                        style={{
+                          left: `${
+                            ((cgResult.forwardLimitPercentMac - 10) / 40) * 100
+                          }%`,
+                          right: `${
+                            100 -
+                            ((cgResult.aftLimitPercentMac - 10) / 40) * 100
+                          }%`,
+                        }}
+                      />
+                      {/* Current CG position */}
+                      <div
+                        className={cn(
+                          "absolute w-1 h-full -translate-x-1/2",
+                          cgResult.zfwWithinEnvelope
+                            ? "bg-green-500"
+                            : "bg-red-500"
+                        )}
+                        style={{
+                          left: `${
+                            ((cgResult.zfwCgPercentMac - 10) / 40) * 100
+                          }%`,
+                        }}
+                      />
+                    </div>
+                    <div className="flex justify-between mt-1 text-[9px] text-muted-foreground">
+                      <span>
+                        FWD ({cgResult.forwardLimitPercentMac.toFixed(0)}%)
+                      </span>
+                      <span>
+                        AFT ({cgResult.aftLimitPercentMac.toFixed(0)}%)
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Status */}
+                <div className="flex items-center justify-center gap-2 py-2">
+                  {cgResult.zfwWithinEnvelope ? (
+                    <>
+                      <CheckCircle2 className="size-4 text-green-500" />
+                      <span className="text-sm text-green-500 font-medium">
+                        Within Envelope
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="size-4 text-red-500" />
+                      <span className="text-sm text-red-500 font-medium">
+                        Out of Limits
+                      </span>
+                    </>
+                  )}
+                </div>
+
+                {/* Details */}
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="p-2 rounded-sm bg-muted/20 text-center">
+                    <div className="font-medium tabular-nums">
+                      {(cgResult.zeroFuelWeightKg / 1000).toFixed(1)}t
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">ZFW</div>
+                  </div>
+                  <div className="p-2 rounded-sm bg-muted/20 text-center">
+                    <div className="font-medium tabular-nums">
+                      {(cgResult.totalMomentKgCm / 1000000).toFixed(2)}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      Moment (×10⁶)
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                <Target className="size-8 mx-auto mb-2 opacity-30" />
+                <p className="text-xs">Run optimization to calculate CG</p>
+              </div>
+            )}
+          </CardContent>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
+  );
+}
 
 // ============================================================================
 // LOAD BALANCING PAGE COMPONENT
@@ -302,12 +629,21 @@ export default function LoadBalancingPage() {
       {/* Main content */}
       {loadPlan && !isLoadingData && !error && (
         <div className="grid gap-6 lg:grid-cols-3">
-          {/* Left panel - ULD List */}
+          {/* Left panel - ULD List & Data */}
           <div className="space-y-4">
             <UldPositionList
               assignments={displayAssignments}
               selectedIndex={selectedUldIndex}
               onSelect={setSelectedUldIndex}
+            />
+
+            {/* Weight Summary - Collapsible */}
+            <CollapsibleWeightSummary loadPlan={loadPlan} defaultOpen={true} />
+
+            {/* CG Data - Collapsible */}
+            <CollapsibleCgData
+              cgResult={optimizationResult?.cgResult}
+              defaultOpen={true}
             />
 
             {/* Optimization button */}
@@ -334,33 +670,15 @@ export default function LoadBalancingPage() {
                   Optimize ULD positions for ideal CG
                 </p>
 
-                {/* Optimization status */}
-                {optimizationResult && (
-                  <div className="mt-4 pt-4 border-t border-border">
-                    <div className="flex items-center justify-center gap-2">
-                      {optimizationResult.cgResult?.zfwWithinEnvelope ? (
-                        <>
-                          <CheckCircle2 className="size-4 text-green-500" />
-                          <span className="text-sm text-green-500">
-                            CG Within Envelope
-                          </span>
-                        </>
-                      ) : (
-                        <>
-                          <AlertTriangle className="size-4 text-yellow-500" />
-                          <span className="text-sm text-yellow-500">
-                            Check CG Limits
-                          </span>
-                        </>
-                      )}
-                    </div>
-                    {optimizationResult.warnings.length > 0 && (
-                      <div className="mt-2 text-xs text-muted-foreground">
+                {/* Warnings */}
+                {optimizationResult &&
+                  optimizationResult.warnings.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-border text-center">
+                      <span className="text-xs text-yellow-500">
                         {optimizationResult.warnings.length} warning(s)
-                      </div>
-                    )}
-                  </div>
-                )}
+                      </span>
+                    </div>
+                  )}
               </CardContent>
             </Card>
           </div>

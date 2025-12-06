@@ -13,6 +13,7 @@ export { UldVisualization } from "./components/uld-visualization";
 export { UldViewer3D } from "./components/uld-viewer-3d";
 export { OptimizationPanel, type OptimizationObjective } from "./components/optimization-panel";
 export { ResultsSummary } from "./components/results-summary";
+export { UldSelector } from "./components/uld-selector";
 
 // Actions
 export {
@@ -23,7 +24,9 @@ export {
   getCargoItems,
   getPackingRules,
   getFlights,
+  getAvailableUldsForFlight,
   type OptimizerUsed,
+  type AvailableUldDisplay,
 } from "./actions/optimize.actions";
 
 // Algorithm (for custom optimizer implementations)

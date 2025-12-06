@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -21,11 +21,15 @@ import {
   CargoList,
   OptimizationPanel,
   ResultsSummary,
+  UldSelector,
   runOptimization,
   generateInstructions,
   getCargoItems,
   getPackingRules,
+  getAvailableUldsForFlight,
   type OptimizationObjective,
+  type AvailableUldDisplay,
+  type RotationLevel,
 } from "@/features/planning";
 import type {
   OptimizationResult,
@@ -45,10 +49,13 @@ export default function BuildUpPage() {
   // Data state
   const [cargoItems, setCargoItems] = useState<CargoItemDisplay[]>([]);
   const [packingRules, setPackingRules] = useState<PackingRule[]>([]);
+  const [availableUlds, setAvailableUlds] = useState<AvailableUldDisplay[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+  const [isLoadingUlds, setIsLoadingUlds] = useState(false);
 
   // UI state
   const [selectedCargoIds, setSelectedCargoIds] = useState<string[]>([]);
+  const [selectedUldIds, setSelectedUldIds] = useState<string[]>([]);
   const [isOptimizing, setIsOptimizing] = useState(false);
   const [optimizationResult, setOptimizationResult] =
     useState<OptimizationResult | null>(null);
@@ -65,6 +72,7 @@ export default function BuildUpPage() {
   const [optimizerUsed, setOptimizerUsed] = useState<
     OptimizerUsed | undefined
   >();
+  const [rotationLevel, setRotationLevel] = useState<RotationLevel>("Z_ONLY");
 
   // Fetch data when flight changes
   useEffect(() => {
@@ -72,40 +80,60 @@ export default function BuildUpPage() {
       if (!selectedFlight?.id) {
         setCargoItems([]);
         setPackingRules([]);
+        setAvailableUlds([]);
         return;
       }
 
       setIsLoadingData(true);
+      setIsLoadingUlds(true);
       try {
-        // Fetch data from database
-        const [cargoResult, rulesResult] = await Promise.all([
+        // Fetch data from database in parallel
+        const [cargoResult, rulesResult, uldsResult] = await Promise.all([
           getCargoItems(selectedFlight.id),
           getPackingRules(),
+          getAvailableUldsForFlight(selectedFlight.id),
         ]);
 
         setCargoItems(cargoResult.items);
         setPackingRules(rulesResult.rules);
+        setAvailableUlds(uldsResult.ulds);
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setCargoItems([]);
         setPackingRules([]);
+        setAvailableUlds([]);
       } finally {
         setIsLoadingData(false);
+        setIsLoadingUlds(false);
       }
     }
 
     fetchData();
     // Reset selection when flight changes
     setSelectedCargoIds([]);
+    setSelectedUldIds([]);
     setOptimizationResult(null);
     setInstructions(new Map());
     setActiveTab("cargo");
   }, [selectedFlight?.id]);
 
-  // Calculate selected weight from current cargo items
-  const selectedWeight = cargoItems
-    .filter((item) => selectedCargoIds.includes(item.id))
-    .reduce((sum, item) => sum + item.weightKg, 0);
+  // Calculate selected cargo weight and volume for capacity checks
+  const selectedCargo = useMemo(() => {
+    const items = cargoItems.filter((item) =>
+      selectedCargoIds.includes(item.id)
+    );
+    return {
+      items,
+      weight: items.reduce((sum, item) => sum + item.weightKg, 0),
+      volume: items.reduce(
+        (sum, item) =>
+          sum + (item.lengthCm * item.widthCm * item.heightCm) / 1000000, // cm³ to m³
+        0
+      ),
+    };
+  }, [cargoItems, selectedCargoIds]);
+
+  const selectedWeight = selectedCargo.weight;
 
   // Handlers
   const handleOptimize = useCallback(
@@ -120,10 +148,12 @@ export default function BuildUpPage() {
           rules: packingRules,
           options: {
             objective: selectedObjective,
-            allowRotation: true,
+            rotationLevel,
             prioritizeHighPriorityCargo: true,
           },
           useLlm,
+          selectedUldIds:
+            selectedUldIds.length > 0 ? selectedUldIds : undefined,
         });
 
         if (result.success && result.result) {
@@ -141,7 +171,14 @@ export default function BuildUpPage() {
         setIsOptimizing(false);
       }
     },
-    [selectedCargoIds, selectedFlight?.id, packingRules, useLlm]
+    [
+      selectedCargoIds,
+      selectedFlight?.id,
+      packingRules,
+      useLlm,
+      rotationLevel,
+      selectedUldIds,
+    ]
   );
 
   const handleGenerateInstructions = useCallback(
@@ -183,6 +220,7 @@ export default function BuildUpPage() {
     setInstructions(new Map());
     setActiveTab("cargo");
     setSelectedCargoIds([]);
+    setSelectedUldIds([]);
   };
 
   return (
@@ -290,7 +328,7 @@ export default function BuildUpPage() {
           ) : null}
         </div>
 
-        {/* Right panel - Optimization only */}
+        {/* Right panel - Optimization controls */}
         <div className="space-y-4">
           <OptimizationPanel
             selectedCargoCount={selectedCargoIds.length}
@@ -304,6 +342,19 @@ export default function BuildUpPage() {
             useLlm={useLlm}
             onUseLlmChange={setUseLlm}
             optimizerUsed={optimizerUsed}
+            rotationLevel={rotationLevel}
+            onRotationLevelChange={setRotationLevel}
+          />
+
+          {/* ULD Selection */}
+          <UldSelector
+            availableUlds={availableUlds}
+            selectedUldIds={selectedUldIds}
+            onSelectionChange={setSelectedUldIds}
+            isLoading={isLoadingUlds}
+            disabled={isOptimizing}
+            requiredWeightKg={selectedCargo.weight}
+            requiredVolumeM3={selectedCargo.volume}
           />
         </div>
       </div>

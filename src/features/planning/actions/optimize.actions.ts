@@ -48,6 +48,8 @@ type OptimizeInput = {
   options: OptimizationOptions;
   algorithmName?: string; // Allow specifying which algorithm to use
   useLlm?: boolean; // Use LLM-based optimization instead of algorithm
+  /** Specific ULD IDs to use (all will be included, even if empty) */
+  selectedUldIds?: string[];
 };
 
 /** Which optimizer was used for the result */
@@ -121,6 +123,17 @@ export async function runOptimization(input: OptimizeInput): Promise<{
     let optimizationResult: OptimizationOutput;
     let optimizerUsed: OptimizerUsed = "FFD3D";
 
+    // Build common optimizer options
+    const optimizerOptions = {
+      objective: input.options.objective ?? "MINIMIZE_ULDS",
+      maxUldsToUse: input.options.maxUldsToUse,
+      prioritizeHighPriorityCargo: input.options.prioritizeHighPriorityCargo,
+      allowRotation: input.options.allowRotation ?? true,
+      rotationLevel: input.options.rotationLevel,
+      targetCgPercentMac: input.options.targetCgPercentMac,
+      selectedUldIds: input.selectedUldIds,
+    };
+
     // Choose optimization approach
     if (input.useLlm) {
       // Try LLM optimization with retry logic
@@ -129,14 +142,7 @@ export async function runOptimization(input: OptimizeInput): Promise<{
           cargoItems,
           uldTypes,
           constraints,
-          options: {
-            objective: input.options.objective ?? "MINIMIZE_ULDS",
-            maxUldsToUse: input.options.maxUldsToUse,
-            prioritizeHighPriorityCargo:
-              input.options.prioritizeHighPriorityCargo,
-            allowRotation: input.options.allowRotation ?? true,
-            targetCgPercentMac: input.options.targetCgPercentMac,
-          },
+          options: optimizerOptions,
           aircraftConfig: aircraftConfig ?? undefined,
           uldInventory,
         },
@@ -158,14 +164,7 @@ export async function runOptimization(input: OptimizeInput): Promise<{
           cargoItems,
           uldTypes,
           constraints,
-          options: {
-            objective: input.options.objective ?? "MINIMIZE_ULDS",
-            maxUldsToUse: input.options.maxUldsToUse,
-            prioritizeHighPriorityCargo:
-              input.options.prioritizeHighPriorityCargo,
-            allowRotation: input.options.allowRotation ?? true,
-            targetCgPercentMac: input.options.targetCgPercentMac,
-          },
+          options: optimizerOptions,
           aircraftConfig: aircraftConfig ?? undefined,
           uldInventory,
         });
@@ -183,14 +182,7 @@ export async function runOptimization(input: OptimizeInput): Promise<{
         cargoItems,
         uldTypes,
         constraints,
-        options: {
-          objective: input.options.objective ?? "MINIMIZE_ULDS",
-          maxUldsToUse: input.options.maxUldsToUse,
-          prioritizeHighPriorityCargo:
-            input.options.prioritizeHighPriorityCargo,
-          allowRotation: input.options.allowRotation ?? true,
-          targetCgPercentMac: input.options.targetCgPercentMac,
-        },
+        options: optimizerOptions,
         aircraftConfig: aircraftConfig ?? undefined,
         uldInventory,
       });
@@ -685,6 +677,69 @@ export async function getFlights(): Promise<{
     return {
       success: true,
       flights: [],
+    };
+  }
+}
+
+// ============================================================================
+// ULD INVENTORY ACTIONS
+// ============================================================================
+
+/**
+ * Display type for available ULD
+ */
+export type AvailableUldDisplay = {
+  id: string;
+  uldNumber: string;
+  uldTypeCode: string;
+  uldTypeName: string;
+  category: "CONTAINER" | "PALLET";
+  maxPayloadKg: number;
+  maxVolumeM3: number;
+  ownerCode: string | null;
+  isRefrigerated: boolean;
+};
+
+/**
+ * Get available ULDs for a flight (at the flight's origin location)
+ */
+export async function getAvailableUldsForFlight(
+  flightId: string
+): Promise<{ success: boolean; ulds: AvailableUldDisplay[]; error?: string }> {
+  try {
+    const flight = await getFlightById(flightId);
+    if (!flight) {
+      return {
+        success: false,
+        ulds: [],
+        error: "Flight not found",
+      };
+    }
+
+    const inventoryUlds = await getAvailableUldsAtLocation(flight.originId);
+
+    const displayUlds: AvailableUldDisplay[] = inventoryUlds.map((uld) => ({
+      id: uld.id,
+      uldNumber: uld.uldNumber,
+      uldTypeCode: uld.uldType.code,
+      uldTypeName: uld.uldType.name,
+      category: uld.uldType.category,
+      maxPayloadKg: uld.uldType.maxGrossWeightKg - uld.uldType.tareWeightKg,
+      maxVolumeM3: uld.uldType.maxVolumeM3,
+      ownerCode: uld.ownerCode,
+      isRefrigerated: uld.uldType.isRefrigerated,
+    }));
+
+    return {
+      success: true,
+      ulds: displayUlds,
+    };
+  } catch (error) {
+    console.error("Failed to get available ULDs:", error);
+    return {
+      success: false,
+      ulds: [],
+      error: error instanceof Error ? error.message : "Unknown error",
     };
   }
 }

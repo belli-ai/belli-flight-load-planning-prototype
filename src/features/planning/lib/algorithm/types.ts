@@ -173,15 +173,28 @@ export type PackingConstraint = {
 };
 
 /**
+ * Rotation level for cargo items
+ * - NONE: No rotation allowed, use original orientation only
+ * - Z_ONLY: Flat rotation only (swap length/width), keeps item upright
+ * - FULL_3D: Full 3D rotation including tilting (all 6 orientations)
+ */
+export type RotationLevel = "NONE" | "Z_ONLY" | "FULL_3D";
+
+/**
  * Optimization configuration options
  */
 export type OptimizerOptions = {
   objective: "MINIMIZE_ULDS" | "MAXIMIZE_UTILIZATION" | "MINIMIZE_CG_DEVIATION" | "BALANCED";
   maxUldsToUse?: number;
   prioritizeHighPriorityCargo?: boolean;
+  /** @deprecated Use rotationLevel instead */
   allowRotation?: boolean;
+  /** Rotation level for cargo items (defaults to Z_ONLY for backwards compatibility) */
+  rotationLevel?: RotationLevel;
   targetCgPercentMac?: number;
   timeoutMs?: number;
+  /** Specific ULD IDs that MUST be used (all will be included even if empty) */
+  selectedUldIds?: string[];
 };
 
 // ============================================================================

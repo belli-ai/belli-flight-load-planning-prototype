@@ -18,8 +18,13 @@ import {
   Scale,
   Bot,
   Cpu,
+  RotateCcw,
+  RotateCw,
+  Rotate3D,
+  Ban,
 } from "lucide-react";
 import type { OptimizationResult, PackingRule, OptimizerUsed } from "../types";
+import type { RotationLevel } from "../lib/algorithm/types";
 
 // ============================================================================
 // TYPES
@@ -43,6 +48,9 @@ type OptimizationPanelProps = {
   onUseLlmChange?: (useLlm: boolean) => void;
   /** Which optimizer produced the current result */
   optimizerUsed?: OptimizerUsed;
+  /** Rotation level for cargo items */
+  rotationLevel?: RotationLevel;
+  onRotationLevelChange?: (level: RotationLevel) => void;
 };
 
 // ============================================================================
@@ -61,6 +69,8 @@ export function OptimizationPanel({
   useLlm: controlledUseLlm,
   onUseLlmChange,
   optimizerUsed,
+  rotationLevel: controlledRotationLevel,
+  onRotationLevelChange,
 }: OptimizationPanelProps) {
   // Support both controlled and uncontrolled objective state
   const [internalObjective, setInternalObjective] = useState<Objective>("MINIMIZE_ULDS");
@@ -83,6 +93,18 @@ export function OptimizationPanel({
       onUseLlmChange(newUseLlm);
     } else {
       setInternalUseLlm(newUseLlm);
+    }
+  };
+
+  // Support both controlled and uncontrolled rotation level state
+  const [internalRotationLevel, setInternalRotationLevel] = useState<RotationLevel>("Z_ONLY");
+  const rotationLevel = controlledRotationLevel ?? internalRotationLevel;
+
+  const handleRotationLevelChange = (newLevel: RotationLevel) => {
+    if (onRotationLevelChange) {
+      onRotationLevelChange(newLevel);
+    } else {
+      setInternalRotationLevel(newLevel);
     }
   };
   
@@ -185,6 +207,53 @@ export function OptimizationPanel({
                   {obj.icon}
                 </span>
                 <span className="text-xs font-medium">{obj.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Rotation level selector */}
+        <div>
+          <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Item Rotation
+          </label>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {[
+              {
+                id: "NONE" as RotationLevel,
+                label: "None",
+                icon: <Ban className="size-4" />,
+                description: "Fixed orientation",
+              },
+              {
+                id: "Z_ONLY" as RotationLevel,
+                label: "Flat",
+                icon: <RotateCw className="size-4" />,
+                description: "Rotate on floor",
+              },
+              {
+                id: "FULL_3D" as RotationLevel,
+                label: "3D",
+                icon: <Rotate3D className="size-4" />,
+                description: "Full rotation",
+              },
+            ].map((level) => (
+              <button
+                key={level.id}
+                onClick={() => handleRotationLevelChange(level.id)}
+                disabled={isOptimizing}
+                className={cn(
+                  "flex flex-col items-center gap-1 rounded-sm border p-2 transition-colors",
+                  rotationLevel === level.id
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:border-muted-foreground",
+                  isOptimizing && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <span className={cn(rotationLevel === level.id ? "text-primary" : "text-muted-foreground")}>
+                  {level.icon}
+                </span>
+                <span className="text-xs font-medium">{level.label}</span>
               </button>
             ))}
           </div>

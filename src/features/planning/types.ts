@@ -316,12 +316,18 @@ export type OptimizationRequest = {
   options: OptimizationOptions;
 };
 
+/** Rotation level for cargo items */
+export type RotationLevel = "NONE" | "Z_ONLY" | "FULL_3D";
+
 export type OptimizationOptions = {
   objective: OptimizationObjective;
   targetCgPercentMac?: number;
   maxUldsToUse?: number;
   prioritizeHighPriorityCargo?: boolean;
+  /** @deprecated Use rotationLevel instead */
   allowRotation?: boolean;
+  /** Rotation level for cargo items (defaults to Z_ONLY) */
+  rotationLevel?: RotationLevel;
   useVirtualUlds?: boolean;
 };
 

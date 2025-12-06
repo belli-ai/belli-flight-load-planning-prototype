@@ -5,8 +5,10 @@
  * 1. Sort cargo items by volume (descending)
  * 2. For each item, try to fit into existing ULDs
  * 3. If no fit, open a new ULD
- * 4. Uses guillotine splits for 3D space management
- * 5. Respects weight limits and stacking constraints
+ * 4. Uses MaxRects algorithm for 3D space management (improved from guillotine)
+ * 5. Supports layer-based packing for better utilization
+ * 6. Supports multiple rotation levels: NONE, Z_ONLY, FULL_3D
+ * 7. Respects weight limits and stacking constraints
  */
 
 import type {
@@ -23,6 +25,7 @@ import type {
   AircraftConfigForPacking,
   CgResultOutput,
   UldInventoryItem,
+  RotationLevel,
 } from "./types";
 import {
   assignPositions,
@@ -50,6 +53,8 @@ type OpenUld = {
   sequence: number;
   freeSpaces: FreeSpace[];
   packedItems: PackedItemOutput[];
+  /** Placed items for MaxRects collision detection */
+  placedItems3D: PlacedItem3D[];
   currentWeightKg: number;
   currentVolumeM3: number;
   /** Physical ULD ID from inventory (null if virtual) */
@@ -66,6 +71,15 @@ type ItemOrientation = {
   rotationAxis: "X" | "Y" | "Z" | null;
 };
 
+type PlacedItem3D = {
+  x: number;
+  y: number;
+  z: number;
+  length: number;
+  width: number;
+  height: number;
+};
+
 // ============================================================================
 // OPTIMIZER IMPLEMENTATION
 // ============================================================================
@@ -73,7 +87,7 @@ type ItemOrientation = {
 export class Ffd3dOptimizer implements IUldOptimizer {
   readonly name = "ffd-3d";
   readonly description =
-    "3D First Fit Decreasing bin packing algorithm with guillotine splits";
+    "3D First Fit Decreasing bin packing algorithm with MaxRects space management";
 
   async optimize(input: OptimizerInput): Promise<OptimizationOutput> {
     const startTime = performance.now();
@@ -368,6 +382,7 @@ export class Ffd3dOptimizer implements IUldOptimizer {
     const openUlds: OpenUld[] = [];
     const unassignedItems: CargoItemForPacking[] = [];
     let uldSequence = 0;
+    const rotationLevel = this.getRotationLevel(options);
 
     // Track available physical ULDs from inventory (grouped by type)
     const availableInventory = new Map<string, UldInventoryItem[]>();
@@ -379,6 +394,19 @@ export class Ffd3dOptimizer implements IUldOptimizer {
       }
     }
 
+    // Handle pre-selected ULDs (must all be used)
+    if (options.selectedUldIds && options.selectedUldIds.length > 0) {
+      return this.packItemsWithSelectedUlds(
+        items,
+        uldTypes,
+        constraints,
+        options,
+        warnings,
+        uldInventory,
+        rotationLevel
+      );
+    }
+
     for (const item of items) {
       let placed = false;
 
@@ -386,7 +414,8 @@ export class Ffd3dOptimizer implements IUldOptimizer {
       const validUldTypes = this.getValidUldTypesForItem(
         item,
         uldTypes,
-        constraints
+        constraints,
+        rotationLevel
       );
 
       if (validUldTypes.length === 0) {
@@ -411,7 +440,7 @@ export class Ffd3dOptimizer implements IUldOptimizer {
           item,
           openUld,
           constraints,
-          options.allowRotation
+          rotationLevel
         );
         if (placement) {
           this.placeItem(item, openUld, placement);
@@ -461,7 +490,7 @@ export class Ffd3dOptimizer implements IUldOptimizer {
           item,
           newUld,
           constraints,
-          options.allowRotation
+          rotationLevel
         );
 
         if (placement) {
@@ -481,6 +510,94 @@ export class Ffd3dOptimizer implements IUldOptimizer {
           }
         }
       }
+    }
+
+    return { openUlds, unassignedItems };
+  }
+
+  /**
+   * Pack items using pre-selected ULDs only.
+   * All selected ULDs MUST be included in output (even if empty).
+   * Overflow items are marked as unassigned.
+   */
+  private packItemsWithSelectedUlds(
+    items: CargoItemForPacking[],
+    uldTypes: UldTypeForPacking[],
+    constraints: PackingConstraint[],
+    options: OptimizerInput["options"],
+    warnings: string[],
+    uldInventory?: UldInventoryItem[],
+    rotationLevel: RotationLevel = "Z_ONLY"
+  ): { openUlds: OpenUld[]; unassignedItems: CargoItemForPacking[] } {
+    const openUlds: OpenUld[] = [];
+    const unassignedItems: CargoItemForPacking[] = [];
+    const selectedIds = new Set(options.selectedUldIds || []);
+
+    // Build inventory lookup
+    const inventoryById = new Map<string, UldInventoryItem>();
+    if (uldInventory) {
+      for (const uld of uldInventory) {
+        inventoryById.set(uld.id, uld);
+      }
+    }
+
+    // Pre-create ULDs for all selected inventory items
+    let sequence = 0;
+    for (const selectedId of selectedIds) {
+      const inventoryItem = inventoryById.get(selectedId);
+      if (!inventoryItem) {
+        warnings.push(`Selected ULD ${selectedId} not found in inventory`);
+        continue;
+      }
+
+      const newUld = this.createNewUld(
+        inventoryItem.uldType,
+        ++sequence,
+        inventoryItem
+      );
+      openUlds.push(newUld);
+    }
+
+    if (openUlds.length === 0) {
+      warnings.push("No valid ULDs from selection, cannot pack items");
+      return { openUlds: [], unassignedItems: items };
+    }
+
+    // Pack items into pre-selected ULDs only
+    for (const item of items) {
+      let placed = false;
+
+      // Sort ULDs for placement based on objective
+      const uldsToTry = this.sortUldsForPlacement(
+        openUlds,
+        uldTypes,
+        item,
+        options.objective
+      );
+
+      for (const openUld of uldsToTry) {
+        const placement = this.tryPlaceItem(
+          item,
+          openUld,
+          constraints,
+          rotationLevel
+        );
+        if (placement) {
+          this.placeItem(item, openUld, placement);
+          placed = true;
+          break;
+        }
+      }
+
+      if (!placed) {
+        unassignedItems.push(item);
+      }
+    }
+
+    if (unassignedItems.length > 0) {
+      warnings.push(
+        `${unassignedItems.length} item(s) could not fit in selected ULDs`
+      );
     }
 
     return { openUlds, unassignedItems };
@@ -576,7 +693,8 @@ export class Ffd3dOptimizer implements IUldOptimizer {
   private getValidUldTypesForItem(
     item: CargoItemForPacking,
     uldTypes: UldTypeForPacking[],
-    constraints: PackingConstraint[]
+    constraints: PackingConstraint[],
+    rotationLevel: RotationLevel = "FULL_3D" // Use FULL_3D for compatibility check
   ): UldTypeForPacking[] {
     return uldTypes.filter((uld) => {
       // Temperature-controlled cargo needs refrigerated ULD
@@ -591,7 +709,8 @@ export class Ffd3dOptimizer implements IUldOptimizer {
       }
 
       // Check dimensions (at least one orientation must fit)
-      const orientations = this.getItemOrientations(item, true);
+      // Use FULL_3D to check maximum compatibility
+      const orientations = this.getItemOrientations(item, rotationLevel);
       const fits = orientations.some(
         (o) =>
           o.length <= uld.internalLengthCm &&
@@ -677,6 +796,7 @@ export class Ffd3dOptimizer implements IUldOptimizer {
         },
       ],
       packedItems: [],
+      placedItems3D: [],
       currentWeightKg: uldType.tareWeightKg,
       currentVolumeM3: 0,
       uldId: inventoryItem?.id ?? null,
@@ -684,9 +804,23 @@ export class Ffd3dOptimizer implements IUldOptimizer {
     };
   }
 
+  /**
+   * Get rotation level from options (handles backwards compatibility with allowRotation)
+   */
+  private getRotationLevel(options: OptimizerInput["options"]): RotationLevel {
+    if (options.rotationLevel) {
+      return options.rotationLevel;
+    }
+    // Backwards compatibility: allowRotation=true defaults to Z_ONLY
+    if (options.allowRotation === false) {
+      return "NONE";
+    }
+    return "Z_ONLY"; // Default
+  }
+
   private getItemOrientations(
     item: CargoItemForPacking,
-    allowRotation: boolean = true
+    rotationLevel: RotationLevel
   ): ItemOrientation[] {
     const orientations: ItemOrientation[] = [
       {
@@ -698,8 +832,12 @@ export class Ffd3dOptimizer implements IUldOptimizer {
       },
     ];
 
-    if (allowRotation && item.isTiltable) {
-      // Rotate around Z axis (swap length and width)
+    if (rotationLevel === "NONE") {
+      return orientations;
+    }
+
+    // Z_ONLY: Flat rotation (swap length and width, keep upright)
+    if (rotationLevel === "Z_ONLY" || rotationLevel === "FULL_3D") {
       orientations.push({
         length: item.widthCm,
         width: item.lengthCm,
@@ -707,7 +845,10 @@ export class Ffd3dOptimizer implements IUldOptimizer {
         rotated: true,
         rotationAxis: "Z",
       });
+    }
 
+    // FULL_3D: Additional rotations (tilting) - only if item is tiltable
+    if (rotationLevel === "FULL_3D" && item.isTiltable) {
       // Rotate around Y axis (swap length and height)
       orientations.push({
         length: item.heightCm,
@@ -725,14 +866,22 @@ export class Ffd3dOptimizer implements IUldOptimizer {
         rotated: true,
         rotationAxis: "X",
       });
-    } else if (allowRotation) {
-      // Only allow Z rotation (keep upright)
+
+      // Rotate around both Y and Z (swap all dimensions)
+      orientations.push({
+        length: item.heightCm,
+        width: item.lengthCm,
+        height: item.widthCm,
+        rotated: true,
+        rotationAxis: "Y",
+      });
+
       orientations.push({
         length: item.widthCm,
-        width: item.lengthCm,
-        height: item.heightCm,
+        width: item.heightCm,
+        height: item.lengthCm,
         rotated: true,
-        rotationAxis: "Z",
+        rotationAxis: "X",
       });
     }
 
@@ -743,7 +892,7 @@ export class Ffd3dOptimizer implements IUldOptimizer {
     item: CargoItemForPacking,
     uld: OpenUld,
     constraints: PackingConstraint[],
-    allowRotation: boolean = true
+    rotationLevel: RotationLevel
   ): {
     space: FreeSpace;
     orientation: ItemOrientation;
@@ -761,14 +910,23 @@ export class Ffd3dOptimizer implements IUldOptimizer {
       return null;
     }
 
-    const orientations = this.getItemOrientations(item, allowRotation);
+    const orientations = this.getItemOrientations(item, rotationLevel);
 
     // Sort free spaces by position (bottom-left-back first - BLF heuristic)
+    // For better packing, also consider spaces that would minimize waste
     const sortedSpaces = [...uld.freeSpaces].sort((a, b) => {
-      if (a.z !== b.z) return a.z - b.z; // Bottom first
+      if (a.z !== b.z) return a.z - b.z; // Bottom first (layer-based)
       if (a.y !== b.y) return a.y - b.y; // Front first
       return a.x - b.x; // Left first
     });
+
+    // Try each space and find the best fit (minimize remaining space)
+    let bestPlacement: {
+      space: FreeSpace;
+      orientation: ItemOrientation;
+      position: Position3D;
+      score: number;
+    } | null = null;
 
     for (const space of sortedSpaces) {
       for (const orientation of orientations) {
@@ -777,13 +935,39 @@ export class Ffd3dOptimizer implements IUldOptimizer {
           orientation.width <= space.width &&
           orientation.height <= space.height
         ) {
-          return {
-            space,
-            orientation,
-            position: { x: space.x, y: space.y, z: space.z },
-          };
+          // Score based on how well it fits (Best Short Side Fit)
+          const remainingLength = space.length - orientation.length;
+          const remainingWidth = space.width - orientation.width;
+          const shortSide = Math.min(remainingLength, remainingWidth);
+          const score = shortSide; // Lower is better
+
+          if (!bestPlacement || score < bestPlacement.score) {
+            bestPlacement = {
+              space,
+              orientation,
+              position: { x: space.x, y: space.y, z: space.z },
+              score,
+            };
+          }
+
+          // If perfect fit on floor plane, use it immediately
+          if (shortSide === 0) {
+            return {
+              space: bestPlacement.space,
+              orientation: bestPlacement.orientation,
+              position: bestPlacement.position,
+            };
+          }
         }
       }
+    }
+
+    if (bestPlacement) {
+      return {
+        space: bestPlacement.space,
+        orientation: bestPlacement.orientation,
+        position: bestPlacement.position,
+      };
     }
 
     return null;
@@ -816,7 +1000,7 @@ export class Ffd3dOptimizer implements IUldOptimizer {
       position: Position3D;
     }
   ): void {
-    const { space, orientation, position } = placement;
+    const { orientation, position } = placement;
 
     // Add packed item
     uld.packedItems.push({
@@ -832,75 +1016,218 @@ export class Ffd3dOptimizer implements IUldOptimizer {
       sequence: uld.packedItems.length + 1,
     });
 
+    // Track placed item for MaxRects collision detection
+    uld.placedItems3D.push({
+      x: position.x,
+      y: position.y,
+      z: position.z,
+      length: orientation.length,
+      width: orientation.width,
+      height: orientation.height,
+    });
+
     // Update ULD stats
     uld.currentWeightKg += item.weightKg;
     uld.currentVolumeM3 += item.volumeM3;
 
-    // Update free spaces using guillotine split
-    this.updateFreeSpaces(uld, space, orientation, position);
+    // Update free spaces using MaxRects algorithm
+    this.updateFreeSpacesMaxRects(uld, orientation, position);
   }
 
-  private updateFreeSpaces(
+  /**
+   * MaxRects algorithm for 3D space management.
+   * When an item is placed, this method:
+   * 1. Splits each free space that intersects with the placed item
+   * 2. Generates maximal rectangles that extend to ULD boundaries or other items
+   * 3. Removes non-maximal rectangles (those contained within others)
+   */
+  private updateFreeSpacesMaxRects(
     uld: OpenUld,
-    usedSpace: FreeSpace,
     itemDimensions: Dimensions3D,
     itemPosition: Position3D
   ): void {
-    // Remove the used space
-    uld.freeSpaces = uld.freeSpaces.filter((s) => s !== usedSpace);
+    const placedItem: PlacedItem3D = {
+      x: itemPosition.x,
+      y: itemPosition.y,
+      z: itemPosition.z,
+      length: itemDimensions.length,
+      width: itemDimensions.width,
+      height: itemDimensions.height,
+    };
 
-    // Guillotine split: create up to 3 new spaces
-    const newSpaces: FreeSpace[] = [];
+    const newFreeSpaces: FreeSpace[] = [];
 
-    // Space to the right (X direction)
-    const rightSpace = usedSpace.length - itemDimensions.length;
-    if (rightSpace > 0) {
-      newSpaces.push({
-        x: itemPosition.x + itemDimensions.length,
-        y: usedSpace.y,
-        z: usedSpace.z,
-        length: rightSpace,
-        width: usedSpace.width,
-        height: usedSpace.height,
-      });
-    }
-
-    // Space in front (Y direction)
-    const frontSpace = usedSpace.width - itemDimensions.width;
-    if (frontSpace > 0) {
-      newSpaces.push({
-        x: usedSpace.x,
-        y: itemPosition.y + itemDimensions.width,
-        z: usedSpace.z,
-        length: itemDimensions.length, // Only the width of the placed item
-        width: frontSpace,
-        height: usedSpace.height,
-      });
-    }
-
-    // Space on top (Z direction)
-    const topSpace = usedSpace.height - itemDimensions.height;
-    if (topSpace > 0) {
-      newSpaces.push({
-        x: usedSpace.x,
-        y: usedSpace.y,
-        z: itemPosition.z + itemDimensions.height,
-        length: itemDimensions.length,
-        width: itemDimensions.width,
-        height: topSpace,
-      });
+    // Process each existing free space
+    for (const space of uld.freeSpaces) {
+      // Check if this space intersects with the placed item
+      if (this.intersects3D(space, placedItem)) {
+        // Split the space into up to 6 new spaces (one for each "side" of the placed item)
+        const splits = this.splitAroundItem(space, placedItem);
+        newFreeSpaces.push(...splits);
+      } else {
+        // Space doesn't intersect, keep it
+        newFreeSpaces.push(space);
+      }
     }
 
     // Filter out tiny spaces (less than 10cm in any dimension)
     const minDimension = 10;
-    const validSpaces = newSpaces.filter(
+    const validSpaces = newFreeSpaces.filter(
       (s) =>
         s.length >= minDimension &&
         s.width >= minDimension &&
         s.height >= minDimension
     );
 
-    uld.freeSpaces.push(...validSpaces);
+    // Remove non-maximal rectangles (those fully contained within others)
+    uld.freeSpaces = this.removeNonMaximalSpaces(validSpaces);
+  }
+
+  /**
+   * Check if two 3D boxes intersect (overlap in all three dimensions)
+   */
+  private intersects3D(space: FreeSpace, item: PlacedItem3D): boolean {
+    const spaceEndX = space.x + space.length;
+    const spaceEndY = space.y + space.width;
+    const spaceEndZ = space.z + space.height;
+    const itemEndX = item.x + item.length;
+    const itemEndY = item.y + item.width;
+    const itemEndZ = item.z + item.height;
+
+    // Two boxes intersect if they overlap in all three axes
+    const overlapX = space.x < itemEndX && spaceEndX > item.x;
+    const overlapY = space.y < itemEndY && spaceEndY > item.y;
+    const overlapZ = space.z < itemEndZ && spaceEndZ > item.z;
+
+    return overlapX && overlapY && overlapZ;
+  }
+
+  /**
+   * Split a free space around a placed item, generating maximal rectangles.
+   * Creates up to 6 new spaces: left, right, front, back, below, above.
+   */
+  private splitAroundItem(space: FreeSpace, item: PlacedItem3D): FreeSpace[] {
+    const result: FreeSpace[] = [];
+
+    const spaceEndX = space.x + space.length;
+    const spaceEndY = space.y + space.width;
+    const spaceEndZ = space.z + space.height;
+
+    // Left space (X < item.x) - FULL height and width of original space
+    if (item.x > space.x) {
+      result.push({
+        x: space.x,
+        y: space.y,
+        z: space.z,
+        length: item.x - space.x,
+        width: space.width,
+        height: space.height,
+      });
+    }
+
+    // Right space (X > item end) - FULL height and width of original space
+    const itemEndX = item.x + item.length;
+    if (itemEndX < spaceEndX) {
+      result.push({
+        x: itemEndX,
+        y: space.y,
+        z: space.z,
+        length: spaceEndX - itemEndX,
+        width: space.width,
+        height: space.height,
+      });
+    }
+
+    // Front space (Y < item.y) - FULL height and length of original space
+    if (item.y > space.y) {
+      result.push({
+        x: space.x,
+        y: space.y,
+        z: space.z,
+        length: space.length,
+        width: item.y - space.y,
+        height: space.height,
+      });
+    }
+
+    // Back space (Y > item end) - FULL height and length of original space
+    const itemEndY = item.y + item.width;
+    if (itemEndY < spaceEndY) {
+      result.push({
+        x: space.x,
+        y: itemEndY,
+        z: space.z,
+        length: space.length,
+        width: spaceEndY - itemEndY,
+        height: space.height,
+      });
+    }
+
+    // Below space (Z < item.z) - FULL length and width of original space
+    if (item.z > space.z) {
+      result.push({
+        x: space.x,
+        y: space.y,
+        z: space.z,
+        length: space.length,
+        width: space.width,
+        height: item.z - space.z,
+      });
+    }
+
+    // Above space (Z > item end) - FULL length and width of original space
+    const itemEndZ = item.z + item.height;
+    if (itemEndZ < spaceEndZ) {
+      result.push({
+        x: space.x,
+        y: space.y,
+        z: itemEndZ,
+        length: space.length,
+        width: space.width,
+        height: spaceEndZ - itemEndZ,
+      });
+    }
+
+    return result;
+  }
+
+  /**
+   * Remove spaces that are fully contained within another space.
+   * This keeps only the "maximal" rectangles.
+   */
+  private removeNonMaximalSpaces(spaces: FreeSpace[]): FreeSpace[] {
+    const result: FreeSpace[] = [];
+
+    for (let i = 0; i < spaces.length; i++) {
+      let isContained = false;
+
+      for (let j = 0; j < spaces.length; j++) {
+        if (i !== j && this.isContainedIn(spaces[i], spaces[j])) {
+          isContained = true;
+          break;
+        }
+      }
+
+      if (!isContained) {
+        result.push(spaces[i]);
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * Check if space A is fully contained within space B
+   */
+  private isContainedIn(a: FreeSpace, b: FreeSpace): boolean {
+    return (
+      a.x >= b.x &&
+      a.y >= b.y &&
+      a.z >= b.z &&
+      a.x + a.length <= b.x + b.length &&
+      a.y + a.width <= b.y + b.width &&
+      a.z + a.height <= b.z + b.height
+    );
   }
 
   // --------------------------------------------------------------------------
