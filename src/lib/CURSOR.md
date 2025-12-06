@@ -11,8 +11,6 @@ lib/
 ├── db/
 │   ├── index.ts      # Drizzle client instance
 │   └── schema.ts     # All database table definitions
-├── supabase/
-│   └── client.ts     # Supabase client for client-side use
 └── utils.ts          # ShadCN utility (cn function)
 ```
 
@@ -20,7 +18,7 @@ lib/
 
 ### Client (`index.ts`)
 
-Singleton Drizzle client connected to Supabase PostgreSQL:
+Singleton Drizzle client connected to PostgreSQL:
 
 ```typescript
 import { db } from "@/lib/db";
@@ -42,27 +40,6 @@ Documentation requirements:
 3. Type exports for select/insert operations
 
 See the schema file for current tables and add new ones following the established pattern.
-
-## Supabase (supabase/)
-
-### Client (`client.ts`)
-
-Browser-side Supabase client for:
-- Real-time subscriptions
-- Storage operations
-- Client-side auth (if added later)
-
-```typescript
-import { supabase } from "@/lib/supabase/client";
-
-// Real-time subscription
-supabase
-  .channel('flights')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'flights' }, handler)
-  .subscribe();
-```
-
-**Note**: For server-side database operations, prefer Drizzle (`@/lib/db`) over Supabase client.
 
 ## Utilities (utils.ts)
 

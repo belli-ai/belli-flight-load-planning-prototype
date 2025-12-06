@@ -35,7 +35,7 @@ src/
 
 ### Library Code (lib/)
 - Database client and schema definitions
-- External service clients (Supabase)
+- External service clients
 - Pure utility functions
 
 ## Import Aliases
