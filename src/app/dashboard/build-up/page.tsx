@@ -1,32 +1,246 @@
+"use client";
+
+import { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Boxes } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { Boxes, Plane, Package, Sparkles, RefreshCw } from "lucide-react";
+import {
+  FlightSelector,
+  FlightInfoBadge,
+  useSelectedFlight,
+} from "@/components/shared/flight-selector";
+import {
+  CargoList,
+  OptimizationPanel,
+  ResultsSummary,
+  runOptimization,
+  generateInstructions,
+  MOCK_CARGO_ITEMS,
+  MOCK_PACKING_RULES,
+} from "@/features/planning";
+import type {
+  OptimizationResult,
+  BuildUpInstruction,
+} from "@/features/planning";
+
+// ============================================================================
+// BUILD-UP PAGE COMPONENT
+// ============================================================================
 
 export default function BuildUpPage() {
+  const { selectedFlight } = useSelectedFlight();
+
+  // State
+  const [selectedCargoIds, setSelectedCargoIds] = useState<string[]>([]);
+  const [isOptimizing, setIsOptimizing] = useState(false);
+  const [optimizationResult, setOptimizationResult] =
+    useState<OptimizationResult | null>(null);
+  const [selectedUldIndex, setSelectedUldIndex] = useState(0);
+  const [instructions, setInstructions] = useState<
+    Map<number, BuildUpInstruction>
+  >(new Map());
+  const [isGeneratingInstructions, setIsGeneratingInstructions] =
+    useState(false);
+  const [activeTab, setActiveTab] = useState<"cargo" | "results">("cargo");
+
+  // Calculate selected weight
+  const selectedWeight = MOCK_CARGO_ITEMS.filter((item) =>
+    selectedCargoIds.includes(item.id)
+  ).reduce((sum, item) => sum + item.weightKg, 0);
+
+  // Handlers
+  const handleOptimize = useCallback(async () => {
+    if (selectedCargoIds.length === 0) return;
+
+    setIsOptimizing(true);
+    try {
+      const result = await runOptimization({
+        flightId: selectedFlight?.id || "",
+        cargoItemIds: selectedCargoIds,
+        uldTypeIds: [],
+        rules: MOCK_PACKING_RULES,
+        options: {
+          objective: "MINIMIZE_ULDS",
+          allowRotation: true,
+        },
+      });
+
+      if (result.success && result.result) {
+        setOptimizationResult(result.result);
+        setActiveTab("results");
+        setSelectedUldIndex(0);
+        setInstructions(new Map());
+      }
+    } catch (error) {
+      console.error("Optimization failed:", error);
+    } finally {
+      setIsOptimizing(false);
+    }
+  }, [selectedCargoIds, selectedFlight?.id]);
+
+  const handleGenerateInstructions = useCallback(
+    async (uldIndex: number) => {
+      if (!optimizationResult) return;
+
+      setIsGeneratingInstructions(true);
+      try {
+        const assignment = optimizationResult.assignments[uldIndex];
+        const result = await generateInstructions({
+          uldAssignmentId: `uld-${uldIndex}`,
+          uldTypeCode: assignment.uldTypeCode,
+          uldNumber: `${assignment.uldTypeCode}-${String(uldIndex + 1).padStart(
+            5,
+            "0"
+          )}GA`,
+          positionCode: assignment.positionCode,
+          cargoItemIds: assignment.cargoItems.map((c) => c.cargoItemId),
+          useLLM: false, // Set to true to use Claude LLM
+        });
+
+        if (result.success && result.instructions) {
+          setInstructions((prev) =>
+            new Map(prev).set(uldIndex, result.instructions!)
+          );
+        }
+      } catch (error) {
+        console.error("Instruction generation failed:", error);
+      } finally {
+        setIsGeneratingInstructions(false);
+      }
+    },
+    [optimizationResult]
+  );
+
+  const handleReset = () => {
+    setOptimizationResult(null);
+    setInstructions(new Map());
+    setActiveTab("cargo");
+  };
+
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold tracking-tight">Build Up</h1>
-        <p className="text-sm text-muted-foreground">
-          ULD packing, container build-up, and cargo assignment
-        </p>
+    <div className="mx-auto max-w-7xl px-6 py-6">
+      {/* Header */}
+      <div className="mb-6 flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Boxes className="size-6 text-primary" />
+            ULD Build-Up
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Pack cargo into ULDs with AI-powered optimization
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          {optimizationResult && (
+            <Button variant="outline" size="sm" onClick={handleReset}>
+              <RefreshCw className="mr-2 size-4" />
+              Reset
+            </Button>
+          )}
+          <FlightSelector />
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Boxes className="size-4 text-primary" />
-            ULD Build Up
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex h-64 items-center justify-center rounded-sm border border-dashed border-border">
-            <p className="text-sm text-muted-foreground">
-              ULD build up interface coming soon...
-            </p>
+      {/* Flight info bar */}
+      {selectedFlight && (
+        <div className="mb-6">
+          <FlightInfoBadge />
+        </div>
+      )}
+
+      {/* Main content */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Left panel - Cargo or Results */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Tab switcher */}
+          <div className="flex items-center gap-1 p-1 rounded-sm bg-muted/30 w-fit">
+            <button
+              onClick={() => setActiveTab("cargo")}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-sm text-sm font-medium transition-colors",
+                activeTab === "cargo"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              <Package className="size-4" />
+              Cargo List
+            </button>
+            <button
+              onClick={() => setActiveTab("results")}
+              disabled={!optimizationResult}
+              className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-sm text-sm font-medium transition-colors",
+                activeTab === "results"
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+                !optimizationResult && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              <Sparkles className="size-4" />
+              Results
+              {optimizationResult && (
+                <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                  {optimizationResult.stats.uldsUsed}
+                </span>
+              )}
+            </button>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Content */}
+          {activeTab === "cargo" ? (
+            <CargoList
+              items={MOCK_CARGO_ITEMS}
+              selectedIds={selectedCargoIds}
+              onSelectionChange={setSelectedCargoIds}
+            />
+          ) : optimizationResult ? (
+            <ResultsSummary
+              result={optimizationResult}
+              selectedUldIndex={selectedUldIndex}
+              onSelectUld={setSelectedUldIndex}
+              onGenerateInstructions={handleGenerateInstructions}
+              instructions={instructions}
+              isGeneratingInstructions={isGeneratingInstructions}
+            />
+          ) : null}
+        </div>
+
+        {/* Right panel - Optimization only */}
+        <div className="space-y-4">
+          <OptimizationPanel
+            selectedCargoCount={selectedCargoIds.length}
+            selectedWeight={selectedWeight}
+            onOptimize={handleOptimize}
+            isOptimizing={isOptimizing}
+            result={optimizationResult}
+            rules={MOCK_PACKING_RULES}
+          />
+        </div>
+      </div>
+
+      {/* Empty state for no flight selected */}
+      {!selectedFlight && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <Card className="max-w-md">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Plane className="size-5 text-primary" />
+                Select a Flight
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-4">
+                Choose a flight to start planning the ULD build-up for cargo
+                loading.
+              </p>
+              <FlightSelector className="w-full" />
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
-
