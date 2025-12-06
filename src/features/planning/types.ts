@@ -335,6 +335,9 @@ export const OPTIMIZATION_OBJECTIVES = {
 export type OptimizationObjective =
   (typeof OPTIMIZATION_OBJECTIVES)[keyof typeof OPTIMIZATION_OBJECTIVES];
 
+/** Which optimizer was used for the result */
+export type OptimizerUsed = "FFD3D" | "LLM" | "LLM_FALLBACK";
+
 /**
  * Optimization result
  */
@@ -348,6 +351,8 @@ export type OptimizationResult = {
   warnings: string[];
   /** CG calculation result (when aircraft config is available) */
   cgResult?: CgResult;
+  /** Which optimizer produced this result (added by action layer) */
+  optimizerUsed?: OptimizerUsed;
 };
 
 /**

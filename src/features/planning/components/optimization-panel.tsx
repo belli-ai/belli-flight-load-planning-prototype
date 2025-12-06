@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
   Sparkles,
@@ -15,8 +16,10 @@ import {
   Zap,
   Target,
   Scale,
+  Bot,
+  Cpu,
 } from "lucide-react";
-import type { OptimizationResult, PackingRule } from "../types";
+import type { OptimizationResult, PackingRule, OptimizerUsed } from "../types";
 
 // ============================================================================
 // TYPES
@@ -35,6 +38,11 @@ type OptimizationPanelProps = {
   rules?: PackingRule[];
   objective?: Objective;
   onObjectiveChange?: (objective: Objective) => void;
+  /** Use LLM-based optimization */
+  useLlm?: boolean;
+  onUseLlmChange?: (useLlm: boolean) => void;
+  /** Which optimizer produced the current result */
+  optimizerUsed?: OptimizerUsed;
 };
 
 // ============================================================================
@@ -50,6 +58,9 @@ export function OptimizationPanel({
   rules = [],
   objective: controlledObjective,
   onObjectiveChange,
+  useLlm: controlledUseLlm,
+  onUseLlmChange,
+  optimizerUsed,
 }: OptimizationPanelProps) {
   // Support both controlled and uncontrolled objective state
   const [internalObjective, setInternalObjective] = useState<Objective>("MINIMIZE_ULDS");
@@ -60,6 +71,18 @@ export function OptimizationPanel({
       onObjectiveChange(newObjective);
     } else {
       setInternalObjective(newObjective);
+    }
+  };
+
+  // Support both controlled and uncontrolled LLM toggle state
+  const [internalUseLlm, setInternalUseLlm] = useState(false);
+  const useLlm = controlledUseLlm ?? internalUseLlm;
+
+  const handleUseLlmChange = (newUseLlm: boolean) => {
+    if (onUseLlmChange) {
+      onUseLlmChange(newUseLlm);
+    } else {
+      setInternalUseLlm(newUseLlm);
     }
   };
   
@@ -167,6 +190,34 @@ export function OptimizationPanel({
           </div>
         </div>
 
+        {/* Optimizer mode toggle */}
+        <div className="rounded-sm border border-border bg-background/50 p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {useLlm ? (
+                <Bot className="size-4 text-primary" />
+              ) : (
+                <Cpu className="size-4 text-muted-foreground" />
+              )}
+              <div>
+                <span className="text-sm font-medium">
+                  {useLlm ? "AI Optimization" : "Algorithm"}
+                </span>
+                <p className="text-[10px] text-muted-foreground">
+                  {useLlm
+                    ? "Uses Claude to plan cargo placement"
+                    : "Uses FFD-3D bin packing algorithm"}
+                </p>
+              </div>
+            </div>
+            <Switch
+              checked={useLlm}
+              onCheckedChange={handleUseLlmChange}
+              disabled={isOptimizing}
+            />
+          </div>
+        </div>
+
         {/* Rules section */}
         <div>
           <button
@@ -253,17 +304,45 @@ export function OptimizationPanel({
                 : "border-red-500/30 bg-red-500/5"
             )}
           >
-            <div className="flex items-center gap-2">
-              {result.status === "OPTIMAL" ? (
-                <Check className="size-4 text-green-400" />
-              ) : result.status === "FEASIBLE" ? (
-                <AlertCircle className="size-4 text-amber-400" />
-              ) : (
-                <AlertCircle className="size-4 text-red-400" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {result.status === "OPTIMAL" ? (
+                  <Check className="size-4 text-green-400" />
+                ) : result.status === "FEASIBLE" ? (
+                  <AlertCircle className="size-4 text-amber-400" />
+                ) : (
+                  <AlertCircle className="size-4 text-red-400" />
+                )}
+                <span className="text-sm font-medium capitalize">
+                  {result.status.toLowerCase()} Solution
+                </span>
+              </div>
+              {optimizerUsed && (
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[10px] font-medium",
+                    optimizerUsed === "LLM"
+                      ? "bg-primary/20 text-primary"
+                      : optimizerUsed === "LLM_FALLBACK"
+                      ? "bg-amber-500/20 text-amber-400"
+                      : "bg-muted text-muted-foreground"
+                  )}
+                >
+                  {optimizerUsed === "LLM" ? (
+                    <>
+                      <Bot className="size-3" /> AI
+                    </>
+                  ) : optimizerUsed === "LLM_FALLBACK" ? (
+                    <>
+                      <Cpu className="size-3" /> Fallback
+                    </>
+                  ) : (
+                    <>
+                      <Cpu className="size-3" /> FFD-3D
+                    </>
+                  )}
+                </span>
               )}
-              <span className="text-sm font-medium capitalize">
-                {result.status.toLowerCase()} Solution
-              </span>
             </div>
             <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
               <div>

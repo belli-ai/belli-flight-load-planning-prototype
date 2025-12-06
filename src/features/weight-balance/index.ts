@@ -8,6 +8,29 @@
 // Type exports
 export * from "./types";
 
+// Component exports
+export { AircraftViewer3D } from "./components/aircraft-viewer-3d";
+export { CgEnvelopeChart } from "./components/cg-envelope-chart";
+export { UldPositionList } from "./components/uld-position-list";
+export { WeightBreakdown } from "./components/weight-breakdown";
+
+// Action exports
+export {
+  getLoadPlanWithAssignments,
+  optimizeBalance,
+  getLoadPlansForFlight,
+  type BalanceOptimizationInput,
+  type BalanceOptimizationResult,
+  type LoadPlanWithAssignments,
+} from "./actions/balance.actions";
+
+// Lib exports
+export {
+  generateLoadSheetPdf,
+  downloadLoadSheet,
+  type LoadSheetData,
+} from "./lib/load-sheet-generator";
+
 // Re-export commonly used types with aliases for convenience
 export type {
   CgEnvelope,
@@ -27,7 +50,7 @@ export type {
   NewFuelIndexEntry,
   WeightConstraint,
   NewWeightConstraint,
-  WeightBreakdown,
+  WeightBreakdown as WeightBreakdownType,
   CgResult,
   WeightBalanceResult,
 } from "./types";

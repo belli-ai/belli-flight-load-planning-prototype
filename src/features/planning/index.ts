@@ -23,6 +23,7 @@ export {
   getCargoItems,
   getPackingRules,
   getFlights,
+  type OptimizerUsed,
 } from "./actions/optimize.actions";
 
 // Algorithm (for custom optimizer implementations)
