@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -369,7 +369,7 @@ function CollapsibleCgData({
 // LOAD BALANCING PAGE COMPONENT
 // ============================================================================
 
-export default function LoadBalancingPage() {
+function LoadBalancingPageContent() {
   const { selectedFlight, setFlightById } = useSelectedFlight();
   const searchParams = useSearchParams();
   const loadPlanIdParam = searchParams.get("loadPlanId");
@@ -818,5 +818,19 @@ export default function LoadBalancingPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function LoadBalancingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <LoadBalancingPageContent />
+    </Suspense>
   );
 }

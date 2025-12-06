@@ -598,7 +598,9 @@ export const airWaybills = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     awbNumber: varchar("awb_number", { length: 20 }).notNull().unique(),
-    flightId: uuid("flight_id").references(() => flights.id),
+    flightId: uuid("flight_id").references(() => flights.id, {
+      onDelete: "set null",
+    }),
     originId: uuid("origin_id")
       .notNull()
       .references(() => locations.id),
@@ -630,10 +632,10 @@ export const airWaybills = pgTable(
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
   (table) => [
+    index("idx_awb_flight").on(table.flightId),
     index("idx_awb_origin").on(table.originId),
     index("idx_awb_destination").on(table.destinationId),
     index("idx_awb_status").on(table.status),
-    index("idx_awb_flight").on(table.flightId),
   ]
 );
 

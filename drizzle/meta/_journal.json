@@ -22,6 +22,13 @@
       "when": 1765041178553,
       "tag": "0002_loud_the_phantom",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1765042474356,
+      "tag": "0003_tiresome_catseye",
+      "breakpoints": true
     }
   ]
 }

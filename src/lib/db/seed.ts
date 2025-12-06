@@ -2940,7 +2940,7 @@ const uldsData = [
 
 // Air Waybills - All going to Singapore (matching flight RY501 KUL->SIN)
 const airWaybillsData = [
-  // AWB 1: Electronics - fits in PMC pallet (main deck)
+  // AWB 1: Electronics - fits in PMC pallet (main deck) - Flight RY501 to SIN
   {
     id: "cfa118fe-d58b-40c2-8efd-3edbee43f9a6",
     awbNumber: "618-12345001",
@@ -2960,7 +2960,7 @@ const airWaybillsData = [
     bookingReference: "BK2024001",
     status: "ACCEPTED",
   },
-  // AWB 2: General cargo - Apparel (fits in PMC pallet)
+  // AWB 2: General cargo - Apparel (fits in PMC pallet) - Flight RY501 to SIN
   {
     id: "5249ad2c-e15d-40fd-ac7f-a4f1a93b0144",
     awbNumber: "618-12345002",
@@ -2980,7 +2980,7 @@ const airWaybillsData = [
     bookingReference: "BK2024002",
     status: "ACCEPTED",
   },
-  // AWB 3: Perishables - Fresh fruits (fits in RKN refrigerated container, lower deck)
+  // AWB 3: Perishables - Fresh fruits (fits in RKN refrigerated container, lower deck) - Flight RY501 to SIN
   {
     id: "8c311b46-f6f5-4810-963f-8e7f5e5321f4",
     awbNumber: "618-12345003",
@@ -3000,7 +3000,7 @@ const airWaybillsData = [
     bookingReference: "BK2024003",
     status: "ACCEPTED",
   },
-  // AWB 4: Pharmaceuticals (fits in RKN refrigerated container, lower deck)
+  // AWB 4: Pharmaceuticals (fits in RKN refrigerated container, lower deck) - Flight RY501 to SIN
   {
     id: "41ac6f9f-ee59-4c2c-881c-4ece90c247c0",
     awbNumber: "618-12345004",
@@ -3020,7 +3020,7 @@ const airWaybillsData = [
     bookingReference: "BK2024004",
     status: "ACCEPTED",
   },
-  // AWB 5: E-commerce shipment (fits in AKE container, lower deck)
+  // AWB 5: E-commerce shipment (fits in AKE container, lower deck) - Flight RY501 to SIN
   {
     id: "c969e034-eab1-4ec4-897e-434ef46945b9",
     awbNumber: "618-12345005",
@@ -3040,7 +3040,7 @@ const airWaybillsData = [
     bookingReference: "BK2024005",
     status: "ACCEPTED",
   },
-  // AWB 6: Express courier (fits in AKE container, lower deck)
+  // AWB 6: Express courier (fits in AKE container, lower deck) - Flight RY501 to SIN
   {
     id: "81e901c7-b479-48cf-9470-3ae70de8ff28",
     awbNumber: "618-12345006",
@@ -3735,6 +3735,9 @@ export async function seed() {
     console.log("📦 Seeding ULD instances...");
     await db.insert(ulds).values(uldsData);
 
+    console.log("✈️  Seeding flights...");
+    await db.insert(flights).values(flightsData);
+
     console.log("📄 Seeding air waybills...");
     await db.insert(airWaybills).values(airWaybillsData);
 
@@ -3743,9 +3746,6 @@ export async function seed() {
 
     console.log("📦 Seeding cargo items...");
     await db.insert(cargoItems).values(cargoItemsData);
-
-    console.log("✈️  Seeding flights...");
-    await db.insert(flights).values(flightsData);
 
     console.log("📝 Seeding load plans...");
     await db.insert(loadPlans).values(loadPlansData);
