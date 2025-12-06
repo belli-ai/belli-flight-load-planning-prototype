@@ -25,4 +25,3 @@ export type {
   NewFlight,
   FlightWithDetails,
 } from "./types";
-

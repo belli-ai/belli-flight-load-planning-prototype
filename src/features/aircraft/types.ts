@@ -281,7 +281,8 @@ export const FLIGHT_STATUSES = {
   CANCELLED: "CANCELLED",
 } as const;
 
-export type FlightStatus = (typeof FLIGHT_STATUSES)[keyof typeof FLIGHT_STATUSES];
+export type FlightStatus =
+  (typeof FLIGHT_STATUSES)[keyof typeof FLIGHT_STATUSES];
 
 export type FlightWithDetails = Flight & {
   aircraft: Aircraft;
@@ -333,4 +334,3 @@ type Location = {
   airportCode: string;
   city: string;
 };
-
