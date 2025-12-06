@@ -288,7 +288,10 @@ export function UldPositionList({
   const nonEmptyGroups = deckGroups.filter((g) => g.assignments.length > 0);
 
   // Calculate totals
-  const totalWeight = assignments.reduce((sum, a) => sum + a.totalWeightKg, 0);
+  const totalWeight = assignments.reduce(
+    (sum, a) => sum + parseFloat(String(a.totalWeightKg)),
+    0
+  );
   const avgUtilization =
     assignments.length > 0
       ? assignments.reduce((sum, a) => sum + a.volumeUtilization, 0) /
