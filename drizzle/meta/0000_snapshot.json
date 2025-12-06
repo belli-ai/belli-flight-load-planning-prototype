@@ -1,12 +1,12 @@
 {
-  "id": "487fb4fc-4c4a-450e-a20d-7a3fe0cae862",
+  "id": "0ed82cfa-4d44-44e5-9210-20f39bc0041b",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.air_waybills": {
+    "app.air_waybills": {
       "name": "air_waybills",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -20,6 +20,12 @@
           "type": "varchar(20)",
           "primaryKey": false,
           "notNull": true
+        },
+        "flight_id": {
+          "name": "flight_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         },
         "origin_id": {
           "name": "origin_id",
@@ -122,6 +128,21 @@
         }
       },
       "indexes": {
+        "idx_awb_flight": {
+          "name": "idx_awb_flight",
+          "columns": [
+            {
+              "expression": "flight_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "idx_awb_origin": {
           "name": "idx_awb_origin",
           "columns": [
@@ -169,10 +190,25 @@
         }
       },
       "foreignKeys": {
+        "air_waybills_flight_id_flights_id_fk": {
+          "name": "air_waybills_flight_id_flights_id_fk",
+          "tableFrom": "air_waybills",
+          "tableTo": "flights",
+          "schemaTo": "app",
+          "columnsFrom": [
+            "flight_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
         "air_waybills_origin_id_locations_id_fk": {
           "name": "air_waybills_origin_id_locations_id_fk",
           "tableFrom": "air_waybills",
           "tableTo": "locations",
+          "schemaTo": "app",
           "columnsFrom": [
             "origin_id"
           ],
@@ -186,6 +222,7 @@
           "name": "air_waybills_destination_id_locations_id_fk",
           "tableFrom": "air_waybills",
           "tableTo": "locations",
+          "schemaTo": "app",
           "columnsFrom": [
             "destination_id"
           ],
@@ -210,9 +247,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.aircrafts": {
+    "app.aircrafts": {
       "name": "aircrafts",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -383,9 +420,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.cargo_items": {
+    "app.cargo_items": {
       "name": "cargo_items",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -624,6 +661,7 @@
           "name": "cargo_items_parcel_group_id_parcel_groups_id_fk",
           "tableFrom": "cargo_items",
           "tableTo": "parcel_groups",
+          "schemaTo": "app",
           "columnsFrom": [
             "parcel_group_id"
           ],
@@ -637,6 +675,7 @@
           "name": "cargo_items_awb_id_air_waybills_id_fk",
           "tableFrom": "cargo_items",
           "tableTo": "air_waybills",
+          "schemaTo": "app",
           "columnsFrom": [
             "awb_id"
           ],
@@ -650,6 +689,7 @@
           "name": "cargo_items_dg_class_id_dangerous_goods_classes_id_fk",
           "tableFrom": "cargo_items",
           "tableTo": "dangerous_goods_classes",
+          "schemaTo": "app",
           "columnsFrom": [
             "dg_class_id"
           ],
@@ -663,6 +703,7 @@
           "name": "cargo_items_temp_zone_id_temperature_zones_id_fk",
           "tableFrom": "cargo_items",
           "tableTo": "temperature_zones",
+          "schemaTo": "app",
           "columnsFrom": [
             "temp_zone_id"
           ],
@@ -676,6 +717,7 @@
           "name": "cargo_items_destination_id_locations_id_fk",
           "tableFrom": "cargo_items",
           "tableTo": "locations",
+          "schemaTo": "app",
           "columnsFrom": [
             "destination_id"
           ],
@@ -692,9 +734,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.cg_envelope_points": {
+    "app.cg_envelope_points": {
       "name": "cg_envelope_points",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -763,6 +805,7 @@
           "name": "cg_envelope_points_envelope_id_cg_envelopes_id_fk",
           "tableFrom": "cg_envelope_points",
           "tableTo": "cg_envelopes",
+          "schemaTo": "app",
           "columnsFrom": [
             "envelope_id"
           ],
@@ -779,9 +822,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.cg_envelopes": {
+    "app.cg_envelopes": {
       "name": "cg_envelopes",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -850,6 +893,7 @@
           "name": "cg_envelopes_aircraft_id_aircrafts_id_fk",
           "tableFrom": "cg_envelopes",
           "tableTo": "aircrafts",
+          "schemaTo": "app",
           "columnsFrom": [
             "aircraft_id"
           ],
@@ -875,9 +919,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.commodity_codes": {
+    "app.commodity_codes": {
       "name": "commodity_codes",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -985,9 +1029,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.dangerous_goods_classes": {
+    "app.dangerous_goods_classes": {
       "name": "dangerous_goods_classes",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -1051,9 +1095,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.deck_configurations": {
-      "name": "deck_configurations",
-      "schema": "",
+    "app.deck_configuration_presets": {
+      "name": "deck_configuration_presets",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -1064,6 +1108,111 @@
         },
         "aircraft_id": {
           "name": "aircraft_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preset_name": {
+          "name": "preset_name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preset_code": {
+          "name": "preset_code",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_default": {
+          "name": "is_default",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_preset_aircraft": {
+          "name": "idx_preset_aircraft",
+          "columns": [
+            {
+              "expression": "aircraft_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "deck_configuration_presets_aircraft_id_aircrafts_id_fk": {
+          "name": "deck_configuration_presets_aircraft_id_aircrafts_id_fk",
+          "tableFrom": "deck_configuration_presets",
+          "tableTo": "aircrafts",
+          "schemaTo": "app",
+          "columnsFrom": [
+            "aircraft_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "preset_unique": {
+          "name": "preset_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "aircraft_id",
+            "preset_code"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "app.deck_configurations": {
+      "name": "deck_configurations",
+      "schema": "app",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "preset_id": {
+          "name": "preset_id",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -1101,11 +1250,11 @@
         }
       },
       "indexes": {
-        "idx_deck_aircraft": {
-          "name": "idx_deck_aircraft",
+        "idx_deck_preset": {
+          "name": "idx_deck_preset",
           "columns": [
             {
-              "expression": "aircraft_id",
+              "expression": "preset_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -1118,12 +1267,13 @@
         }
       },
       "foreignKeys": {
-        "deck_configurations_aircraft_id_aircrafts_id_fk": {
-          "name": "deck_configurations_aircraft_id_aircrafts_id_fk",
+        "deck_configurations_preset_id_deck_configuration_presets_id_fk": {
+          "name": "deck_configurations_preset_id_deck_configuration_presets_id_fk",
           "tableFrom": "deck_configurations",
-          "tableTo": "aircrafts",
+          "tableTo": "deck_configuration_presets",
+          "schemaTo": "app",
           "columnsFrom": [
-            "aircraft_id"
+            "preset_id"
           ],
           "columnsTo": [
             "id"
@@ -1138,7 +1288,7 @@
           "name": "deck_config_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "aircraft_id",
+            "preset_id",
             "deck_code"
           ]
         }
@@ -1147,9 +1297,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.dg_segregation_rules": {
+    "app.dg_segregation_rules": {
       "name": "dg_segregation_rules",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -1233,6 +1383,7 @@
           "name": "dg_segregation_rules_class_a_id_dangerous_goods_classes_id_fk",
           "tableFrom": "dg_segregation_rules",
           "tableTo": "dangerous_goods_classes",
+          "schemaTo": "app",
           "columnsFrom": [
             "class_a_id"
           ],
@@ -1246,6 +1397,7 @@
           "name": "dg_segregation_rules_class_b_id_dangerous_goods_classes_id_fk",
           "tableFrom": "dg_segregation_rules",
           "tableTo": "dangerous_goods_classes",
+          "schemaTo": "app",
           "columnsFrom": [
             "class_b_id"
           ],
@@ -1271,9 +1423,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.flights": {
+    "app.flights": {
       "name": "flights",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -1434,6 +1586,7 @@
           "name": "flights_aircraft_id_aircrafts_id_fk",
           "tableFrom": "flights",
           "tableTo": "aircrafts",
+          "schemaTo": "app",
           "columnsFrom": [
             "aircraft_id"
           ],
@@ -1447,6 +1600,7 @@
           "name": "flights_origin_id_locations_id_fk",
           "tableFrom": "flights",
           "tableTo": "locations",
+          "schemaTo": "app",
           "columnsFrom": [
             "origin_id"
           ],
@@ -1460,6 +1614,7 @@
           "name": "flights_destination_id_locations_id_fk",
           "tableFrom": "flights",
           "tableTo": "locations",
+          "schemaTo": "app",
           "columnsFrom": [
             "destination_id"
           ],
@@ -1485,9 +1640,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.fuel_configurations": {
+    "app.fuel_configurations": {
       "name": "fuel_configurations",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -1528,6 +1683,7 @@
           "name": "fuel_configurations_aircraft_id_aircrafts_id_fk",
           "tableFrom": "fuel_configurations",
           "tableTo": "aircrafts",
+          "schemaTo": "app",
           "columnsFrom": [
             "aircraft_id"
           ],
@@ -1552,9 +1708,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.fuel_index_entries": {
+    "app.fuel_index_entries": {
       "name": "fuel_index_entries",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -1639,6 +1795,7 @@
           "name": "fuel_index_entries_fuel_tank_id_fuel_tanks_id_fk",
           "tableFrom": "fuel_index_entries",
           "tableTo": "fuel_tanks",
+          "schemaTo": "app",
           "columnsFrom": [
             "fuel_tank_id"
           ],
@@ -1652,6 +1809,7 @@
           "name": "fuel_index_entries_fuel_config_id_fuel_configurations_id_fk",
           "tableFrom": "fuel_index_entries",
           "tableTo": "fuel_configurations",
+          "schemaTo": "app",
           "columnsFrom": [
             "fuel_config_id"
           ],
@@ -1668,9 +1826,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.fuel_tanks": {
+    "app.fuel_tanks": {
       "name": "fuel_tanks",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -1745,6 +1903,7 @@
           "name": "fuel_tanks_fuel_config_id_fuel_configurations_id_fk",
           "tableFrom": "fuel_tanks",
           "tableTo": "fuel_configurations",
+          "schemaTo": "app",
           "columnsFrom": [
             "fuel_config_id"
           ],
@@ -1770,153 +1929,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.load_messages": {
-      "name": "load_messages",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "load_plan_id": {
-          "name": "load_plan_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "message_type": {
-          "name": "message_type",
-          "type": "varchar(10)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "format": {
-          "name": "format",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'TYPE_B'"
-        },
-        "content": {
-          "name": "content",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "version": {
-          "name": "version",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 1
-        },
-        "sent_at": {
-          "name": "sent_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "recipient": {
-          "name": "recipient",
-          "type": "varchar(100)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(20)",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'DRAFT'"
-        },
-        "error_message": {
-          "name": "error_message",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "idx_load_messages_plan": {
-          "name": "idx_load_messages_plan",
-          "columns": [
-            {
-              "expression": "load_plan_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_load_messages_type": {
-          "name": "idx_load_messages_type",
-          "columns": [
-            {
-              "expression": "message_type",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_load_messages_status": {
-          "name": "idx_load_messages_status",
-          "columns": [
-            {
-              "expression": "status",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "load_messages_load_plan_id_load_plans_id_fk": {
-          "name": "load_messages_load_plan_id_load_plans_id_fk",
-          "tableFrom": "load_messages",
-          "tableTo": "load_plans",
-          "columnsFrom": [
-            "load_plan_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.load_plans": {
+    "app.load_plans": {
       "name": "load_plans",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -2167,6 +2182,7 @@
           "name": "load_plans_flight_id_flights_id_fk",
           "tableFrom": "load_plans",
           "tableTo": "flights",
+          "schemaTo": "app",
           "columnsFrom": [
             "flight_id"
           ],
@@ -2180,6 +2196,7 @@
           "name": "load_plans_aircraft_id_aircrafts_id_fk",
           "tableFrom": "load_plans",
           "tableTo": "aircrafts",
+          "schemaTo": "app",
           "columnsFrom": [
             "aircraft_id"
           ],
@@ -2204,9 +2221,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.loading_positions": {
+    "app.loading_positions": {
       "name": "loading_positions",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -2274,7 +2291,8 @@
           "name": "contour_code",
           "type": "varchar(20)",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "'FULL_WIDTH'"
         },
         "x_offset": {
           "name": "x_offset",
@@ -2330,6 +2348,7 @@
           "name": "loading_positions_deck_id_deck_configurations_id_fk",
           "tableFrom": "loading_positions",
           "tableTo": "deck_configurations",
+          "schemaTo": "app",
           "columnsFrom": [
             "deck_id"
           ],
@@ -2355,9 +2374,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.loading_zone_index_entries": {
+    "app.loading_zone_index_entries": {
       "name": "loading_zone_index_entries",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -2420,6 +2439,7 @@
           "name": "loading_zone_index_entries_zone_id_loading_zones_id_fk",
           "tableFrom": "loading_zone_index_entries",
           "tableTo": "loading_zones",
+          "schemaTo": "app",
           "columnsFrom": [
             "zone_id"
           ],
@@ -2436,9 +2456,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.loading_zones": {
+    "app.loading_zones": {
       "name": "loading_zones",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -2507,6 +2527,7 @@
           "name": "loading_zones_aircraft_id_aircrafts_id_fk",
           "tableFrom": "loading_zones",
           "tableTo": "aircrafts",
+          "schemaTo": "app",
           "columnsFrom": [
             "aircraft_id"
           ],
@@ -2532,9 +2553,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.locations": {
+    "app.locations": {
       "name": "locations",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -2620,9 +2641,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.packed_items": {
+    "app.packed_items": {
       "name": "packed_items",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -2743,6 +2764,7 @@
           "name": "packed_items_uld_assignment_id_uld_assignments_id_fk",
           "tableFrom": "packed_items",
           "tableTo": "uld_assignments",
+          "schemaTo": "app",
           "columnsFrom": [
             "uld_assignment_id"
           ],
@@ -2756,6 +2778,7 @@
           "name": "packed_items_cargo_item_id_cargo_items_id_fk",
           "tableFrom": "packed_items",
           "tableTo": "cargo_items",
+          "schemaTo": "app",
           "columnsFrom": [
             "cargo_item_id"
           ],
@@ -2781,9 +2804,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.packing_rules": {
+    "app.packing_rules": {
       "name": "packing_rules",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -2890,9 +2913,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.parcel_groups": {
+    "app.parcel_groups": {
       "name": "parcel_groups",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -3045,6 +3068,7 @@
           "name": "parcel_groups_awb_id_air_waybills_id_fk",
           "tableFrom": "parcel_groups",
           "tableTo": "air_waybills",
+          "schemaTo": "app",
           "columnsFrom": [
             "awb_id"
           ],
@@ -3058,6 +3082,7 @@
           "name": "parcel_groups_commodity_code_id_commodity_codes_id_fk",
           "tableFrom": "parcel_groups",
           "tableTo": "commodity_codes",
+          "schemaTo": "app",
           "columnsFrom": [
             "commodity_code_id"
           ],
@@ -3071,6 +3096,7 @@
           "name": "parcel_groups_temp_zone_id_temperature_zones_id_fk",
           "tableFrom": "parcel_groups",
           "tableTo": "temperature_zones",
+          "schemaTo": "app",
           "columnsFrom": [
             "temp_zone_id"
           ],
@@ -3096,9 +3122,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.position_loads": {
+    "app.position_loads": {
       "name": "position_loads",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -3220,6 +3246,7 @@
           "name": "position_loads_load_plan_id_load_plans_id_fk",
           "tableFrom": "position_loads",
           "tableTo": "load_plans",
+          "schemaTo": "app",
           "columnsFrom": [
             "load_plan_id"
           ],
@@ -3233,6 +3260,7 @@
           "name": "position_loads_position_id_loading_positions_id_fk",
           "tableFrom": "position_loads",
           "tableTo": "loading_positions",
+          "schemaTo": "app",
           "columnsFrom": [
             "position_id"
           ],
@@ -3246,6 +3274,7 @@
           "name": "position_loads_uld_assignment_id_uld_assignments_id_fk",
           "tableFrom": "position_loads",
           "tableTo": "uld_assignments",
+          "schemaTo": "app",
           "columnsFrom": [
             "uld_assignment_id"
           ],
@@ -3271,9 +3300,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.temperature_zones": {
+    "app.temperature_zones": {
       "name": "temperature_zones",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -3336,9 +3365,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.uld_assignments": {
+    "app.uld_assignments": {
       "name": "uld_assignments",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -3509,6 +3538,7 @@
           "name": "uld_assignments_load_plan_id_load_plans_id_fk",
           "tableFrom": "uld_assignments",
           "tableTo": "load_plans",
+          "schemaTo": "app",
           "columnsFrom": [
             "load_plan_id"
           ],
@@ -3522,6 +3552,7 @@
           "name": "uld_assignments_uld_id_ulds_id_fk",
           "tableFrom": "uld_assignments",
           "tableTo": "ulds",
+          "schemaTo": "app",
           "columnsFrom": [
             "uld_id"
           ],
@@ -3535,6 +3566,7 @@
           "name": "uld_assignments_uld_type_id_uld_types_id_fk",
           "tableFrom": "uld_assignments",
           "tableTo": "uld_types",
+          "schemaTo": "app",
           "columnsFrom": [
             "uld_type_id"
           ],
@@ -3551,9 +3583,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.uld_types": {
+    "app.uld_types": {
       "name": "uld_types",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -3725,9 +3757,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.ulds": {
+    "app.ulds": {
       "name": "ulds",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -3840,6 +3872,7 @@
           "name": "ulds_uld_type_id_uld_types_id_fk",
           "tableFrom": "ulds",
           "tableTo": "uld_types",
+          "schemaTo": "app",
           "columnsFrom": [
             "uld_type_id"
           ],
@@ -3853,6 +3886,7 @@
           "name": "ulds_location_id_locations_id_fk",
           "tableFrom": "ulds",
           "tableTo": "locations",
+          "schemaTo": "app",
           "columnsFrom": [
             "location_id"
           ],
@@ -3877,9 +3911,9 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.weight_constraints": {
+    "app.weight_constraints": {
       "name": "weight_constraints",
-      "schema": "",
+      "schema": "app",
       "columns": {
         "id": {
           "name": "id",
@@ -3968,6 +4002,7 @@
           "name": "weight_constraints_aircraft_id_aircrafts_id_fk",
           "tableFrom": "weight_constraints",
           "tableTo": "aircrafts",
+          "schemaTo": "app",
           "columnsFrom": [
             "aircraft_id"
           ],
@@ -3986,7 +4021,9 @@
     }
   },
   "enums": {},
-  "schemas": {},
+  "schemas": {
+    "app": "app"
+  },
   "sequences": {},
   "roles": {},
   "policies": {},

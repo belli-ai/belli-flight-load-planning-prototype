@@ -1383,7 +1383,7 @@ const loadingPositionsData = [
     sequenceNumber: 1,
     maxWeightKg: "1134.00",
     armStationCm: "480.00",
-    compatibleUldTypes: ["AKE", "AKH", "PKX", "RKN"],
+    compatibleUldTypes: ["AKE", "AKH", "PKX", "FQA", "PEB", "DQF", "RKN"],
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
@@ -1400,7 +1400,7 @@ const loadingPositionsData = [
     sequenceNumber: 2,
     maxWeightKg: "1134.00",
     armStationCm: "480.00",
-    compatibleUldTypes: ["AKE", "AKH", "PKX", "RKN"],
+    compatibleUldTypes: ["AKE", "AKH", "PKX", "FQA", "PEB", "DQF", "RKN"],
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
@@ -1417,7 +1417,7 @@ const loadingPositionsData = [
     sequenceNumber: 3,
     maxWeightKg: "1134.00",
     armStationCm: "580.00",
-    compatibleUldTypes: ["AKE", "AKH", "PKX", "RKN"],
+    compatibleUldTypes: ["AKE", "AKH", "PKX", "FQA", "PEB", "DQF", "RKN"],
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
@@ -1434,7 +1434,7 @@ const loadingPositionsData = [
     sequenceNumber: 4,
     maxWeightKg: "1134.00",
     armStationCm: "580.00",
-    compatibleUldTypes: ["AKE", "AKH", "PKX", "RKN"],
+    compatibleUldTypes: ["AKE", "AKH", "PKX", "FQA", "PEB", "DQF", "RKN"],
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
@@ -1451,7 +1451,7 @@ const loadingPositionsData = [
     sequenceNumber: 5,
     maxWeightKg: "1134.00",
     armStationCm: "680.00",
-    compatibleUldTypes: ["AKE", "AKH", "PKX", "RKN"],
+    compatibleUldTypes: ["AKE", "AKH", "PKX", "FQA", "PEB", "DQF", "RKN"],
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
@@ -1469,7 +1469,7 @@ const loadingPositionsData = [
     sequenceNumber: 1,
     maxWeightKg: "1013.00",
     armStationCm: "1200.00",
-    compatibleUldTypes: ["AKE", "AKH", "PKX", "RKN"],
+    compatibleUldTypes: ["AKE", "AKH", "PKX", "FQA", "PEB", "DQF", "RKN"],
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
@@ -1486,7 +1486,7 @@ const loadingPositionsData = [
     sequenceNumber: 2,
     maxWeightKg: "1189.00",
     armStationCm: "1200.00",
-    compatibleUldTypes: ["AKE", "AKH", "PKX", "RKN"],
+    compatibleUldTypes: ["AKE", "AKH", "PKX", "FQA", "PEB", "DQF", "RKN"],
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
@@ -1503,7 +1503,7 @@ const loadingPositionsData = [
     sequenceNumber: 3,
     maxWeightKg: "1189.00",
     armStationCm: "1300.00",
-    compatibleUldTypes: ["AKE", "AKH", "PKX", "RKN"],
+    compatibleUldTypes: ["AKE", "AKH", "PKX", "FQA", "PEB", "DQF", "RKN"],
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
@@ -1520,7 +1520,7 @@ const loadingPositionsData = [
     sequenceNumber: 4,
     maxWeightKg: "1189.00",
     armStationCm: "1300.00",
-    compatibleUldTypes: ["AKE", "AKH", "PKX", "RKN"],
+    compatibleUldTypes: ["AKE", "AKH", "PKX", "FQA", "PEB", "DQF", "RKN"],
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
@@ -1537,7 +1537,7 @@ const loadingPositionsData = [
     sequenceNumber: 5,
     maxWeightKg: "1696.00",
     armStationCm: "1400.00",
-    compatibleUldTypes: ["AKE", "AKH", "PKX", "RKN"],
+    compatibleUldTypes: ["AKE", "AKH", "PKX", "FQA", "PEB", "DQF", "RKN"],
     acceptsBulkCargo: false,
     floorAreaM2: "2.40",
     maxHeightCm: "114.00",
@@ -2697,15 +2697,7 @@ const uldsData = [
     ownerCode: "RY",
     status: "AVAILABLE",
   },
-  // RAP refrigerated pallet
-  {
-    id: "b8c9d0e1-f2a3-4b5c-6d7e-f8a9b0c1d2e3",
-    uldNumber: "RAP45678RY",
-    uldTypeId: ULD_TYPE_IDS.RAP,
-    locationId: LOCATION_IDS.KUL,
-    ownerCode: "RY",
-    status: "AVAILABLE",
-  },
+  // Note: RAP (LD-9 Refrigerated) removed - full-width container not compatible with A321 narrow-body lower deck
 
   // ============================================================================
   // SIN (Singapore)
@@ -2964,7 +2956,7 @@ const airWaybillsData = [
     bookingReference: "BK2024001",
     status: "ACCEPTED",
   },
-  // AWB 2: E-commerce Fashion (PMC pallet - main deck)
+  // AWB 2: Electronics with Lithium Ion Batteries - DANGEROUS GOODS (PMC pallet - main deck)
   {
     id: "5249ad2c-e15d-40fd-ac7f-a4f1a93b0144",
     awbNumber: "539-10104496",
@@ -2979,8 +2971,8 @@ const airWaybillsData = [
     totalWeightKg: "1983.00",
     totalVolumeM3: "9.9000",
     chargeableWeightKg: "1983.00",
-    natureOfGoods: "EXPRESS SHOES, CLOTHES, BAG",
-    specialHandlingCodes: null,
+    natureOfGoods: "ELECTRONIC PRODUCTS WITH LITHIUM ION BATTERIES UN3481",
+    specialHandlingCodes: ["ELI", "CAO"],
     bookingReference: "BK2024002",
     status: "ACCEPTED",
   },
@@ -3012,7 +3004,8 @@ const airWaybillsData = [
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.SIN,
     shipperName: "GEELY AUTOMOBILE INTERNATIONAL CORP",
-    shipperAddress: "Building 1, Commercial Building, Liaohe Road, Ningbo, China",
+    shipperAddress:
+      "Building 1, Commercial Building, Liaohe Road, Ningbo, China",
     consigneeName: "PROTON TANJUNG MALIM SDN BHD",
     consigneeAddress: "Kompleks 1, Mukim Hulu Bernam Timur, Perak, Malaysia",
     totalPieces: 11,
@@ -3032,9 +3025,11 @@ const airWaybillsData = [
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.SIN,
     shipperName: "J&T EXPRESS (M) SDN BHD",
-    shipperAddress: "16, Lengkuk Keluli 2, Taman Perundustrian Bukit Raja, Klang 41050",
+    shipperAddress:
+      "16, Lengkuk Keluli 2, Taman Perundustrian Bukit Raja, Klang 41050",
     consigneeName: "AZAM SOLUTIONS PTE LTD",
-    consigneeAddress: "1ST Floor Lot 13374, River Edge Commercial Centre, Singapore",
+    consigneeAddress:
+      "1ST Floor Lot 13374, River Edge Commercial Centre, Singapore",
     totalPieces: 10,
     totalWeightKg: "100.00",
     totalVolumeM3: "0.0100",
@@ -3052,9 +3047,11 @@ const airWaybillsData = [
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.SIN,
     shipperName: "CTS INTERNATIONAL LOGISTICS CORP LIMITED",
-    shipperAddress: "42 Floor, Building A, New Century Plaza, No.288 Zhongshan East Road, Nanjing",
+    shipperAddress:
+      "42 Floor, Building A, New Century Plaza, No.288 Zhongshan East Road, Nanjing",
     consigneeName: "TRANSCARGO WORLDWIDE (M) SDN BHD",
-    consigneeAddress: "Lot 1A & 1B, Block B, MAB Freight Forwarders Complex, KLIA Cargo Village",
+    consigneeAddress:
+      "Lot 1A & 1B, Block B, MAB Freight Forwarders Complex, KLIA Cargo Village",
     totalPieces: 1,
     totalWeightKg: "700.00",
     totalVolumeM3: "3.9276",
@@ -3074,9 +3071,11 @@ const airWaybillsData = [
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.HKG,
     shipperName: "SHENZHEN KINGFLYING FORWARDERS CO LTD",
-    shipperAddress: "First Floor, Building D, Agricultural Power Industrial Zone, Fuyong Street, Shenzhen",
+    shipperAddress:
+      "First Floor, Building D, Agricultural Power Industrial Zone, Fuyong Street, Shenzhen",
     consigneeName: "WORLD ASIA LOGISTICS (HK) LTD",
-    consigneeAddress: "Cainiao Aeropolis EWTP Hub, Hong Kong International Airport",
+    consigneeAddress:
+      "Cainiao Aeropolis EWTP Hub, Hong Kong International Airport",
     totalPieces: 69,
     totalWeightKg: "1602.00",
     totalVolumeM3: "6.9000",
@@ -3094,7 +3093,8 @@ const airWaybillsData = [
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.HKG,
     shipperName: "JIANGSU DTW INTERNATIONAL TRANSPORTATION CO LTD",
-    shipperAddress: "RM 1604 Fuxin International Bldg, No.359 Hongwu Rd, Nanjing",
+    shipperAddress:
+      "RM 1604 Fuxin International Bldg, No.359 Hongwu Rd, Nanjing",
     consigneeName: "MMA FREIGHT SERVICES (HK) LTD",
     consigneeAddress: "Stellar Suites, 28-05, Jalan Puteri 4/7, Hong Kong",
     totalPieces: 50,
@@ -3106,7 +3106,7 @@ const airWaybillsData = [
     bookingReference: "BK2024008",
     status: "ACCEPTED",
   },
-  // AWB 9: Fashion Express (AKE container - lower deck)
+  // AWB 9: Consumer Electronics with Lithium Metal Batteries - DANGEROUS GOODS (AKE container - lower deck)
   {
     id: "0758e2d7-ae80-4f2a-aee8-625b2c5761f5",
     awbNumber: "539-10103516",
@@ -3114,35 +3114,37 @@ const airWaybillsData = [
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.HKG,
     shipperName: "SHENZHEN YOUTONGDA INTL FREIGHT FORWARDING CO LTD",
-    shipperAddress: "Room 404, Building 3, Lechuanghui Building, Longhua District, Shenzhen",
+    shipperAddress:
+      "Room 404, Building 3, Lechuanghui Building, Longhua District, Shenzhen",
     consigneeName: "GLOBAL EXPRESS SOLUTIONS (HK) LTD",
     consigneeAddress: "E-5-02, Oasis Ara Damansara, Hong Kong",
     totalPieces: 92,
     totalWeightKg: "1707.00",
     totalVolumeM3: "9.2000",
     chargeableWeightKg: "1707.00",
-    natureOfGoods: "EXPRESS SHOES, CLOTHES, BAG",
-    specialHandlingCodes: null,
+    natureOfGoods: "CONSUMER ELECTRONICS WITH LITHIUM METAL BATTERIES UN3091",
+    specialHandlingCodes: ["ELM", "CAO"],
     bookingReference: "BK2024009",
     status: "ACCEPTED",
   },
-  // AWB 10: Valve Components (AKE container - lower deck)
+  // AWB 10: Pharmaceutical Products - COLD CHAIN (RKN container - lower deck)
   {
     id: "40d30476-0045-4534-8fa0-a4e3d689c959",
     awbNumber: "539-10102223",
     flightId: FLIGHT_IDS.RY502_KUL_HKG,
     originId: LOCATION_IDS.KUL,
     destinationId: LOCATION_IDS.HKG,
-    shipperName: "TOLL GLOBAL FORWARDING (BEIJING) LIMITED",
+    shipperName: "PHARMEX LOGISTICS (BEIJING) LIMITED",
     shipperAddress: "Tower C, No.768, Zhongshan South 1st Road, Shanghai",
-    consigneeName: "PERUSAHAAN OTOMOBIL NASIONAL (HK) LTD",
-    consigneeAddress: "Persiaran Kuala Selangor, Seksyen 26, Shah Alam, Hong Kong",
-    totalPieces: 2,
+    consigneeName: "HONG KONG PHARMA DISTRIBUTORS LTD",
+    consigneeAddress:
+      "15 Science Park West Avenue, Hong Kong Science Park, Shatin",
+    totalPieces: 24,
     totalWeightKg: "868.00",
     totalVolumeM3: "0.9198",
     chargeableWeightKg: "868.00",
-    natureOfGoods: "COMPONENTS OF VALVES",
-    specialHandlingCodes: null,
+    natureOfGoods: "PHARMACEUTICAL PRODUCTS - VACCINES AND BIOLOGICS",
+    specialHandlingCodes: ["PIL", "COL"],
     bookingReference: "BK2024010",
     status: "ACCEPTED",
   },
@@ -3156,7 +3158,8 @@ const airWaybillsData = [
     shipperName: "JIANGSU SOHO INTERNATIONAL GROUP WUXI CO LTD",
     shipperAddress: "37, Bei Cang Men, Wuxi, Jiangsu, China",
     consigneeName: "LF LANSEN (HK) LTD",
-    consigneeAddress: "No 16-1, Jalan Putra Mahkota 7/6B, Putra Heights, Hong Kong",
+    consigneeAddress:
+      "No 16-1, Jalan Putra Mahkota 7/6B, Putra Heights, Hong Kong",
     totalPieces: 2,
     totalWeightKg: "2092.00",
     totalVolumeM3: "6.7502",
@@ -3209,13 +3212,14 @@ const parcelGroupsData = [
     isTiltable: false,
     tempZoneId: null,
     specialHandlingCodes: null,
-    description: "T-shirts, trousers, jackets, handbags, sneakers, slippers in cartons",
+    description:
+      "T-shirts, trousers, jackets, handbags, sneakers, slippers in cartons",
   },
-  // AWB 2 - E-commerce Fashion -> PMC pallet (main deck)
+  // AWB 2 - Electronics with Lithium Ion Batteries - DANGEROUS GOODS -> PMC pallet (main deck)
   {
     id: "28805f19-974b-4742-87e2-1dbcd9e41812",
     awbId: "5249ad2c-e15d-40fd-ac7f-a4f1a93b0144",
-    commodityCodeId: COMMODITY_CODE_IDS.GEN,
+    commodityCodeId: COMMODITY_CODE_IDS.LITHIUM_ION,
     groupNumber: 1,
     pieces: 99,
     weightKg: "1983.00",
@@ -3227,8 +3231,9 @@ const parcelGroupsData = [
     maxStackWeightKg: "300.00",
     isTiltable: false,
     tempZoneId: null,
-    specialHandlingCodes: null,
-    description: "Express shoes, clothes, bags - consolidated e-commerce",
+    specialHandlingCodes: ["ELI", "CAO"],
+    description:
+      "Electronic products with lithium ion batteries UN3481 - DG Class 9",
   },
   // AWB 3 - Fresh Mangosteen -> RKN refrigerated container (lower deck)
   {
@@ -3266,7 +3271,8 @@ const parcelGroupsData = [
     isTiltable: false,
     tempZoneId: null,
     specialHandlingCodes: ["HEA"],
-    description: "Fuel rail injector subassembly and cylinder head - heavy cargo",
+    description:
+      "Fuel rail injector subassembly and cylinder head - heavy cargo",
   },
   // AWB 5 - Courier Material -> AKE container (lower deck)
   {
@@ -3346,11 +3352,11 @@ const parcelGroupsData = [
     specialHandlingCodes: null,
     description: "Honda DPS Housing - automotive parts",
   },
-  // AWB 9 - Fashion Express -> AKE container (lower deck)
+  // AWB 9 - Consumer Electronics with Lithium Metal Batteries - DANGEROUS GOODS -> AKE container (lower deck)
   {
     id: "2987dabf-3241-4fa8-bfbd-c28e527cdda4",
     awbId: "0758e2d7-ae80-4f2a-aee8-625b2c5761f5",
-    commodityCodeId: COMMODITY_CODE_IDS.GEN,
+    commodityCodeId: COMMODITY_CODE_IDS.LITHIUM_METAL,
     groupNumber: 1,
     pieces: 92,
     weightKg: "1707.00",
@@ -3362,16 +3368,17 @@ const parcelGroupsData = [
     maxStackWeightKg: "250.00",
     isTiltable: false,
     tempZoneId: null,
-    specialHandlingCodes: null,
-    description: "Express shoes, clothes, bags - fashion consolidation",
+    specialHandlingCodes: ["ELM", "CAO"],
+    description:
+      "Consumer electronics with lithium metal batteries UN3091 - DG Class 9",
   },
-  // AWB 10 - Valve Components -> AKE container (lower deck)
+  // AWB 10 - Pharmaceutical Products - COLD CHAIN -> RKN container (lower deck)
   {
     id: "fe043fa7-e551-4e9f-a26c-9211af77f0f2",
     awbId: "40d30476-0045-4534-8fa0-a4e3d689c959",
-    commodityCodeId: COMMODITY_CODE_IDS.GEN,
+    commodityCodeId: COMMODITY_CODE_IDS.PIL,
     groupNumber: 1,
-    pieces: 2,
+    pieces: 24,
     weightKg: "868.00",
     lengthCm: "70.00",
     widthCm: "50.00",
@@ -3380,9 +3387,10 @@ const parcelGroupsData = [
     isStackable: false,
     maxStackWeightKg: null,
     isTiltable: false,
-    tempZoneId: null,
-    specialHandlingCodes: null,
-    description: "Components of valves - automotive parts",
+    tempZoneId: TEMP_ZONE_IDS.CHILLED,
+    specialHandlingCodes: ["PIL", "COL"],
+    description:
+      "Pharmaceutical products - vaccines and biologics requiring 2-8°C cold chain",
   },
   // AWB 11 - Metal Sheet Panels -> Bulk (lower deck)
   {
@@ -3451,7 +3459,7 @@ const cargoItemsData = [
     destinationId: LOCATION_IDS.SIN,
     loadStatus: "PENDING",
   },
-  // AWB 2 - E-commerce Fashion -> PMC pallet (main deck)
+  // AWB 2 - Electronics with Lithium Ion Batteries - DANGEROUS GOODS -> PMC pallet (main deck)
   {
     id: "b0eb28df-28d3-420c-b0c9-dbcc2205a5ae",
     parcelGroupId: "28805f19-974b-4742-87e2-1dbcd9e41812",
@@ -3465,12 +3473,12 @@ const cargoItemsData = [
     isStackable: true,
     maxStackWeightKg: "300.00",
     isTiltable: false,
-    isDangerousGoods: false,
-    dgClassId: null,
+    isDangerousGoods: true,
+    dgClassId: DG_CLASS_IDS.CLASS_9,
     tempZoneId: null,
     isLiveAnimal: false,
     isFoodstuff: false,
-    specialHandlingCodes: null,
+    specialHandlingCodes: ["ELI", "CAO"],
     priority: "STANDARD",
     destinationId: LOCATION_IDS.SIN,
     loadStatus: "PENDING",
@@ -3621,7 +3629,7 @@ const cargoItemsData = [
     destinationId: LOCATION_IDS.HKG,
     loadStatus: "PENDING",
   },
-  // AWB 9 - Fashion Express -> AKE container (lower deck)
+  // AWB 9 - Consumer Electronics with Lithium Metal Batteries - DANGEROUS GOODS -> AKE container (lower deck)
   {
     id: "cbc73e60-ae48-4dd7-82d5-0fa69f3b5e29",
     parcelGroupId: "2987dabf-3241-4fa8-bfbd-c28e527cdda4",
@@ -3635,17 +3643,17 @@ const cargoItemsData = [
     isStackable: true,
     maxStackWeightKg: "250.00",
     isTiltable: false,
-    isDangerousGoods: false,
-    dgClassId: null,
+    isDangerousGoods: true,
+    dgClassId: DG_CLASS_IDS.CLASS_9,
     tempZoneId: null,
     isLiveAnimal: false,
     isFoodstuff: false,
-    specialHandlingCodes: null,
+    specialHandlingCodes: ["ELM", "CAO"],
     priority: "STANDARD",
     destinationId: LOCATION_IDS.HKG,
     loadStatus: "PENDING",
   },
-  // AWB 10 - Valve Components -> AKE container (lower deck)
+  // AWB 10 - Pharmaceutical Products - COLD CHAIN -> RKN container (lower deck)
   {
     id: "ae88c0a7-0979-4f6f-a3c2-c6cf80399add",
     parcelGroupId: "fe043fa7-e551-4e9f-a26c-9211af77f0f2",
@@ -3661,11 +3669,11 @@ const cargoItemsData = [
     isTiltable: false,
     isDangerousGoods: false,
     dgClassId: null,
-    tempZoneId: null,
+    tempZoneId: TEMP_ZONE_IDS.CHILLED,
     isLiveAnimal: false,
     isFoodstuff: false,
-    specialHandlingCodes: null,
-    priority: "STANDARD",
+    specialHandlingCodes: ["PIL", "COL"],
+    priority: "EXPRESS",
     destinationId: LOCATION_IDS.HKG,
     loadStatus: "PENDING",
   },
@@ -3843,9 +3851,9 @@ const uldAssignmentsData = [
   {
     id: "bfb1e206-6982-4e67-b565-a83e22b59657",
     loadPlanId: "050e8669-6d19-4f75-9f02-ce5ee307f8e8",
-    uldId: "a9b0c1d2-e3f4-5a6b-7c8d-e9f0a1b2c3d4", // RKN91234SQ
+    uldId: "f6c308e8-06e9-4ddd-98b0-f175175617e3", // RKN98765RY (KUL)
     uldTypeId: ULD_TYPE_IDS.RKN,
-    uldNumber: "RKN91234SQ",
+    uldNumber: "RKN98765RY",
     positionCode: "21",
     sequence: 2,
     totalWeightKg: "6000.00", // 150 tare + 5850 mangosteen
@@ -3881,9 +3889,9 @@ const uldAssignmentsData = [
   {
     id: "8ad8839f-1de9-447a-bf42-fa3d960a3a09",
     loadPlanId: "050e8669-6d19-4f75-9f02-ce5ee307f8e8",
-    uldId: "c5d6e7f8-a9b0-1c2d-3e4f-a5b6c7d8e9f0", // AKE81234SQ
+    uldId: "15f69fa5-8ab7-44fd-a608-4f62a609f3bc", // AKE54321RY (KUL)
     uldTypeId: ULD_TYPE_IDS.AKE,
-    uldNumber: "AKE81234SQ",
+    uldNumber: "AKE54321RY",
     positionCode: "11",
     sequence: 4,
     totalWeightKg: "882.00", // 82 tare + 100 courier + 700 equipment
@@ -3902,9 +3910,9 @@ const uldAssignmentsData = [
   {
     id: "3d5d452e-db64-4c29-a896-64e5d65a25b8",
     loadPlanId: "62c9c58b-1681-4c1c-8af6-2a551f2adaec",
-    uldId: "c3d4e5f6-f7a8-9b0c-1d2e-f3a4b5c6d7e9", // PAJ91234CX
-    uldTypeId: ULD_TYPE_IDS.PAJ,
-    uldNumber: "PAJ91234CX",
+    uldId: "21c31fd4-0538-495e-8bad-2e42bb6d7bb8", // PMC12347RY (KUL)
+    uldTypeId: ULD_TYPE_IDS.PMC,
+    uldNumber: "PMC12347RY",
     positionCode: "U3",
     sequence: 1,
     totalWeightKg: "2130.00", // 120 tare + 1602 shoes + 408 honda parts
@@ -3917,51 +3925,53 @@ const uldAssignmentsData = [
     status: "PLANNED",
     notes: "Shoes, handbags, and Honda DPS Housing for Hong Kong",
   },
-  // AKE container - Fashion Express (AWB 9) -> Lower Deck 11
+  // FQA container - Electronics with Lithium Metal Batteries (AWB 9) - DANGEROUS GOODS -> Lower Deck 11
   {
     id: "57213c44-b55b-4a29-b25a-e4da69f966d5",
     loadPlanId: "62c9c58b-1681-4c1c-8af6-2a551f2adaec",
-    uldId: "a1b2c3d4-e5f6-7a8b-9c0d-e1f2a3b4c5d7", // FQA81234CX
+    uldId: "e5f6a7b8-c9d0-1e2f-3a4b-c5d6e7f8a9b0", // FQA34567RY (KUL)
     uldTypeId: ULD_TYPE_IDS.FQA,
-    uldNumber: "FQA81234CX",
+    uldNumber: "FQA34567RY",
     positionCode: "11",
     sequence: 2,
-    totalWeightKg: "1789.00", // 82 tare + 1707 fashion
-    tareWeightKg: "82.00",
+    totalWeightKg: "1768.00", // 61 tare (FQA) + 1707 electronics
+    tareWeightKg: "61.00",
     cargoWeightKg: "1707.00",
     volumeUsedM3: "9.2000",
     volumeUtilization: "85.18",
     weightUtilization: "69.67",
     isVirtual: false,
     status: "PLANNED",
-    notes: "Fashion express - shoes, clothes, bags for Hong Kong",
+    notes:
+      "DG CLASS 9 - Consumer electronics with lithium metal batteries UN3091 for Hong Kong",
   },
-  // AKE container - Valve Components (AWB 10) -> Lower Deck 12
+  // RKN refrigerated container - Pharmaceutical Products (AWB 10) - COLD CHAIN -> Lower Deck 12
   {
     id: "098d4b92-060c-4b4c-8415-a47af01ef5df",
     loadPlanId: "62c9c58b-1681-4c1c-8af6-2a551f2adaec",
-    uldId: "b2c3d4e5-f6a7-8b9c-0d1e-f2a3b4c5d6e8", // FQA81235CX
-    uldTypeId: ULD_TYPE_IDS.FQA,
-    uldNumber: "FQA81235CX",
+    uldId: "a7b8c9d0-e1f2-3a4b-5c6d-e7f8a9b0c1d2", // RKN98766RY (KUL)
+    uldTypeId: ULD_TYPE_IDS.RKN,
+    uldNumber: "RKN98766RY",
     positionCode: "12",
     sequence: 3,
-    totalWeightKg: "950.00", // 82 tare + 868 valve components
-    tareWeightKg: "82.00",
+    totalWeightKg: "1018.00", // 150 tare + 868 pharmaceuticals
+    tareWeightKg: "150.00",
     cargoWeightKg: "868.00",
     volumeUsedM3: "0.9198",
-    volumeUtilization: "8.52",
-    weightUtilization: "35.41",
+    volumeUtilization: "26.28",
+    weightUtilization: "60.42",
     isVirtual: false,
     status: "PLANNED",
-    notes: "Automotive valve components for Hong Kong",
+    notes:
+      "TEMP CONTROLLED 2-8°C - Pharmaceutical products, vaccines and biologics for Hong Kong",
   },
   // PMC pallet for Heavy Cargo - Metal Sheets + Riveting Machine (AWB 11 + AWB 12) -> Main Deck U4
   {
     id: "31869717-0491-4229-a3cc-7ae3d7954550",
     loadPlanId: "62c9c58b-1681-4c1c-8af6-2a551f2adaec",
-    uldId: "d4e5f6a7-a8b9-0c1d-2e3f-a4b5c6d7e8f1", // PAJ91235CX
-    uldTypeId: ULD_TYPE_IDS.PAJ,
-    uldNumber: "PAJ91235CX",
+    uldId: "cd3260b9-96c9-4be1-b111-5cf05aacf517", // PMC12348RY (KUL)
+    uldTypeId: ULD_TYPE_IDS.PMC,
+    uldNumber: "PMC12348RY",
     positionCode: "U4",
     sequence: 4,
     totalWeightKg: "2390.00", // 120 tare + 2092 metal sheets + 178 riveting machine
@@ -4037,7 +4047,7 @@ const positionLoadsData = [
   },
 
   // ============ FLIGHT RY502 (KUL -> HKG) ============
-  // PAJ on Main Deck U3 (Shoes/Handbags + Honda Parts - AWB 7 + AWB 8)
+  // PMC on Main Deck U3 (Shoes/Handbags + Honda Parts - AWB 7 + AWB 8)
   {
     id: "2aedda55-8cd7-4cfe-826a-07cc2036cd2d",
     loadPlanId: "62c9c58b-1681-4c1c-8af6-2a551f2adaec",
@@ -4051,35 +4061,35 @@ const positionLoadsData = [
     loadedAt: null,
     verifiedBy: null,
   },
-  // FQA on Lower Deck 11 (Fashion Express - AWB 9)
+  // FQA on Lower Deck 11 (Electronics with Lithium Batteries - AWB 9) - DANGEROUS GOODS
   {
     id: "80fa30da-ed20-47aa-968c-d2755440d76f",
     loadPlanId: "62c9c58b-1681-4c1c-8af6-2a551f2adaec",
     positionId: "6bff12d4-5ec0-4c39-be0d-72ac0bcefb26", // 11 (lower fwd)
     uldAssignmentId: "57213c44-b55b-4a29-b25a-e4da69f966d5",
     positionCode: "11",
-    grossWeightKg: "1789.00",
-    calculatedMoment: "858720.00",
+    grossWeightKg: "1768.00",
+    calculatedMoment: "848640.00",
     calculatedIndex: "-1.00",
     status: "PLANNED",
     loadedAt: null,
     verifiedBy: null,
   },
-  // FQA on Lower Deck 12 (Valve Components - AWB 10)
+  // RKN on Lower Deck 12 (Pharmaceutical Products - AWB 10) - COLD CHAIN
   {
     id: "f5e00b1a-2cf4-4d1e-9cf5-cd61d177bc04",
     loadPlanId: "62c9c58b-1681-4c1c-8af6-2a551f2adaec",
     positionId: "9f0c740a-241d-458d-b138-6773e9520960", // 12 (lower fwd)
     uldAssignmentId: "098d4b92-060c-4b4c-8415-a47af01ef5df",
     positionCode: "12",
-    grossWeightKg: "950.00",
-    calculatedMoment: "456000.00",
-    calculatedIndex: "-0.60",
+    grossWeightKg: "1018.00",
+    calculatedMoment: "488640.00",
+    calculatedIndex: "-0.65",
     status: "PLANNED",
     loadedAt: null,
     verifiedBy: null,
   },
-  // PAJ on Main Deck U4 (Metal Sheets + Riveting Machine - AWB 11 + AWB 12)
+  // PMC on Main Deck U4 (Metal Sheets + Riveting Machine - AWB 11 + AWB 12)
   {
     id: "0f7aec92-b45b-4329-b6dc-99f1719ff367",
     loadPlanId: "62c9c58b-1681-4c1c-8af6-2a551f2adaec",
@@ -4113,11 +4123,11 @@ const packedItemsData = [
     packedWidthCm: "100.00",
     packedHeightCm: "80.00",
   },
-  // AWB 2 E-commerce Fashion in same PMC pallet (main deck U3)
+  // AWB 2 Electronics with Lithium Ion Batteries - DANGEROUS GOODS in same PMC pallet (main deck U3)
   {
     id: "86a11540-b5f4-4d4a-9855-5a620dbc9a57",
     uldAssignmentId: "b4ccd581-920c-420a-a034-5757a3d8a62e", // PMC on U3
-    cargoItemId: "b0eb28df-28d3-420c-b0c9-dbcc2205a5ae", // E-commerce fashion
+    cargoItemId: "b0eb28df-28d3-420c-b0c9-dbcc2205a5ae", // DG - Electronics with lithium batteries
     sequence: 2,
     xPositionCm: "130.00",
     yPositionCm: "0.00",
@@ -4190,10 +4200,10 @@ const packedItemsData = [
   },
 
   // ============ FLIGHT RY502 (KUL -> HKG) ============
-  // AWB 7 Shoes/Handbags in PAJ pallet (main deck U3)
+  // AWB 7 Shoes/Handbags in PMC pallet (main deck U3)
   {
     id: "97ef29c2-d4f3-4317-9c53-b8136705a992",
-    uldAssignmentId: "3d5d452e-db64-4c29-a896-64e5d65a25b8", // PAJ on U3
+    uldAssignmentId: "3d5d452e-db64-4c29-a896-64e5d65a25b8", // PMC on U3
     cargoItemId: "eecd1e61-e6e9-4394-8430-592349ac0efe", // Shoes/handbags
     sequence: 1,
     xPositionCm: "0.00",
@@ -4205,10 +4215,10 @@ const packedItemsData = [
     packedWidthCm: "60.00",
     packedHeightCm: "50.00",
   },
-  // AWB 8 Honda Parts in same PAJ pallet (main deck U3)
+  // AWB 8 Honda Parts in same PMC pallet (main deck U3)
   {
     id: "b4920959-611b-48a0-8e82-d8ac02577801",
-    uldAssignmentId: "3d5d452e-db64-4c29-a896-64e5d65a25b8", // PAJ on U3
+    uldAssignmentId: "3d5d452e-db64-4c29-a896-64e5d65a25b8", // PMC on U3
     cargoItemId: "7f692468-ae05-4074-a2ad-ea4eb82d757e", // Honda DPS Housing
     sequence: 2,
     xPositionCm: "90.00",
@@ -4220,11 +4230,11 @@ const packedItemsData = [
     packedWidthCm: "50.00",
     packedHeightCm: "40.00",
   },
-  // AWB 9 Fashion Express in FQA container (lower deck 11)
+  // AWB 9 Electronics with Lithium Metal Batteries - DANGEROUS GOODS in FQA container (lower deck 11)
   {
     id: "0b489634-bd63-494d-b9cd-a3a678cb94bd",
     uldAssignmentId: "57213c44-b55b-4a29-b25a-e4da69f966d5", // FQA on 11
-    cargoItemId: "cbc73e60-ae48-4dd7-82d5-0fa69f3b5e29", // Fashion express
+    cargoItemId: "cbc73e60-ae48-4dd7-82d5-0fa69f3b5e29", // DG - Electronics with lithium batteries
     sequence: 1,
     xPositionCm: "0.00",
     yPositionCm: "0.00",
@@ -4235,11 +4245,11 @@ const packedItemsData = [
     packedWidthCm: "70.00",
     packedHeightCm: "60.00",
   },
-  // AWB 10 Valve Components in FQA container (lower deck 12)
+  // AWB 10 Pharmaceutical Products - COLD CHAIN in RKN refrigerated container (lower deck 12)
   {
     id: "c2f2af0a-9671-4eec-9001-f106956bfd67",
-    uldAssignmentId: "098d4b92-060c-4b4c-8415-a47af01ef5df", // FQA on 12
-    cargoItemId: "ae88c0a7-0979-4f6f-a3c2-c6cf80399add", // Valve components
+    uldAssignmentId: "098d4b92-060c-4b4c-8415-a47af01ef5df", // RKN on 12
+    cargoItemId: "ae88c0a7-0979-4f6f-a3c2-c6cf80399add", // Pharmaceuticals - cold chain
     sequence: 1,
     xPositionCm: "0.00",
     yPositionCm: "0.00",
@@ -4250,10 +4260,10 @@ const packedItemsData = [
     packedWidthCm: "50.00",
     packedHeightCm: "40.00",
   },
-  // AWB 11 Metal Sheet Panels in Bulk (lower deck bulk)
+  // AWB 11 Metal Sheet Panels in PMC pallet (main deck U4)
   {
     id: "544d5986-c5b7-48ef-85bd-9db1c2da25a2",
-    uldAssignmentId: "31869717-0491-4229-a3cc-7ae3d7954550", // Bulk cargo
+    uldAssignmentId: "31869717-0491-4229-a3cc-7ae3d7954550", // PMC on U4
     cargoItemId: "414bc7de-db7a-46fe-b5f0-579dd1bfa5a6", // Metal sheet panels
     sequence: 1,
     xPositionCm: "0.00",
@@ -4265,10 +4275,10 @@ const packedItemsData = [
     packedWidthCm: "100.00",
     packedHeightCm: "80.00",
   },
-  // AWB 12 Riveting Machine in Bulk (lower deck bulk)
+  // AWB 12 Riveting Machine in PMC pallet (main deck U4)
   {
     id: "26e11abc-b5c9-4a8c-94f8-f8d7eb4b5bb3",
-    uldAssignmentId: "31869717-0491-4229-a3cc-7ae3d7954550", // Bulk cargo
+    uldAssignmentId: "31869717-0491-4229-a3cc-7ae3d7954550", // PMC on U4
     cargoItemId: "64944827-5b93-44d9-8b6d-01d4d844be2b", // Riveting machine
     sequence: 2,
     xPositionCm: "210.00",

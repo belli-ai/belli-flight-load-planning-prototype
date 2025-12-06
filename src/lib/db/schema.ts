@@ -1,5 +1,5 @@
 import {
-  pgTable,
+  pgSchema,
   uuid,
   text,
   timestamp,
@@ -13,6 +13,9 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
+// Create dedicated schema to isolate from CockroachDB internal types
+export const appSchema = pgSchema("app");
+
 // ============================================================================
 // REFERENCE DATA TABLES
 // ============================================================================
@@ -20,7 +23,7 @@ import { relations } from "drizzle-orm";
 /**
  * Airport and location master data
  */
-export const locations = pgTable(
+export const locations = appSchema.table(
   "locations",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -38,7 +41,7 @@ export const locations = pgTable(
 /**
  * IATA commodity classification codes
  */
-export const commodityCodes = pgTable(
+export const commodityCodes = appSchema.table(
   "commodity_codes",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -61,22 +64,25 @@ export const commodityCodes = pgTable(
 /**
  * IATA Dangerous Goods Regulations class definitions
  */
-export const dangerousGoodsClasses = pgTable("dangerous_goods_classes", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  classCode: varchar("class_code", { length: 10 }).notNull().unique(),
-  division: varchar("division", { length: 10 }),
-  name: varchar("name", { length: 100 }).notNull(),
-  description: text("description"),
-  isExemptFromSegregation: boolean("is_exempt_from_segregation")
-    .notNull()
-    .default(false),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+export const dangerousGoodsClasses = appSchema.table(
+  "dangerous_goods_classes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    classCode: varchar("class_code", { length: 10 }).notNull().unique(),
+    division: varchar("division", { length: 10 }),
+    name: varchar("name", { length: 100 }).notNull(),
+    description: text("description"),
+    isExemptFromSegregation: boolean("is_exempt_from_segregation")
+      .notNull()
+      .default(false),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  }
+);
 
 /**
  * IATA Table 9.3.A - Segregation of packages matrix
  */
-export const dgSegregationRules = pgTable(
+export const dgSegregationRules = appSchema.table(
   "dg_segregation_rules",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -101,7 +107,7 @@ export const dgSegregationRules = pgTable(
 /**
  * Temperature zone definitions for cargo compatibility
  */
-export const temperatureZones = pgTable("temperature_zones", {
+export const temperatureZones = appSchema.table("temperature_zones", {
   id: uuid("id").defaultRandom().primaryKey(),
   code: varchar("code", { length: 20 }).notNull().unique(),
   name: varchar("name", { length: 50 }).notNull(),
@@ -118,7 +124,7 @@ export const temperatureZones = pgTable("temperature_zones", {
 /**
  * Unit Load Device type specifications
  */
-export const uldTypes = pgTable(
+export const uldTypes = appSchema.table(
   "uld_types",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -165,7 +171,7 @@ export const uldTypes = pgTable(
 /**
  * Physical ULD instance tracking
  */
-export const ulds = pgTable(
+export const ulds = appSchema.table(
   "ulds",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -190,7 +196,7 @@ export const ulds = pgTable(
 /**
  * Aircraft configuration master data
  */
-export const aircrafts = pgTable(
+export const aircrafts = appSchema.table(
   "aircrafts",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -255,7 +261,7 @@ export const aircrafts = pgTable(
 /**
  * Deck configuration presets per aircraft (an aircraft can have multiple presets)
  */
-export const deckConfigurationPresets = pgTable(
+export const deckConfigurationPresets = appSchema.table(
   "deck_configuration_presets",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -278,7 +284,7 @@ export const deckConfigurationPresets = pgTable(
 /**
  * Deck configuration per preset
  */
-export const deckConfigurations = pgTable(
+export const deckConfigurations = appSchema.table(
   "deck_configurations",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -311,7 +317,7 @@ export type ContourCode = (typeof CONTOUR_CODES)[number];
 /**
  * Individual cargo loading positions
  */
-export const loadingPositions = pgTable(
+export const loadingPositions = appSchema.table(
   "loading_positions",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -332,7 +338,9 @@ export const loadingPositions = pgTable(
     acceptsBulkCargo: boolean("accepts_bulk_cargo").notNull().default(false),
     floorAreaM2: decimal("floor_area_m2", { precision: 10, scale: 4 }),
     maxHeightCm: decimal("max_height_cm", { precision: 10, scale: 2 }),
-    contourCode: varchar("contour_code", { length: 20 }).notNull().default("FULL_WIDTH"), // FULL_WIDTH or ONE_COLUMN
+    contourCode: varchar("contour_code", { length: 20 })
+      .notNull()
+      .default("FULL_WIDTH"), // FULL_WIDTH or ONE_COLUMN
     xOffset: decimal("x_offset", { precision: 10, scale: 2 }),
     yOffset: decimal("y_offset", { precision: 10, scale: 2 }),
     colIndex: integer("col_index"),
@@ -348,7 +356,7 @@ export const loadingPositions = pgTable(
 /**
  * Flight schedule data
  */
-export const flights = pgTable(
+export const flights = appSchema.table(
   "flights",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -391,7 +399,7 @@ export const flights = pgTable(
 /**
  * Center of Gravity envelope definitions
  */
-export const cgEnvelopes = pgTable(
+export const cgEnvelopes = appSchema.table(
   "cg_envelopes",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -419,7 +427,7 @@ export const cgEnvelopes = pgTable(
 /**
  * CG envelope polygon points
  */
-export const cgEnvelopePoints = pgTable(
+export const cgEnvelopePoints = appSchema.table(
   "cg_envelope_points",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -441,7 +449,7 @@ export const cgEnvelopePoints = pgTable(
 /**
  * Loading zone definitions with LMC index impacts
  */
-export const loadingZones = pgTable(
+export const loadingZones = appSchema.table(
   "loading_zones",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -466,7 +474,7 @@ export const loadingZones = pgTable(
 /**
  * Weight-to-index lookup table per zone
  */
-export const loadingZoneIndexEntries = pgTable(
+export const loadingZoneIndexEntries = appSchema.table(
   "loading_zone_index_entries",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -490,7 +498,7 @@ export const loadingZoneIndexEntries = pgTable(
 /**
  * Aircraft fuel system configuration
  */
-export const fuelConfigurations = pgTable("fuel_configurations", {
+export const fuelConfigurations = appSchema.table("fuel_configurations", {
   id: uuid("id").defaultRandom().primaryKey(),
   aircraftId: uuid("aircraft_id")
     .notNull()
@@ -507,7 +515,7 @@ export const fuelConfigurations = pgTable("fuel_configurations", {
 /**
  * Individual fuel tank specifications
  */
-export const fuelTanks = pgTable(
+export const fuelTanks = appSchema.table(
   "fuel_tanks",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -536,7 +544,7 @@ export const fuelTanks = pgTable(
 /**
  * Fuel weight-to-index lookup table
  */
-export const fuelIndexEntries = pgTable(
+export const fuelIndexEntries = appSchema.table(
   "fuel_index_entries",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -562,7 +570,7 @@ export const fuelIndexEntries = pgTable(
 /**
  * Combined position weight constraints
  */
-export const weightConstraints = pgTable(
+export const weightConstraints = appSchema.table(
   "weight_constraints",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -593,7 +601,7 @@ export const weightConstraints = pgTable(
 /**
  * Air Waybill header information
  */
-export const airWaybills = pgTable(
+export const airWaybills = appSchema.table(
   "air_waybills",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -642,7 +650,7 @@ export const airWaybills = pgTable(
 /**
  * Cargo piece groups within an AWB
  */
-export const parcelGroups = pgTable(
+export const parcelGroups = appSchema.table(
   "parcel_groups",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -681,7 +689,7 @@ export const parcelGroups = pgTable(
 /**
  * Individual cargo items for optimization
  */
-export const cargoItems = pgTable(
+export const cargoItems = appSchema.table(
   "cargo_items",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -734,7 +742,7 @@ export const cargoItems = pgTable(
 /**
  * Load planning session and results
  */
-export const loadPlans = pgTable(
+export const loadPlans = appSchema.table(
   "load_plans",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -796,7 +804,7 @@ export const loadPlans = pgTable(
 /**
  * Cargo-to-ULD assignment records
  */
-export const uldAssignments = pgTable(
+export const uldAssignments = appSchema.table(
   "uld_assignments",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -847,7 +855,7 @@ export const uldAssignments = pgTable(
 /**
  * 3D packing coordinates within ULD
  */
-export const packedItems = pgTable(
+export const packedItems = appSchema.table(
   "packed_items",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -896,7 +904,7 @@ export const packedItems = pgTable(
 /**
  * ULD-to-aircraft position assignments
  */
-export const positionLoads = pgTable(
+export const positionLoads = appSchema.table(
   "position_loads",
   {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -932,7 +940,7 @@ export const positionLoads = pgTable(
 /**
  * Natural language rules for LLM interpretation
  */
-export const packingRules = pgTable(
+export const packingRules = appSchema.table(
   "packing_rules",
   {
     id: uuid("id").defaultRandom().primaryKey(),

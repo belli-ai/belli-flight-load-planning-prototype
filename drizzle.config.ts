@@ -11,8 +11,8 @@ export default defineConfig({
   schema: "./src/lib/db/schema.ts",
   out: "./drizzle",
   dialect: "postgresql",
+  schemaFilter: ["app"],
   dbCredentials: {
     url: connectionString,
   },
 });
-

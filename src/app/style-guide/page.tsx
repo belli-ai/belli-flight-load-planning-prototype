@@ -39,7 +39,9 @@ export default function StyleGuidePage() {
           </h2>
           <div className="space-y-3">
             <p className="text-3xl font-bold">Heading 1 — Geist Mono Bold</p>
-            <p className="text-2xl font-semibold">Heading 2 — Geist Mono Semibold</p>
+            <p className="text-2xl font-semibold">
+              Heading 2 — Geist Mono Semibold
+            </p>
             <p className="text-xl font-medium">Heading 3 — Geist Mono Medium</p>
             <p className="text-base">Body Text — Geist Mono Regular</p>
             <p className="text-sm text-muted-foreground">
@@ -244,13 +246,7 @@ export default function StyleGuidePage() {
   );
 }
 
-function ColorSwatch({
-  name,
-  className,
-}: {
-  name: string;
-  className: string;
-}) {
+function ColorSwatch({ name, className }: { name: string; className: string }) {
   return (
     <div className="space-y-2">
       <div className={`h-16 rounded-sm border border-border ${className}`} />
@@ -258,4 +254,3 @@ function ColorSwatch({
     </div>
   );
 }
-
