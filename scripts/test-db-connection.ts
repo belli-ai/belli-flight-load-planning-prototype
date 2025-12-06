@@ -3,7 +3,8 @@ import postgres from "postgres";
 
 dotenv.config();
 
-const connectionString = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}?sslmode=${process.env.DB_SSL_MODE}`;
+const encodedPassword = encodeURIComponent(process.env.DB_PASSWORD || "");
+const connectionString = `postgresql://${process.env.DB_USER}:${encodedPassword}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}?sslmode=${process.env.DB_SSL_MODE}`;
 
 async function testConnection() {
   console.log("Testing database connection...");
