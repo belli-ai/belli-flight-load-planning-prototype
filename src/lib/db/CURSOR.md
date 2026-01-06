@@ -212,3 +212,8 @@ pnpm db:studio    # Open Drizzle Studio GUI
 3. Add relations if needed using `relations()`
 4. Update this CURSOR.md with table documentation
 5. Run `pnpm db:push` (dev) or `pnpm db:generate && pnpm db:migrate` (prod)
+
+
+
+
+

@@ -1,5 +1,6 @@
 "use server";
 
+import { isStaticDataMode } from "@/lib/config";
 import { db } from "@/lib/db";
 import {
   cargoItems,
@@ -9,18 +10,15 @@ import {
   packingRules,
   flights,
   aircrafts,
-  locations,
-  temperatureZones,
-  dangerousGoodsClasses,
-  loadPlans,
-  uldAssignments,
-  packedItems,
   deckConfigurationPresets,
   deckConfigurations,
   loadingPositions,
   cgEnvelopes,
   cgEnvelopePoints,
   positionLoads,
+  loadPlans,
+  uldAssignments,
+  packedItems,
 } from "@/lib/db/schema";
 import { eq, and, inArray, desc, asc } from "drizzle-orm";
 import type { PackingRule } from "../types";
@@ -34,6 +32,28 @@ import type {
   CgEnvelopeForPacking,
 } from "../lib/algorithm/types";
 
+// Import static data
+import {
+  staticFlights,
+  staticAircrafts,
+  staticLocations,
+  staticUldTypes,
+  staticUlds,
+  staticCargoItems,
+  staticAirWaybills,
+  staticPackingRules,
+  staticDeckConfigurations,
+  staticLoadingPositions,
+  staticCgEnvelopes,
+  staticCgEnvelopePoints,
+  staticDeckConfigurationPresets,
+  getStaticCargoItemsForFlight,
+  AIRCRAFT_IDS,
+} from "@/lib/data/static-data";
+
+// Import memory store
+import { memoryStore } from "@/lib/data/memory-store";
+
 // ============================================================================
 // CARGO QUERIES
 // ============================================================================
@@ -42,6 +62,31 @@ import type {
  * Get cargo items for a flight (via AWBs linked to the flight)
  */
 export async function getCargoItemsForFlight(flightId: string): Promise<CargoItemForPacking[]> {
+  if (isStaticDataMode()) {
+    const items = getStaticCargoItemsForFlight(flightId);
+    return items.map((item) => ({
+      id: item.id,
+      awbId: item.awbId,
+      awbNumber: item.awbNumber,
+      pieceNumber: item.pieceNumber,
+      weightKg: item.weightKg,
+      lengthCm: item.lengthCm,
+      widthCm: item.widthCm,
+      heightCm: item.heightCm,
+      volumeM3: item.volumeM3,
+      isStackable: item.isStackable,
+      maxStackWeightKg: item.maxStackWeightKg,
+      isTiltable: item.isTiltable,
+      isDangerousGoods: item.isDangerousGoods,
+      dgClassCode: item.dgClassCode,
+      tempZoneCode: item.tempZoneCode,
+      isLiveAnimal: item.isLiveAnimal,
+      isFoodstuff: item.isFoodstuff,
+      specialHandlingCodes: item.specialHandlingCodes ?? [],
+      priority: item.priority,
+    }));
+  }
+
   // First, get all AWB IDs that belong to this flight
   const awbsForFlight = await db.query.airWaybills.findMany({
     where: eq(airWaybills.flightId, flightId),
@@ -97,6 +142,32 @@ export async function getCargoItemsForFlight(flightId: string): Promise<CargoIte
 export async function getCargoItemsByIds(ids: string[]): Promise<CargoItemForPacking[]> {
   if (ids.length === 0) return [];
 
+  if (isStaticDataMode()) {
+    return staticCargoItems
+      .filter((item) => ids.includes(item.id))
+      .map((item) => ({
+        id: item.id,
+        awbId: item.awbId,
+        awbNumber: item.awbNumber,
+        pieceNumber: item.pieceNumber,
+        weightKg: item.weightKg,
+        lengthCm: item.lengthCm,
+        widthCm: item.widthCm,
+        heightCm: item.heightCm,
+        volumeM3: item.volumeM3,
+        isStackable: item.isStackable,
+        maxStackWeightKg: item.maxStackWeightKg,
+        isTiltable: item.isTiltable,
+        isDangerousGoods: item.isDangerousGoods,
+        dgClassCode: item.dgClassCode,
+        tempZoneCode: item.tempZoneCode,
+        isLiveAnimal: item.isLiveAnimal,
+        isFoodstuff: item.isFoodstuff,
+        specialHandlingCodes: item.specialHandlingCodes ?? [],
+        priority: item.priority,
+      }));
+  }
+
   const items = await db.query.cargoItems.findMany({
     where: inArray(cargoItems.id, ids),
     with: {
@@ -138,6 +209,22 @@ export async function getCargoItemsByIds(ids: string[]): Promise<CargoItemForPac
  * Get all available ULD types
  */
 export async function getUldTypes(): Promise<UldTypeForPacking[]> {
+  if (isStaticDataMode()) {
+    return staticUldTypes.map((uld) => ({
+      id: uld.id,
+      code: uld.code,
+      name: uld.name,
+      category: uld.category as "CONTAINER" | "PALLET",
+      maxGrossWeightKg: uld.maxGrossWeightKg,
+      tareWeightKg: uld.tareWeightKg,
+      maxVolumeM3: uld.maxVolumeM3,
+      internalLengthCm: uld.internalLengthCm ?? uld.lengthCm,
+      internalWidthCm: uld.internalWidthCm ?? uld.widthCm,
+      internalHeightCm: uld.internalHeightCm ?? uld.heightCm,
+      isRefrigerated: uld.isRefrigerated,
+    }));
+  }
+
   const types = await db.query.uldTypes.findMany();
 
   return types.map((uld) => ({
@@ -160,6 +247,24 @@ export async function getUldTypes(): Promise<UldTypeForPacking[]> {
  */
 export async function getUldTypesByIds(ids: string[]): Promise<UldTypeForPacking[]> {
   if (ids.length === 0) return [];
+
+  if (isStaticDataMode()) {
+    return staticUldTypes
+      .filter((uld) => ids.includes(uld.id))
+      .map((uld) => ({
+        id: uld.id,
+        code: uld.code,
+        name: uld.name,
+        category: uld.category as "CONTAINER" | "PALLET",
+        maxGrossWeightKg: uld.maxGrossWeightKg,
+        tareWeightKg: uld.tareWeightKg,
+        maxVolumeM3: uld.maxVolumeM3,
+        internalLengthCm: uld.internalLengthCm ?? uld.lengthCm,
+        internalWidthCm: uld.internalWidthCm ?? uld.widthCm,
+        internalHeightCm: uld.internalHeightCm ?? uld.heightCm,
+        isRefrigerated: uld.isRefrigerated,
+      }));
+  }
 
   const types = await db.query.uldTypes.findMany({
     where: inArray(uldTypes.id, ids),
@@ -188,6 +293,26 @@ export async function getUldTypesByIds(ids: string[]): Promise<UldTypeForPacking
  * Get all active packing rules
  */
 export async function getActivePackingRules(): Promise<PackingRule[]> {
+  if (isStaticDataMode()) {
+    return staticPackingRules
+      .filter((rule) => rule.isActive)
+      .sort((a, b) => b.priority - a.priority)
+      .map((rule) => ({
+        id: rule.id,
+        ruleText: rule.ruleText,
+        ruleType: rule.ruleType as "CONSTRAINT" | "PREFERENCE" | "PROHIBITION",
+        priority: rule.priority,
+        category: rule.category,
+        isActive: rule.isActive,
+        examples: rule.examples,
+        // The static structuredRule has a different shape than the StructuredRule type,
+        // so we set it to null. The LLM parser interprets ruleText anyway.
+        structuredRule: null,
+        createdAt: rule.createdAt,
+        updatedAt: rule.updatedAt,
+      }));
+  }
+
   const rules = await db.query.packingRules.findMany({
     where: eq(packingRules.isActive, true),
     orderBy: [desc(packingRules.priority)],
@@ -215,6 +340,25 @@ export async function getActivePackingRules(): Promise<PackingRule[]> {
  * Get flights with aircraft and location details
  */
 export async function getFlightsWithDetails() {
+  if (isStaticDataMode()) {
+    return staticFlights.map((f) => {
+      const aircraft = staticAircrafts.find((a) => a.id === f.aircraftId);
+      const origin = staticLocations.find((l) => l.id === f.originId);
+      const destination = staticLocations.find((l) => l.id === f.destinationId);
+      return {
+        id: f.id,
+        flightNumber: f.flightNumber,
+        aircraftType: aircraft?.typeCode ?? "Unknown",
+        aircraftName: aircraft?.name ?? "Unknown",
+        origin: origin?.airportCode ?? "Unknown",
+        destination: destination?.airportCode ?? "Unknown",
+        scheduledDeparture: f.scheduledDeparture,
+        scheduledArrival: f.scheduledArrival,
+        status: f.status,
+      };
+    });
+  }
+
   const flightList = await db.query.flights.findMany({
     with: {
       aircraft: true,
@@ -242,6 +386,30 @@ export async function getFlightsWithDetails() {
  * Get a single flight by ID
  */
 export async function getFlightById(id: string) {
+  if (isStaticDataMode()) {
+    const flight = staticFlights.find((f) => f.id === id);
+    if (!flight) return null;
+
+    const aircraft = staticAircrafts.find((a) => a.id === flight.aircraftId);
+    const origin = staticLocations.find((l) => l.id === flight.originId);
+    const destination = staticLocations.find((l) => l.id === flight.destinationId);
+
+    return {
+      id: flight.id,
+      flightNumber: flight.flightNumber,
+      aircraftType: aircraft?.typeCode ?? "Unknown",
+      aircraftName: aircraft?.name ?? "Unknown",
+      aircraftId: flight.aircraftId,
+      originId: flight.originId,
+      origin: origin?.airportCode ?? "Unknown",
+      destinationId: flight.destinationId,
+      destination: destination?.airportCode ?? "Unknown",
+      scheduledDeparture: flight.scheduledDeparture,
+      scheduledArrival: flight.scheduledArrival,
+      status: flight.status,
+    };
+  }
+
   const flight = await db.query.flights.findFirst({
     where: eq(flights.id, id),
     with: {
@@ -277,6 +445,36 @@ export async function getFlightById(id: string) {
  * Create or get load plan for a flight
  */
 export async function getOrCreateLoadPlan(flightId: string) {
+  if (isStaticDataMode()) {
+    // Check for existing plan in memory store
+    const existing = memoryStore.getLoadPlanByFlightId(flightId);
+    if (existing) return existing;
+
+    // Get flight to get aircraft ID
+    const flight = staticFlights.find((f) => f.id === flightId);
+    if (!flight) {
+      throw new Error("Flight not found");
+    }
+
+    // Create new load plan in memory store
+    return memoryStore.createLoadPlan({
+      flightId,
+      version: 1,
+      status: "DRAFT",
+      totalCargoWeightKg: 0,
+      totalCargoVolumeM3: 0,
+      uldCount: 0,
+      bulkCargoWeightKg: 0,
+      totalIndexChange: null,
+      estimatedCgPercentMac: null,
+      isWithinEnvelope: null,
+      optimizationScore: null,
+      notes: null,
+      releasedAt: null,
+      releasedBy: null,
+    });
+  }
+
   // Check for existing draft plan
   const existing = await db.query.loadPlans.findFirst({
     where: and(
@@ -338,6 +536,56 @@ export async function saveOptimizationResults(
     computationTimeMs: number;
   }
 ) {
+  if (isStaticDataMode()) {
+    // Delete existing assignments (memory store handles this internally)
+    const existingAssignments = memoryStore.getUldAssignmentsForLoadPlan(loadPlanId);
+    for (const assignment of existingAssignments) {
+      memoryStore.deleteUldAssignment(assignment.id);
+    }
+
+    // Create new assignments and packed items
+    for (const assignment of results.assignments) {
+      // Find ULD type to get the code
+      const uldType = staticUldTypes.find((u) => u.id === assignment.uldTypeId);
+      
+      const newAssignment = memoryStore.createUldAssignment({
+        loadPlanId,
+        uldId: "", // Virtual ULD
+        uldNumber: `V-${uldType?.code ?? "ULD"}-${assignment.sequence}`,
+        uldTypeId: assignment.uldTypeId,
+        uldTypeCode: uldType?.code ?? "ULD",
+        assignedPositionId: null,
+        positionCode: assignment.positionCode,
+        deckCode: null,
+        sequence: assignment.sequence,
+        totalWeightKg: assignment.totalWeightKg,
+        totalVolumeM3: assignment.volumeUsedM3,
+        itemCount: assignment.cargoItems.length,
+        status: "ASSIGNED",
+      });
+
+      // Create packed items
+      for (const item of assignment.cargoItems) {
+        memoryStore.createPackedItem({
+          uldAssignmentId: newAssignment.id,
+          cargoItemId: item.cargoItemId,
+          sequence: item.sequence,
+          xPositionCm: item.xPositionCm,
+          yPositionCm: item.yPositionCm,
+          zPositionCm: item.zPositionCm,
+          isRotated: item.rotated,
+        });
+      }
+    }
+
+    // Update load plan status
+    memoryStore.updateLoadPlan(loadPlanId, {
+      status: "OPTIMIZED",
+    });
+
+    return;
+  }
+
   // Delete existing position loads for this load plan first (foreign key constraint)
   await db.delete(positionLoads).where(eq(positionLoads.loadPlanId, loadPlanId));
   
@@ -400,6 +648,12 @@ export async function saveOptimizationResults(
 export async function getAircraftConfigForFlight(
   flightId: string
 ): Promise<AircraftConfigForPacking | null> {
+  if (isStaticDataMode()) {
+    const flight = staticFlights.find((f) => f.id === flightId);
+    if (!flight) return null;
+    return getAircraftConfigById(flight.aircraftId);
+  }
+
   // Get flight with aircraft
   const flight = await db.query.flights.findFirst({
     where: eq(flights.id, flightId),
@@ -421,6 +675,103 @@ export async function getAircraftConfigForFlight(
 export async function getAircraftConfigById(
   aircraftId: string
 ): Promise<AircraftConfigForPacking | null> {
+  if (isStaticDataMode()) {
+    const aircraft = staticAircrafts.find((a) => a.id === aircraftId);
+    if (!aircraft) return null;
+
+    // Get the default preset for this aircraft
+    const preset = staticDeckConfigurationPresets.find(
+      (p) => p.aircraftId === aircraftId && p.isDefault
+    ) ?? staticDeckConfigurationPresets.find((p) => p.aircraftId === aircraftId);
+
+    if (!preset) {
+      return {
+        id: aircraft.id,
+        name: aircraft.name,
+        typeCode: aircraft.typeCode,
+        operatingEmptyWeightKg: aircraft.operatingEmptyWeightKg,
+        maxZeroFuelWeightKg: aircraft.maxZeroFuelWeightKg,
+        maxTakeoffWeightKg: aircraft.maxTakeoffWeightKg,
+        maxLandingWeightKg: aircraft.maxLandingWeightKg,
+        totalMaxPayloadKg: aircraft.totalMaxPayloadKg,
+        macLeadingEdgeCm: aircraft.macLeadingEdgeCm,
+        macLengthCm: aircraft.macLengthCm,
+        decks: [],
+        cgEnvelopes: [],
+      };
+    }
+
+    // Get deck configurations
+    const decks = staticDeckConfigurations
+      .filter((d) => d.presetId === preset.id)
+      .sort((a, b) => a.sequence - b.sequence);
+
+    // Get positions grouped by deck
+    const deckConfigs: DeckConfigForPacking[] = decks.map((deck) => {
+      const positions = staticLoadingPositions
+        .filter((p) => p.deckId === deck.id)
+        .sort((a, b) => a.sequenceNumber - b.sequenceNumber)
+        .map((pos) => ({
+          id: pos.id,
+          positionCode: pos.positionCode,
+          sequenceNumber: pos.sequenceNumber,
+          maxWeightKg: pos.maxWeightKg,
+          armStationCm: pos.armStationCm,
+          compatibleUldTypes: pos.compatibleUldTypes,
+          acceptsBulkCargo: pos.acceptsBulkCargo,
+          maxHeightCm: pos.maxHeightCm,
+          contourCode: pos.contourCode,
+          colIndex: pos.colIndex,
+          rowIndex: pos.rowIndex,
+        }));
+
+      return {
+        id: deck.id,
+        deckCode: deck.deckCode as DeckConfigForPacking["deckCode"],
+        deckName: deck.deckName,
+        maxStructuralWeightKg: deck.maxStructuralWeightKg,
+        sequence: deck.sequence,
+        positions,
+      };
+    });
+
+    // Get CG envelopes
+    const envelopes = staticCgEnvelopes.filter((e) => e.aircraftId === aircraftId);
+    const cgEnvelopeConfigs: CgEnvelopeForPacking[] = envelopes.map((env) => {
+      const points = staticCgEnvelopePoints
+        .filter((p) => p.envelopeId === env.id)
+        .sort((a, b) => a.sequence - b.sequence)
+        .map((point) => ({
+          sequence: point.sequence,
+          weightKg: point.weightKg,
+          cgPercentMac: point.cgPercentMac,
+        }));
+
+      return {
+        id: env.id,
+        envelopeType: env.envelopeType as CgEnvelopeForPacking["envelopeType"],
+        forwardLimitPercentMac: env.forwardLimitPercentMac,
+        aftLimitPercentMac: env.aftLimitPercentMac,
+        points,
+      };
+    });
+
+    return {
+      id: aircraft.id,
+      name: aircraft.name,
+      typeCode: aircraft.typeCode,
+      operatingEmptyWeightKg: aircraft.operatingEmptyWeightKg,
+      maxZeroFuelWeightKg: aircraft.maxZeroFuelWeightKg,
+      maxTakeoffWeightKg: aircraft.maxTakeoffWeightKg,
+      maxLandingWeightKg: aircraft.maxLandingWeightKg,
+      totalMaxPayloadKg: aircraft.totalMaxPayloadKg,
+      macLeadingEdgeCm: aircraft.macLeadingEdgeCm,
+      macLengthCm: aircraft.macLengthCm,
+      decks: deckConfigs,
+      cgEnvelopes: cgEnvelopeConfigs,
+    };
+  }
+
   // Get aircraft
   const aircraft = await db.query.aircrafts.findFirst({
     where: eq(aircrafts.id, aircraftId),
@@ -579,6 +930,34 @@ export async function savePositionLoads(
     calculatedIndex: number | null;
   }>
 ) {
+  if (isStaticDataMode()) {
+    // Delete existing position loads
+    memoryStore.deletePositionLoadsForLoadPlan(loadPlanId);
+
+    // Create new position loads
+    for (const load of positionLoadsData) {
+      // Find position to get arm station and deck code
+      const position = staticLoadingPositions.find((p) => p.id === load.positionId);
+      const deck = position
+        ? staticDeckConfigurations.find((d) => d.id === position.deckId)
+        : null;
+
+      memoryStore.createPositionLoad({
+        loadPlanId,
+        positionId: load.positionId,
+        positionCode: load.positionCode,
+        deckCode: deck?.deckCode ?? "",
+        uldAssignmentId: load.uldAssignmentId,
+        grossWeightKg: load.grossWeightKg,
+        indexContribution: load.calculatedIndex ?? 0,
+        armStationCm: position?.armStationCm ?? 0,
+        sequence: position?.sequenceNumber ?? 0,
+      });
+    }
+
+    return;
+  }
+
   // Delete existing position loads for this load plan
   await db.delete(positionLoads).where(eq(positionLoads.loadPlanId, loadPlanId));
 
@@ -613,6 +992,15 @@ export async function updateLoadPlanCgResults(
     withinCgEnvelope: boolean;
   }
 ) {
+  if (isStaticDataMode()) {
+    memoryStore.updateLoadPlan(loadPlanId, {
+      totalCargoWeightKg: cgResults.payloadKg,
+      estimatedCgPercentMac: cgResults.zfwCgPercentMac,
+      isWithinEnvelope: cgResults.withinCgEnvelope,
+    });
+    return;
+  }
+
   await db.update(loadPlans)
     .set({
       payloadKg: String(cgResults.payloadKg),
@@ -635,6 +1023,50 @@ export async function updateLoadPlanCgResults(
 export async function getAvailableUldsAtLocation(
   locationId: string
 ): Promise<UldInventoryItem[]> {
+  if (isStaticDataMode()) {
+    return staticUlds
+      .filter((uld) => uld.locationId === locationId && uld.status === "AVAILABLE")
+      .map((uld) => {
+        const uldType = staticUldTypes.find((t) => t.id === uld.uldTypeId);
+        return {
+          id: uld.id,
+          uldNumber: uld.uldNumber,
+          uldTypeId: uld.uldTypeId,
+          uldType: uldType
+            ? {
+                id: uldType.id,
+                code: uldType.code,
+                name: uldType.name,
+                category: uldType.category as "CONTAINER" | "PALLET",
+                maxGrossWeightKg: uldType.maxGrossWeightKg,
+                tareWeightKg: uldType.tareWeightKg,
+                maxVolumeM3: uldType.maxVolumeM3,
+                internalLengthCm: uldType.internalLengthCm ?? uldType.lengthCm,
+                internalWidthCm: uldType.internalWidthCm ?? uldType.widthCm,
+                internalHeightCm: uldType.internalHeightCm ?? uldType.heightCm,
+                isRefrigerated: uldType.isRefrigerated,
+              }
+            : {
+                id: uld.uldTypeId,
+                code: "UNK",
+                name: "Unknown",
+                category: "CONTAINER" as const,
+                maxGrossWeightKg: 0,
+                tareWeightKg: 0,
+                maxVolumeM3: 0,
+                internalLengthCm: 0,
+                internalWidthCm: 0,
+                internalHeightCm: 0,
+                isRefrigerated: false,
+              },
+          locationId: uld.locationId,
+          ownerCode: uld.ownerCode,
+          status: uld.status,
+        };
+      })
+      .sort((a, b) => a.uldNumber.localeCompare(b.uldNumber));
+  }
+
   const uldsAtLocation = await db.query.ulds.findMany({
     where: and(
       eq(ulds.locationId, locationId),
@@ -682,6 +1114,12 @@ export async function updateUldStatus(
   uldId: string,
   status: "AVAILABLE" | "ASSIGNED" | "IN_USE" | "MAINTENANCE"
 ): Promise<void> {
+  if (isStaticDataMode()) {
+    // In static mode, we don't actually persist ULD status changes
+    // This is intentional since static data is immutable
+    return;
+  }
+
   await db.update(ulds)
     .set({
       status,
@@ -699,6 +1137,11 @@ export async function updateUldsStatus(
 ): Promise<void> {
   if (uldIds.length === 0) return;
 
+  if (isStaticDataMode()) {
+    // In static mode, we don't actually persist ULD status changes
+    return;
+  }
+
   await db.update(ulds)
     .set({
       status,
@@ -712,6 +1155,11 @@ export async function updateUldsStatus(
  * Finds all ULD assignments for the load plan and releases those ULDs
  */
 export async function releaseUldsFromLoadPlan(loadPlanId: string): Promise<void> {
+  if (isStaticDataMode()) {
+    // In static mode, we don't actually persist ULD status changes
+    return;
+  }
+
   // Get all ULD assignments for this load plan
   const assignments = await db.query.uldAssignments.findMany({
     where: eq(uldAssignments.loadPlanId, loadPlanId),
@@ -731,6 +1179,22 @@ export async function releaseUldsFromLoadPlan(loadPlanId: string): Promise<void>
  * Get flight with origin location for ULD availability check
  */
 export async function getFlightWithOrigin(flightId: string) {
+  if (isStaticDataMode()) {
+    const flight = staticFlights.find((f) => f.id === flightId);
+    if (!flight) return null;
+
+    const origin = staticLocations.find((l) => l.id === flight.originId);
+    const destination = staticLocations.find((l) => l.id === flight.destinationId);
+    const aircraft = staticAircrafts.find((a) => a.id === flight.aircraftId);
+
+    return {
+      ...flight,
+      origin,
+      destination,
+      aircraft,
+    };
+  }
+
   return db.query.flights.findFirst({
     where: eq(flights.id, flightId),
     with: {
@@ -738,5 +1202,74 @@ export async function getFlightWithOrigin(flightId: string) {
       destination: true,
       aircraft: true,
     },
+  });
+}
+
+/**
+ * Get load plan by ID
+ */
+export async function getLoadPlanById(loadPlanId: string) {
+  if (isStaticDataMode()) {
+    return memoryStore.getLoadPlanById(loadPlanId);
+  }
+
+  return db.query.loadPlans.findFirst({
+    where: eq(loadPlans.id, loadPlanId),
+  });
+}
+
+/**
+ * Get load plans for a flight
+ */
+export async function getLoadPlansForFlight(flightId: string) {
+  if (isStaticDataMode()) {
+    return memoryStore.getLoadPlansForFlight(flightId);
+  }
+
+  return db.query.loadPlans.findMany({
+    where: eq(loadPlans.flightId, flightId),
+    orderBy: [desc(loadPlans.createdAt)],
+  });
+}
+
+/**
+ * Get ULD assignments for a load plan
+ */
+export async function getUldAssignmentsForLoadPlan(loadPlanId: string) {
+  if (isStaticDataMode()) {
+    return memoryStore.getUldAssignmentsForLoadPlan(loadPlanId);
+  }
+
+  return db.query.uldAssignments.findMany({
+    where: eq(uldAssignments.loadPlanId, loadPlanId),
+    orderBy: [asc(uldAssignments.sequence)],
+  });
+}
+
+/**
+ * Get position loads for a load plan
+ */
+export async function getPositionLoadsForLoadPlan(loadPlanId: string) {
+  if (isStaticDataMode()) {
+    return memoryStore.getPositionLoadsForLoadPlan(loadPlanId);
+  }
+
+  return db.query.positionLoads.findMany({
+    where: eq(positionLoads.loadPlanId, loadPlanId),
+    orderBy: [asc(positionLoads.positionCode)],
+  });
+}
+
+/**
+ * Get packed items for a ULD assignment
+ */
+export async function getPackedItemsForAssignment(uldAssignmentId: string) {
+  if (isStaticDataMode()) {
+    return memoryStore.getPackedItemsForAssignment(uldAssignmentId);
+  }
+
+  return db.query.packedItems.findMany({
+    where: eq(packedItems.uldAssignmentId, uldAssignmentId),
+    orderBy: [asc(packedItems.sequence)],
   });
 }

@@ -179,3 +179,8 @@ export const NOTE_CATEGORIES = {
   TEMPERATURE: { icon: "🌡", trigger: "temperatureControlled" },
   ORIENTATION: { icon: "↑", trigger: "orientationRestricted" },
 } as const;
+
+
+
+
+
