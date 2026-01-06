@@ -7,9 +7,17 @@ import type {
   BuildUpInstruction,
 } from "../types";
 import type { CargoItemDisplay } from "@/features/cargo";
+import { isStaticDataMode } from "@/lib/config";
 import { db } from "@/lib/db";
 import { loadPlans, airWaybills } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
+import {
+  staticAirWaybills,
+  staticFlights,
+  staticLocations,
+  getStaticAwbsForFlight,
+} from "@/lib/data/static-data";
+import { memoryStore } from "@/lib/data/memory-store";
 import {
   getCargoItemsByIds,
   getUldTypes,
@@ -739,6 +747,35 @@ export async function getAwbsForFlight(
   error?: string;
 }> {
   try {
+    if (isStaticDataMode()) {
+      const awbs = getStaticAwbsForFlight(flightId);
+      const displayAwbs: AwbWithParcelsDisplay[] = awbs.map((awb) => {
+        const origin = staticLocations.find((l) => l.id === awb.originId);
+        const destination = staticLocations.find((l) => l.id === awb.destinationId);
+        return {
+          id: awb.id,
+          awbNumber: awb.awbNumber,
+          flightId: awb.flightId,
+          originCode: origin?.airportCode ?? "Unknown",
+          destinationCode: destination?.airportCode ?? "Unknown",
+          shipperName: awb.shipperName,
+          consigneeName: awb.consigneeName,
+          totalPieces: awb.totalPieces,
+          totalWeightKg: awb.totalWeightKg,
+          totalVolumeM3: awb.totalVolumeM3,
+          natureOfGoods: awb.natureOfGoods,
+          specialHandlingCodes: awb.specialHandlingCodes,
+          status: awb.status,
+          parcels: [], // Static data doesn't have parcel groups, cargo items are used directly
+        };
+      });
+
+      return {
+        success: true,
+        awbs: displayAwbs,
+      };
+    }
+
     const awbs = await db.query.airWaybills.findMany({
       where: eq(airWaybills.flightId, flightId),
       with: {
@@ -870,6 +907,30 @@ export async function confirmBuildUpPlan(loadPlanId: string): Promise<{
   error?: string;
 }> {
   try {
+    if (isStaticDataMode()) {
+      const loadPlan = memoryStore.getLoadPlanById(loadPlanId);
+      if (!loadPlan) {
+        return {
+          success: false,
+          error: "Load plan not found",
+        };
+      }
+
+      const assignments = memoryStore.getUldAssignmentsForLoadPlan(loadPlanId);
+      if (assignments.length === 0) {
+        return {
+          success: false,
+          error: "No ULD assignments found for this load plan",
+        };
+      }
+
+      return {
+        success: true,
+        loadPlanId: loadPlan.id,
+        flightId: loadPlan.flightId,
+      };
+    }
+
     // Verify the load plan exists and has data
     const loadPlan = await db.query.loadPlans.findFirst({
       where: eq(loadPlans.id, loadPlanId),
@@ -921,6 +982,30 @@ export async function getLoadPlanById(loadPlanId: string): Promise<{
   error?: string;
 }> {
   try {
+    if (isStaticDataMode()) {
+      const loadPlan = memoryStore.getLoadPlanById(loadPlanId);
+      if (!loadPlan) {
+        return {
+          success: false,
+          error: "Load plan not found",
+        };
+      }
+
+      const flight = staticFlights.find((f) => f.id === loadPlan.flightId);
+      const assignments = memoryStore.getUldAssignmentsForLoadPlan(loadPlanId);
+
+      return {
+        success: true,
+        loadPlan: {
+          id: loadPlan.id,
+          flightId: loadPlan.flightId,
+          flightNumber: flight?.flightNumber ?? "Unknown",
+          status: loadPlan.status,
+          assignmentCount: assignments.length,
+        },
+      };
+    }
+
     const loadPlan = await db.query.loadPlans.findFirst({
       where: eq(loadPlans.id, loadPlanId),
       with: {
