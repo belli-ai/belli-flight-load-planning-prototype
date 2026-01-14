@@ -70,18 +70,18 @@ export default function StyleGuidePage() {
           </div>
           <div className="mt-6">
             <h3 className="text-sm font-medium mb-3 text-muted-foreground">
-              Orange Palette (Primary)
+              Blue Palette (ANA Branding)
             </h3>
             <div className="flex gap-1">
               {[50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950].map(
                 (shade) => (
                   <div
                     key={shade}
-                    className={`h-12 flex-1 rounded-sm bg-orange-${shade}`}
+                    className={`h-12 flex-1 rounded-sm bg-blue-${shade}`}
                     style={{
-                      backgroundColor: `var(--color-orange-${shade})`,
+                      backgroundColor: `var(--color-blue-${shade})`,
                     }}
-                    title={`Orange ${shade}`}
+                    title={`Blue ${shade}`}
                   />
                 )
               )}

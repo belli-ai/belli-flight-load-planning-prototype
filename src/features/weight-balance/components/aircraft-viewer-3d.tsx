@@ -220,7 +220,7 @@ function UldBox({
     const util = assignment.volumeUtilization;
     if (util > 0.85) return "#22c55e"; // Green - good
     if (util > 0.6) return "#eab308"; // Yellow - medium
-    return "#f97316"; // Orange - low
+    return "#6591ee"; // ANA Light Blue - low
   };
 
   const baseColor = isSelected ? "#3b82f6" : getColor();
@@ -530,7 +530,7 @@ function AircraftWireframe({
           [dimensions.lowerDeckMaxX, dimensions.lowerDeckFloorY, -1.1],
           [dimensions.lowerDeckMinX, dimensions.lowerDeckFloorY, -1.1],
         ]}
-        color="#f97316"
+        color="#3d63da"
         opacity={opacity}
         lineWidth={2}
       />
@@ -540,7 +540,7 @@ function AircraftWireframe({
         position={[dimensions.lowerDeckMinX - 1, dimensions.lowerDeckFloorY, 0]}
         rotation={[0, Math.PI / 2, 0]}
         fontSize={0.5}
-        color="#f97316"
+        color="#3d63da"
         anchorX="right"
         anchorY="middle"
       >

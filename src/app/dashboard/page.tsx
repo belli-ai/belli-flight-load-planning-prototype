@@ -388,7 +388,7 @@ function MajorFeatureCard({
           <div
             className={`flex items-center gap-2 rounded-sm px-2 py-1.5 text-xs ${
               urgencyLevel === "warning"
-                ? "bg-orange-500/10 text-orange-500"
+                ? "bg-blue-500/10 text-blue-500"
                 : "bg-primary/10 text-primary"
             }`}
           >

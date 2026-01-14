@@ -281,7 +281,7 @@ function DeckVisualization({
   }
 
   const getDeckColor = (code: string) => {
-    if (code.includes("MAIN")) return "from-orange-500/20 to-orange-500/5";
+    if (code.includes("MAIN")) return "from-blue-600/20 to-blue-600/5";
     if (code.includes("FWD")) return "from-blue-500/20 to-blue-500/5";
     if (code.includes("AFT")) return "from-emerald-500/20 to-emerald-500/5";
     if (code.includes("BULK")) return "from-purple-500/20 to-purple-500/5";
@@ -289,7 +289,7 @@ function DeckVisualization({
   };
 
   const getDeckBorderColor = (code: string) => {
-    if (code.includes("MAIN")) return "border-orange-500/30";
+    if (code.includes("MAIN")) return "border-blue-600/30";
     if (code.includes("FWD")) return "border-blue-500/30";
     if (code.includes("AFT")) return "border-emerald-500/30";
     if (code.includes("BULK")) return "border-purple-500/30";
@@ -482,7 +482,7 @@ function PositionCell({
         {isMainDeck && (
           <span className={cn(
             "text-[8px]",
-            colSpan === 2 ? "text-orange-400" : "text-blue-400"
+            colSpan === 2 ? "text-blue-400" : "text-blue-400"
           )}>
             {colSpan === 2 ? "2C" : "1C"}
           </span>

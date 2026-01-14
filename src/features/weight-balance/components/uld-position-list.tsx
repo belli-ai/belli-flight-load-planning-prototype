@@ -64,13 +64,13 @@ function getDeckFromPosition(
 function getUtilizationColor(utilization: number): string {
   if (utilization >= 0.85) return "text-green-500";
   if (utilization >= 0.6) return "text-yellow-500";
-  return "text-orange-500";
+  return "text-blue-500";
 }
 
 function getUtilizationBg(utilization: number): string {
   if (utilization >= 0.85) return "bg-green-500/10";
   if (utilization >= 0.6) return "bg-yellow-500/10";
-  return "bg-orange-500/10";
+  return "bg-blue-500/10";
 }
 
 // ============================================================================

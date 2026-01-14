@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     color: "#22c55e",
   },
   statusWarning: {
-    color: "#f97316",
+    color: "#3d63da",
   },
   footer: {
     position: "absolute",

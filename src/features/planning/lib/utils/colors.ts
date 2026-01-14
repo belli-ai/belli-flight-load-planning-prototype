@@ -4,7 +4,7 @@
 
 // Color palette for cargo visualization
 export const CARGO_COLORS = [
-  "#f97316", // orange-500
+  "#3d63da", // ANA Navy Blue
   "#3b82f6", // blue-500
   "#22c55e", // green-500
   "#a855f7", // purple-500
