@@ -1,0 +1,211 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: rgb(var(--background) / <alpha-value>);
+  --color-foreground: rgb(var(--foreground) / <alpha-value>);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-inter);
+  --color-sidebar-ring: rgb(var(--sidebar-ring) / <alpha-value>);
+  --color-sidebar-border: rgb(var(--sidebar-border) / <alpha-value>);
+  --color-sidebar-accent-foreground: rgb(var(--sidebar-accent-foreground) / <alpha-value>);
+  --color-sidebar-accent: rgb(var(--sidebar-accent) / <alpha-value>);
+  --color-sidebar-primary-foreground: rgb(var(--sidebar-primary-foreground) / <alpha-value>);
+  --color-sidebar-primary: rgb(var(--sidebar-primary) / <alpha-value>);
+  --color-sidebar-foreground: rgb(var(--sidebar-foreground) / <alpha-value>);
+  --color-sidebar: rgb(var(--sidebar) / <alpha-value>);
+  --color-chart-5: rgb(var(--chart-5) / <alpha-value>);
+  --color-chart-4: rgb(var(--chart-4) / <alpha-value>);
+  --color-chart-3: rgb(var(--chart-3) / <alpha-value>);
+  --color-chart-2: rgb(var(--chart-2) / <alpha-value>);
+  --color-chart-1: rgb(var(--chart-1) / <alpha-value>);
+  --color-ring: rgb(var(--ring) / <alpha-value>);
+  --color-input: rgb(var(--input) / <alpha-value>);
+  --color-border: rgb(var(--border) / <alpha-value>);
+  --color-destructive: rgb(var(--destructive) / <alpha-value>);
+  --color-destructive-foreground: rgb(var(--destructive-foreground) / <alpha-value>);
+  --color-accent-foreground: rgb(var(--accent-foreground) / <alpha-value>);
+  --color-accent: rgb(var(--accent) / <alpha-value>);
+  --color-muted-foreground: rgb(var(--muted-foreground) / <alpha-value>);
+  --color-muted: rgb(var(--muted) / <alpha-value>);
+  --color-secondary-foreground: rgb(var(--secondary-foreground) / <alpha-value>);
+  --color-secondary: rgb(var(--secondary) / <alpha-value>);
+  --color-primary-foreground: rgb(var(--primary-foreground) / <alpha-value>);
+  --color-primary: rgb(var(--primary) / <alpha-value>);
+  --color-popover-foreground: rgb(var(--popover-foreground) / <alpha-value>);
+  --color-popover: rgb(var(--popover) / <alpha-value>);
+  --color-card-foreground: rgb(var(--card-foreground) / <alpha-value>);
+  --color-card: rgb(var(--card) / <alpha-value>);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /* Lufthansa Cargo color palette */
+  /* Primary: Gulf Blue #05164d */
+  --color-lh-blue: 5 22 77;
+  --color-lh-blue-50: 239 242 250;
+  --color-lh-blue-100: 224 230 245;
+  --color-lh-blue-200: 193 205 235;
+  --color-lh-blue-300: 132 155 205;
+  --color-lh-blue-400: 71 105 175;
+  --color-lh-blue-500: 35 66 130;
+  --color-lh-blue-600: 20 44 100;
+  --color-lh-blue-700: 15 33 77;
+  --color-lh-blue-800: 10 22 54;
+  --color-lh-blue-900: 5 22 77;
+  --color-lh-blue-950: 3 13 46;
+
+  /* Accent: Lufthansa Yellow #f9ba00 */
+  --color-lh-yellow: 249 186 0;
+  --color-lh-yellow-50: 255 251 235;
+  --color-lh-yellow-100: 254 243 199;
+  --color-lh-yellow-200: 253 230 138;
+  --color-lh-yellow-300: 252 211 77;
+  --color-lh-yellow-400: 251 199 32;
+  --color-lh-yellow-500: 249 186 0;
+  --color-lh-yellow-600: 234 158 0;
+  --color-lh-yellow-700: 195 132 0;
+  --color-lh-yellow-800: 156 105 0;
+  --color-lh-yellow-900: 117 79 0;
+  --color-lh-yellow-950: 78 52 0;
+}
+
+/* Light theme - Lufthansa Cargo style: White background, blue text, yellow accents */
+:root {
+  --radius: 0.375rem;
+
+  /* Pure white background like Lufthansa Cargo website */
+  --background: 255 255 255; /* #FFFFFF */
+  --foreground: 5 22 77; /* #05164D - Lufthansa dark blue */
+
+  /* Cards with subtle gray background */
+  --card: 249 249 251; /* #F9F9FB - Very light gray for cards */
+  --card-foreground: 5 22 77; /* #05164D */
+
+  /* Popovers */
+  --popover: 255 255 255; /* #FFFFFF */
+  --popover-foreground: 5 22 77; /* #05164D */
+
+  /* Primary - Lufthansa Yellow */
+  --primary: 249 186 0; /* #F9BA00 - Lufthansa yellow */
+  --primary-foreground: 5 22 77; /* #05164D - Dark blue text on yellow */
+
+  /* Secondary - Light blue/gray */
+  --secondary: 240 242 245; /* #F0F2F5 */
+  --secondary-foreground: 5 22 77; /* #05164D */
+
+  /* Muted */
+  --muted: 245 247 250; /* #F5F7FA */
+  --muted-foreground: 107 114 128; /* #6B7280 - Gray text */
+
+  /* Accent - Lufthansa Yellow */
+  --accent: 249 186 0; /* #F9BA00 */
+  --accent-foreground: 5 22 77; /* #05164D */
+
+  /* Destructive */
+  --destructive: 220 38 38; /* #DC2626 - Red */
+  --destructive-foreground: 255 255 255; /* #FFFFFF */
+
+  /* Border */
+  --border: 229 231 235; /* #E5E7EB - Light gray border */
+  --input: 229 231 235; /* #E5E7EB */
+
+  /* Ring (focus) */
+  --ring: 249 186 0; /* #F9BA00 - Yellow focus ring */
+
+  /* Charts */
+  --chart-1: 5 22 77; /* #05164D - Blue */
+  --chart-2: 249 186 0; /* #F9BA00 - Yellow */
+  --chart-3: 59 130 246; /* #3B82F6 - Lighter blue */
+  --chart-4: 234 179 8; /* #EAB308 - Gold */
+  --chart-5: 107 114 128; /* #6B7280 - Gray */
+
+  /* Sidebar - Keep dark blue for contrast */
+  --sidebar: 5 22 77; /* #05164D */
+  --sidebar-foreground: 255 255 255; /* #FFFFFF */
+  --sidebar-primary: 249 186 0; /* #F9BA00 */
+  --sidebar-primary-foreground: 5 22 77; /* #05164D */
+  --sidebar-accent: 15 32 87; /* Slightly lighter blue */
+  --sidebar-accent-foreground: 255 255 255; /* #FFFFFF */
+  --sidebar-border: 15 32 87;
+  --sidebar-ring: 249 186 0; /* #F9BA00 */
+}
+
+/* Dark theme - Lufthansa Cargo professional dark mode */
+.dark {
+  --background: oklch(0.14 0.04 265);
+  --foreground: oklch(0.95 0 0);
+  --card: oklch(0.18 0.05 265);
+  --card-foreground: oklch(0.95 0 0);
+  --popover: oklch(0.16 0.04 265);
+  --popover-foreground: oklch(0.95 0 0);
+  --primary: oklch(0.82 0.17 85);
+  --primary-foreground: oklch(0.14 0.04 265);
+  --secondary: oklch(0.25 0.06 265);
+  --secondary-foreground: oklch(0.95 0 0);
+  --muted: oklch(0.25 0.05 265);
+  --muted-foreground: oklch(0.65 0 0);
+  --accent: oklch(0.82 0.17 85);
+  --accent-foreground: oklch(0.14 0.04 265);
+  --destructive: oklch(0.60 0.20 25);
+  --border: oklch(0.28 0.06 265);
+  --input: oklch(0.28 0.06 265);
+  --ring: oklch(0.82 0.17 85);
+  --chart-1: oklch(0.82 0.17 85);
+  --chart-2: oklch(0.50 0.11 265);
+  --chart-3: oklch(0.65 0.09 265);
+  --chart-4: oklch(0.75 0.16 80);
+  --chart-5: oklch(0.38 0.12 265);
+  --sidebar: oklch(0.14 0.04 265);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.82 0.17 85);
+  --sidebar-primary-foreground: oklch(0.14 0.04 265);
+  --sidebar-accent: oklch(0.25 0.06 265);
+  --sidebar-accent-foreground: oklch(0.95 0 0);
+  --sidebar-border: oklch(0.28 0.06 265);
+  --sidebar-ring: oklch(0.82 0.17 85);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+/* Hero carousel animations */
+@keyframes fadeInSlideRight {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInSlideLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes heroValuePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
