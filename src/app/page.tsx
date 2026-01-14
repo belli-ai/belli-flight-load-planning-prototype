@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function HomePage() {
   return (
@@ -15,19 +16,53 @@ export default function HomePage() {
       <div className="relative overflow-hidden">
         {/* Background Pattern */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,var(--border)_1px,transparent_1px),linear-gradient(to_bottom,var(--border)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
-        
-        <div className="relative mx-auto max-w-5xl px-6 py-24 sm:py-32">
+
+        {/* Logo */}
+        <div className="absolute left-5 z-10 hidden md:block">
+          <Link href="/" className="inline-block">
+            <Image
+              src="/air_china_cargo_logo.png"
+              alt="Air China Cargo"
+              width={200}
+              height={60}
+              priority
+              className="h-auto w-50"
+            />
+          </Link>
+        </div>
+
+        <div className="relative mx-auto max-w-5xl px-6 py-12 sm:py-24 md:py-32">
           <div className="text-center space-y-6">
-            {/* Badge */}
-            <div className="inline-flex items-center gap-2 rounded-sm border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Cargo Load Management System
+            {/* Badge with Logo on Mobile */}
+            <div className="flex items-center justify-center gap-3 md:justify-center">
+              <Link href="/" className="inline-block md:hidden">
+                <Image
+                  src="/air_china_cargo_logo.png"
+                  alt="Air China Cargo"
+                  width={120}
+                  height={36}
+                  priority
+                  className="h-auto w-40"
+                />
+              </Link>
+              <div className="inline-flex flex-col items-center gap-1 rounded-sm border border-border bg-card px-3 py-2 text-xs text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                  Cargo Load Management System
+                </div>
+                <div className="text-xs">货运装载管理系统</div>
+              </div>
             </div>
-            
+
             {/* Title */}
             <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
-              Flight Load{" "}
-              <span className="text-primary">Planning</span>
+              <div className="flex flex-col gap-2">
+                <div>
+                  Flight Load{" "}
+                  <span className="text-primary">Planning</span>
+                </div>
+                <div className="text-3xl sm:text-4xl">航班装载规划</div>
+              </div>
             </h1>
             
             {/* Description */}

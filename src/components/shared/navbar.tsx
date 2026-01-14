@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -132,13 +133,14 @@ export function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-6">
         {/* Logo */}
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-primary">
-            <Plane className="size-4 text-primary-foreground" />
-          </div>
-          <span className="text-sm font-semibold tracking-tight">
-            FlightLoad
-          </span>
+        <Link href="/" className="flex items-center">
+          <Image
+            src="/air_china_cargo_logo.png"
+            alt="Air China Cargo"
+            width={150}
+            height={45}
+            priority
+          />
         </Link>
 
         {/* Navigation */}
